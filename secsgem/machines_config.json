@@ -9,6 +9,16 @@
             "device_type": "HOST",
             "connection": "enabled",
             "machine_model": "fcl"
+        },
+        {
+            "machine_name": "TNF-62",
+            "address": "192.168.226.163",
+            "port": 5000,
+            "session_id": 62,
+            "connect_mode": "ACTIVE",
+            "device_type": "HOST",
+            "connection": "disabled",
+            "machine_model": "fcl"
         }
     ]
 }
