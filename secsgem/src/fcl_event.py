@@ -68,14 +68,17 @@ class FCLEvent:
 
         try:
             decode = self.settings.streams_functions.decode(message)
+            print(decode)
+            print(f"RPT: {decode.RPT}")
         except Exception as e:
             print(f"Error decoding message: {e}")
             return
         ceid_code = fcl_ceid()
         _state = ceid_code.get(ceid, f"Unknown code: {ceid}")
 
-        print(f"Handling CEID: {ceid}, {_state}")
-        if ceid in [8, 9, 10]:
+        print(f"{self.machine_name} Handling CEID: {ceid}, {_state}")
+
+        if ceid in [8, 9, 10]: # case control state
             try:
                 self.mqtt_client.publish(
                     f"hosts/{self.machine_name}/controlstate", _state

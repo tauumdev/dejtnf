@@ -569,38 +569,74 @@ class SecsCmd(cmd.Cmd):
 
     # control
     def do_rcmd(self, arg):
-        """
-        Run a remote command on a specific machine.
-        Usage: rcmd <machine_name> <command>
-        """
-        import shlex
-
+        '''
+        Send a remote command to a machine.
+        Usage: rcmd <machine_name> <command_name> <param1=value1> <param2=value2> ...
+        '''
         try:
-            args = shlex.split(arg)
-            if len(args) < 2:
-                print("Usage: rcmd <machine_name> <command>")
+            # Use shlex.split to handle arguments with spaces enclosed in quotes
+            params = shlex.split(arg)
+            if len(params) < 2:
+                print("Usage: rcmd <machine_name> <command_name> <param1=value1> <param2=value2> ...")
                 return
 
-            machine_name = args[0]
-            command = " ".join(args[1:])
+            # Extract machine name and command name from the arguments
+            machine_name = params[0]
+            command_name = params[1]
+            param_pairs = params[2:]
 
+            # Check if the specified machine exists in the list of hosts
             if machine_name not in self.hosts:
-                print(f"Machine {machine_name} does not exist.")
+                print(f"Host '{machine_name}' not found.")
                 return
 
+            # Parse parameters into a list of (key, value) tuples
+            param_list = []
+            for pair in param_pairs:
+                if "=" in pair:
+                    key, value = pair.split("=", 1)  # Split into key and value
+                    param_list.append((key, value))
+                else:
+                    # Invalid parameter format, exit early
+                    print(f"Invalid parameter format: {pair}")
+                    return
+
+            # Debug print to show the command being sent
+            print(f"Sending command to {machine_name}: {command_name} with params {param_list}")
+
+            # Get the host object and check if it's enabled
             host = self.hosts[machine_name]
             if not host.enabled:
-                print(f"Machine {machine_name} is not enabled.")
+                print(f"Machine '{machine_name}' is not enabled. Please enable it first.")
                 return
 
-            # Execute the remote command
-            result = host.execute_command(command)
-            print(f"Command executed on {machine_name}: {command}")
-            print(f"Result: {result}")
+            # Send the command to the remote host
+            response = host.send_remote_command(command_name, param_list)
+
+            # Define response codes for better readability
+            RESPONSE_CODES = {
+                0x0: "ok, completed",
+                0x1: "invalid command",
+                0x2: "cannot do now",
+                0x3: "parameter error",
+                0x4: "initiated for asynchronous completion",
+                0x5: "rejected, already in desired condition",
+                0x6: "invalid object"
+            }
+
+            # Check the response for validity and extract the response code
+            if hasattr(response, "data") and len(response.data) > 0:
+                response_code = response.data[0].get()  # Adjust as per the actual API structure
+                # Map response code to human-readable status
+                status = RESPONSE_CODES.get(response_code, f"Unknown code: {response_code}")
+                print(f"Command response: {status}")
+            else:
+                print("Unexpected response format or missing data.")
 
         except Exception as e:
-            print(f"Error executing remote command: {e}")
-
+            # Catch and display any errors during execution
+            print(f"Error sending command: {e}")
+    
     def do_clear_events(self, machine_name):
         """
         Clear collection events for a specific machine.
