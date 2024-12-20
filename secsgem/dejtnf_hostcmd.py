@@ -5,7 +5,7 @@ import secsgem
 import paho.mqtt.client as mqtt
 from src.gem_command import GemCommands
 from src.gem_host import DejtnfHost
-
+# Bug Tumm
 def on_mqtt_message(client, userdata, msg): 
     """
     Callback for handling received MQTT messages.
