@@ -6,6 +6,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.validation import Validator, ValidationError
 
+
 # MQTT callbacks
 def on_mqtt_message(client, userdata, msg):
     payload = msg.payload.decode("utf-8")
@@ -18,7 +19,10 @@ def on_mqtt_message(client, userdata, msg):
         host = userdata.get(machine_name)
         if not host:
             print(f"No host found for MQTT message on {msg.topic}")
-            client.publish(f"hosts/{machine_name}/commandresponse", f"No host found for MQTT message on {msg.topic}")
+            client.publish(
+                f"hosts/{machine_name}/commandresponse",
+                f"No host found for MQTT message on {msg.topic}",
+            )
             return
 
         if command == "online":
@@ -31,7 +35,10 @@ def on_mqtt_message(client, userdata, msg):
             host.disable_host(source="MQTT")
         else:
             print(f"Unknown command: {command}")
-            client.publish(f"hosts/{machine_name}/commandresponse", f"Unknown command: {command}")
+            client.publish(
+                f"hosts/{machine_name}/commandresponse", f"Unknown command: {command}"
+            )
+
 
 def on_mqtt_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -46,6 +53,7 @@ def on_mqtt_connect(client, userdata, flags, rc):
     else:
         print(f"Failed to connect to MQTT broker. Return code: {rc}")
 
+
 # Save machine configuration
 def save_machine_config(hosts, config_file="machines_config.json"):
     config = {"hosts_settings": []}
@@ -58,13 +66,14 @@ def save_machine_config(hosts, config_file="machines_config.json"):
             "connect_mode": host.settings.connect_mode.name,
             "device_type": host.settings.device_type.name,
             "connection": "enabled" if host.enabled else "disabled",
-            "machine_model": host.settings.machine_model
+            "machine_model": host.settings.machine_model,
         }
         config["hosts_settings"].append(settings)
 
     with open(config_file, "w") as f:
         json.dump(config, f, indent=4)
     print(f"Configuration saved to {config_file}")
+
 
 # Sub-command loops
 class MachineConfigCmd:
@@ -80,7 +89,9 @@ class MachineConfigCmd:
         print("Entering the machine configuration menu. Type 'help' for commands.")
         while True:
             try:
-                user_input = self.session.prompt("(hostconfig) ", completer=self.commands)
+                user_input = self.session.prompt(
+                    "(hostconfig) ", completer=self.commands
+                )
                 if not user_input:
                     continue
                 if user_input.lower() == "back":
@@ -133,22 +144,26 @@ class MachineConfigCmd:
         print("Editing a machine...")
         # Edit machine logic
 
+
 # Sub-command loops
 class SecsCmd:
     """
     Sub-command loop for SECS commands.
     """
+
     def __init__(self, hosts, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.hosts = hosts
         self.session = PromptSession()
         self.commands = WordCompleter(
-            ["rcmd", "ppdir", "stream", "estatus", "econst", "back", "help"], ignore_case=True
+            ["rcmd", "ppdir", "stream", "estatus", "econst", "back", "help"],
+            ignore_case=True,
         )
 
     def show_help(self):
         """Display help for available commands."""
-        print("""
+        print(
+            """
         Available commands:
         rcmd      - Send a SECS remote command
         ppdir     - Get the process program directory
@@ -157,7 +172,8 @@ class SecsCmd:
         econst    - Request equipment constants
         back      - Return to the main menu
         help      - Show this help message
-        """)
+        """
+        )
 
     def run(self):
         """
@@ -166,7 +182,9 @@ class SecsCmd:
         print("Entering the SECS commands menu. Type 'help' for commands.")
         while True:
             try:
-                user_input = self.session.prompt("(secs) ", completer=self.commands).strip()
+                user_input = self.session.prompt(
+                    "(secs) ", completer=self.commands
+                ).strip()
                 if not user_input:  # Skip if no input
                     continue
                 if user_input.lower() == "back":
@@ -210,6 +228,7 @@ class SecsCmd:
     def do_econst(self):
         """Request equipment constants."""
         print("Requesting equipment constants...")
+
 
 class MainCmd:
     def __init__(self, hosts, mqtt_client):
@@ -256,6 +275,7 @@ class MainCmd:
     def run_secs_commands(self):
         SecsCmd(self.hosts).run()
 
+
 # Main application
 if __name__ == "__main__":
     try:
@@ -285,7 +305,9 @@ if __name__ == "__main__":
                 address=host_settings["address"],
                 port=host_settings["port"],
                 session_id=host_settings["session_id"],
-                connect_mode=secsgem.hsms.HsmsConnectMode[host_settings["connect_mode"]],
+                connect_mode=secsgem.hsms.HsmsConnectMode[
+                    host_settings["connect_mode"]
+                ],
                 device_type=secsgem.common.DeviceType[host_settings["device_type"]],
             )
             settings.machine_model = host_settings.get("machine_model", "unknown")

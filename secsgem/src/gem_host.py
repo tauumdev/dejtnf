@@ -1,4 +1,4 @@
-#gem_host.py
+# gem_host.py
 import logging
 import secsgem.common
 import secsgem.gem
@@ -9,6 +9,10 @@ import os
 import paho.mqtt.client as mqtt
 import time
 
+from src.fclx_event import FCLXEvent
+from src.fcl_event import FCLEvent
+
+
 class CommunicationLogFileHandler(logging.Handler):
     def __init__(self, path, prefix=""):
         logging.Handler.__init__(self)
@@ -18,110 +22,146 @@ class CommunicationLogFileHandler(logging.Handler):
     def emit(self, record):
         filename = os.path.join(self.path, f"{self.prefix}com_{record.address}.log")
         os.makedirs(os.path.dirname(filename), exist_ok=True)
-        with open(filename, 'a') as f:
+        with open(filename, "a") as f:
             f.write(self.format(record) + "\n")
 
+
 class DejtnfHost(secsgem.gem.GemHostHandler):
-    def __init__(self, settings: secsgem.common.Settings, machine_name: str, mqtt_client: mqtt.Client):
+    def __init__(
+        self,
+        settings: secsgem.common.Settings,
+        machine_name: str,
+        mqtt_client: mqtt.Client,
+    ):
         super().__init__(settings)
         self.machine_name = machine_name
         self.MDLN = "DEJTNF"
         self.SOFTREV = "1.0.0"
         self.enabled = False
         self.mqtt_client = mqtt_client
-        self.register_stream_function(1,14,self.s01f14)
-        self.register_stream_function(9,1,self.s09f1)
-        self.register_stream_function(9,3,self.s09f3)
-        self.register_stream_function(9,5,self.s09f5)
-        self.register_stream_function(9,7,self.s09f7)
-        self.register_stream_function(9,9,self.s09f9)
-        self.register_stream_function(9,11,self.s09f11)
+        self.register_stream_function(1, 14, self.s01f14)
+        self.register_stream_function(9, 1, self.s09f1)
+        self.register_stream_function(9, 3, self.s09f3)
+        self.register_stream_function(9, 5, self.s09f5)
+        self.register_stream_function(9, 7, self.s09f7)
+        self.register_stream_function(9, 9, self.s09f9)
+        self.register_stream_function(9, 11, self.s09f11)
         self._protocol.events.disconnected += self.on_connection_closed
 
-    def s09f1(self,handle,packet):
-        machine_model = getattr(self.settings, 'machine_model', 'unknown')
-        print(f"{self.machine_name},{machine_model}, s09f1:Unrecognized Device ID (UDN)")
+    def s09f1(self, handle, packet):
+        machine_model = getattr(self.settings, "machine_model", "unknown")
+        print(
+            f"{self.machine_name},{machine_model}, s09f1:Unrecognized Device ID (UDN)"
+        )
 
-    def s09f3(self,handle,packet):
-        machine_model = getattr(self.settings, 'machine_model', 'unknown')
-        print(f"{self.machine_name},{machine_model}, s09f3:Unrecognized Stream Function (SFCD)")
+    def s09f3(self, handle, packet):
+        machine_model = getattr(self.settings, "machine_model", "unknown")
+        print(
+            f"{self.machine_name},{machine_model}, s09f3:Unrecognized Stream Function (SFCD)"
+        )
 
-    def s09f5(self,handle,packet):
-        machine_model = getattr(self.settings, 'machine_model', 'unknown')
-        print(f"{self.machine_name},{machine_model}, s09f5:Unrecognized Function Type (UFN)")
+    def s09f5(self, handle, packet):
+        machine_model = getattr(self.settings, "machine_model", "unknown")
+        print(
+            f"{self.machine_name},{machine_model}, s09f5:Unrecognized Function Type (UFN)"
+        )
 
-    def s09f7(self,handle,packet):
-        machine_model = getattr(self.settings, 'machine_model', 'unknown')
+    def s09f7(self, handle, packet):
+        machine_model = getattr(self.settings, "machine_model", "unknown")
         print(f"{self.machine_name},{machine_model}, s09f7:Illegal Data (IDN)")
 
-    def s09f9(self,handle,packet):
-        machine_model = getattr(self.settings, 'machine_model', 'unknown')
-        print(f"{self.machine_name},{machine_model}, s09f9:Transaction Timer Timeout (TTN)")
+    def s09f9(self, handle, packet):
+        machine_model = getattr(self.settings, "machine_model", "unknown")
+        print(
+            f"{self.machine_name},{machine_model}, s09f9:Transaction Timer Timeout (TTN)"
+        )
 
-    def s09f11(self,handle,packet):
-        machine_model = getattr(self.settings, 'machine_model', 'unknown')
+    def s09f11(self, handle, packet):
+        machine_model = getattr(self.settings, "machine_model", "unknown")
         print(f"{self.machine_name},{machine_model}, s09f11:Data Too Long (DLN)")
 
-    def s01f14(self,handle,packet):
+    def s01f14(self, handle, packet):
         self.mqtt_client.publish(f"hosts/{self.machine_name}/controlstate", "selected")
 
     def waitfor_communicating(self, timeout):
-        machine_model = getattr(self.settings, 'machine_model', 'unknown')
+        machine_model = getattr(self.settings, "machine_model", "unknown")
         current_state = self._communication_state.current.name
 
-        print(f"{self.machine_name},{machine_model}, waitfor_communicating, state: {current_state}")
-        self.mqtt_client.publish(f"hosts/{self.machine_name}/communication", current_state)
+        print(
+            f"{self.machine_name},{machine_model}, waitfor_communicating, state: {current_state}"
+        )
+        self.mqtt_client.publish(
+            f"hosts/{self.machine_name}/communication", current_state
+        )
 
         return super().waitfor_communicating(timeout)
-    
+
     def on_commack_requested(self):
-        machine_model = getattr(self.settings, 'machine_model', 'unknown')
+        machine_model = getattr(self.settings, "machine_model", "unknown")
         current_state = self._communication_state.current.name
 
-        print(f"{self.machine_name},{machine_model}, on_commack_requested, state: {current_state}")
-        self.mqtt_client.publish(f"hosts/{self.machine_name}/communication", current_state)
+        print(
+            f"{self.machine_name},{machine_model}, on_commack_requested, state: {current_state}"
+        )
+        self.mqtt_client.publish(
+            f"hosts/{self.machine_name}/communication", current_state
+        )
 
-        return super().on_commack_requested()    
-    
+        return super().on_commack_requested()
+
     def _on_communicating(self, _):
-        machine_model = getattr(self.settings, 'machine_model', 'unknown')
+        machine_model = getattr(self.settings, "machine_model", "unknown")
         current_state = self._communication_state.current.name
 
-        print(f"{self.machine_name},{machine_model}, _on_communicating, state: {current_state}")
-        self.mqtt_client.publish(f"hosts/{self.machine_name}/communication", current_state)
+        print(
+            f"{self.machine_name},{machine_model}, _on_communicating, state: {current_state}"
+        )
+        self.mqtt_client.publish(
+            f"hosts/{self.machine_name}/communication", current_state
+        )
 
         return super()._on_communicating(_)
-    
+
     def _on_state_communicating(self, _):
-        machine_model = getattr(self.settings, 'machine_model', 'unknown')
+        machine_model = getattr(self.settings, "machine_model", "unknown")
         current_state = self._communication_state.current.name
 
-        print(f"{self.machine_name},{machine_model}, _on_state_communicating, state: {current_state}")
-        self.mqtt_client.publish(f"hosts/{self.machine_name}/communication", current_state)
+        print(
+            f"{self.machine_name},{machine_model}, _on_state_communicating, state: {current_state}"
+        )
+        self.mqtt_client.publish(
+            f"hosts/{self.machine_name}/communication", current_state
+        )
         self.mqtt_client.publish(f"hosts/{self.machine_name}/controlstate", "selected")
         return super()._on_state_communicating(_)
 
     def on_connection_closed(self, _):
-        machine_model = getattr(self.settings, 'machine_model', 'unknown')
+        machine_model = getattr(self.settings, "machine_model", "unknown")
         # current_state = self._communication_state.current.name
         current_state = "NOT_COMMUNICATING"
 
-        print(f"{self.machine_name},{machine_model}, on_connection_closed, state: {current_state}")
-        self.mqtt_client.publish(f"hosts/{self.machine_name}/communication", current_state)
+        print(
+            f"{self.machine_name},{machine_model}, on_connection_closed, state: {current_state}"
+        )
+        self.mqtt_client.publish(
+            f"hosts/{self.machine_name}/communication", current_state
+        )
 
         return super().on_connection_closed(_)
-    
-    def enable_host(self,source="unknown"):
+
+    def enable_host(self, source="unknown"):
         """_summary_
 
         Args:
             source (str, optional): _description_. Defaults to "unknown".
-        """        
+        """
         if self.enabled:
             message = f"{self.machine_name} is already enabled."
             print(message)
             if source == "MQTT":
-                self.mqtt_client.publish(f"hosts/{self.machine_name}/commandresponse", "already enabled")
+                self.mqtt_client.publish(
+                    f"hosts/{self.machine_name}/commandresponse", "already enabled"
+                )
             return
 
         print(f"{self.machine_name} is going enable by {source}.")
@@ -136,19 +176,23 @@ class DejtnfHost(secsgem.gem.GemHostHandler):
             error_message = f"Error enabling {self.machine_name}: {e}"
             print(error_message)
             if source == "MQTT":
-                self.mqtt_client.publish(f"hosts/{self.machine_name}/commandresponse", f"error: {e}")
+                self.mqtt_client.publish(
+                    f"hosts/{self.machine_name}/commandresponse", f"error: {e}"
+                )
 
-    def disable_host(self,source="unknown"):
+    def disable_host(self, source="unknown"):
         """_summary_
 
         Args:
             source (str, optional): _description_. Defaults to "unknown".
-        """        
+        """
         if not self.enabled:
             message = f"{self.machine_name} is already disabled."
             print(message)
             if source == "MQTT":
-                self.mqtt_client.publish(f"hosts/{self.machine_name}/commandresponse", "already disabled")
+                self.mqtt_client.publish(
+                    f"hosts/{self.machine_name}/commandresponse", "already disabled"
+                )
             return
 
         print(f"{self.machine_name} is going disable by {source}.")
@@ -163,12 +207,16 @@ class DejtnfHost(secsgem.gem.GemHostHandler):
             error_message = f"Error disabling {self.machine_name}: {e}"
             print(error_message)
             if source == "MQTT":
-                self.mqtt_client.publish(f"hosts/{self.machine_name}/commandresponse", f"error: {e}")
-        
-        current_state = self._communication_state.current.name
-        self.mqtt_client.publish(f"hosts/{self.machine_name}/communication", current_state)
+                self.mqtt_client.publish(
+                    f"hosts/{self.machine_name}/commandresponse", f"error: {e}"
+                )
 
-    def go_online(self,source="unknown"):
+        current_state = self._communication_state.current.name
+        self.mqtt_client.publish(
+            f"hosts/{self.machine_name}/communication", current_state
+        )
+
+    def go_online(self, source="unknown"):
         """_summary_
 
         Args:
@@ -176,12 +224,16 @@ class DejtnfHost(secsgem.gem.GemHostHandler):
 
         Returns:
             _type_: _description_
-        """        
+        """
         if not self.enabled:
-            error_message = f"{self.machine_name} cannot go online because it is not enabled."
+            error_message = (
+                f"{self.machine_name} cannot go online because it is not enabled."
+            )
             print(error_message)
             if source == "MQTT":
-                self.mqtt_client.publish(f"hosts/{self.machine_name}/commandresponse", error_message)
+                self.mqtt_client.publish(
+                    f"hosts/{self.machine_name}/commandresponse", error_message
+                )
 
             return False  # Indicate failure to go online
 
@@ -196,7 +248,10 @@ class DejtnfHost(secsgem.gem.GemHostHandler):
             if response is None:
                 print("No response received from the remote command.")
                 if source == "MQTT":
-                    self.mqtt_client.publish(f"hosts/{self.machine_name}/commandresponse", "error: no response")
+                    self.mqtt_client.publish(
+                        f"hosts/{self.machine_name}/commandresponse",
+                        "error: no response",
+                    )
 
                 return False
 
@@ -208,23 +263,29 @@ class DejtnfHost(secsgem.gem.GemHostHandler):
             }
 
             # Retrieve response message
-            response_message = response_code.get(response.get(), f"Unknown code: {response.get()}")
+            response_message = response_code.get(
+                response.get(), f"Unknown code: {response.get()}"
+            )
             print(f"Response message: {response_message}")
 
             if source == "MQTT":
                 # Publish command response
-                self.mqtt_client.publish(f"hosts/{self.machine_name}/commandresponse", response_message)
+                self.mqtt_client.publish(
+                    f"hosts/{self.machine_name}/commandresponse", response_message
+                )
 
             return response.get() == 0x0  # Return True if the command succeeded
 
         except Exception as e:
             print(f"Error during online transition: {e}")
             if source == "MQTT":
-                self.mqtt_client.publish(f"hosts/{self.machine_name}/commandresponse", f"error: {e}")
+                self.mqtt_client.publish(
+                    f"hosts/{self.machine_name}/commandresponse", f"error: {e}"
+                )
 
             return False
 
-    def go_offline(self,source="unknown"):
+    def go_offline(self, source="unknown"):
         """_summary_
 
         Args:
@@ -232,12 +293,16 @@ class DejtnfHost(secsgem.gem.GemHostHandler):
 
         Returns:
             _type_: _description_
-        """        
+        """
         if not self.enabled:
-            error_message = f"{self.machine_name} cannot go offline because it is not enabled."
+            error_message = (
+                f"{self.machine_name} cannot go offline because it is not enabled."
+            )
             print(error_message)
             if source == "MQTT":
-                self.mqtt_client.publish(f"hosts/{self.machine_name}/commandresponse", error_message)
+                self.mqtt_client.publish(
+                    f"hosts/{self.machine_name}/commandresponse", error_message
+                )
 
             return False  # Indicate failure to go offline
 
@@ -252,7 +317,10 @@ class DejtnfHost(secsgem.gem.GemHostHandler):
             if response is None:
                 print("No response received from the remote command.")
                 if source == "MQTT":
-                    self.mqtt_client.publish(f"hosts/{self.machine_name}/commandresponse", "error: no response")
+                    self.mqtt_client.publish(
+                        f"hosts/{self.machine_name}/commandresponse",
+                        "error: no response",
+                    )
 
                 return False
 
@@ -264,59 +332,59 @@ class DejtnfHost(secsgem.gem.GemHostHandler):
             }
 
             # Retrieve response message
-            response_message = response_code.get(response.get(), f"Unknown code: {response.get()}")
+            response_message = response_code.get(
+                response.get(), f"Unknown code: {response.get()}"
+            )
             print(f"Response message: {response_message}")
 
             if source == "MQTT":
                 # Publish command response
-                self.mqtt_client.publish(f"hosts/{self.machine_name}/commandresponse", response_message)
+                self.mqtt_client.publish(
+                    f"hosts/{self.machine_name}/commandresponse", response_message
+                )
 
             return response.get() == 0x0  # Return True if the command succeeded
 
         except Exception as e:
             print(f"Error during offline transition: {e}")
             if source == "MQTT":
-                self.mqtt_client.publish(f"hosts/{self.machine_name}/commandresponse", f"error: {e}")
+                self.mqtt_client.publish(
+                    f"hosts/{self.machine_name}/commandresponse", f"error: {e}"
+                )
 
             return False
 
     def _on_alarm_received(self, handler, alarm_id, alarm_code, alarm_text):
         super()._on_alarm_received(handler, alarm_id, alarm_code, alarm_text)
-        
-        machine_model = getattr(self.settings, 'machine_model', 'unknown')
-        print(f"{self.machine_name}, {machine_model} code: {alarm_code.get()} text: {alarm_text.get().strip()}")
 
-        self.mqtt_client.publish(f"hosts/{self.machine_name}/alarm", f"{alarm_id.get()}:{alarm_code.get()} - {alarm_text.get().strip()}")
+        machine_model = getattr(self.settings, "machine_model", "unknown")
+        print(
+            f"{self.machine_name}, {machine_model} code: {alarm_code.get()} text: {alarm_text.get().strip()}"
+        )
+
+        self.mqtt_client.publish(
+            f"hosts/{self.machine_name}/alarm",
+            f"{alarm_id.get()}:{alarm_code.get()} - {alarm_text.get().strip()}",
+        )
 
     def _on_s06f11(self, handler, message):
-        self.send_response(self.stream_function(6, 12)(secsgem.secs.data_items.ACKC6.ACCEPTED), message.header.system)
-        decode = self.settings.streams_functions.decode(message)
-        machine_model = getattr(self.settings, 'machine_model', 'unknown')
+        self.send_response(
+            self.stream_function(6, 12)(secsgem.secs.data_items.ACKC6.ACCEPTED),
+            message.header.system,
+        )
 
-        # print(f"decode: {decode}")
-        # print(f"CEID: {decode.CEID}")
-        # print(f"RPT: {decode.RPT}")
+        decode = self.settings.streams_functions.decode(message)
+        machine_model = getattr(self.settings, "machine_model", "unknown")
+
         ceid = decode.CEID.get()
 
         if machine_model == "fcl":
-            if ceid in [8, 9, 10]:
-                self.flc_handle_controlstate(ceid)
+            FCLEvent.handle_ceid(self, ceid, message)
+        elif machine_model == "fclx":
+            FCLXEvent.handle_ceid(self, ceid, message)
+        else:
+            print(f"unknow machine model: {machine_model}")
 
-    def flc_handle_controlstate(self,ceid):
-        """_summary_
-
-        Args:
-            ceid (_type_): _description_
-        """        
-
-        ceid_code = {
-            8 : "offline",
-            9 : "online/local",
-            10 : "online/remote"
-        }    
-        _state = ceid_code.get(ceid, f"Unknown code: {ceid}")
-
-        self.mqtt_client.publish(f"hosts/{self.machine_name}/controlstate", _state)
 
 commLogFileHandler = CommunicationLogFileHandler("log")
 commLogFileHandler.setFormatter(logging.Formatter("%(asctime)s: %(message)s"))
@@ -329,4 +397,6 @@ logger.propagate = False
 root_logger = logging.getLogger()
 root_logger.handlers = []
 
-logging.basicConfig(format='%(asctime)s %(name)s.%(funcName)s: %(message)s', level=logging.ERROR)
+logging.basicConfig(
+    format="%(asctime)s %(name)s.%(funcName)s: %(message)s", level=logging.ERROR
+)

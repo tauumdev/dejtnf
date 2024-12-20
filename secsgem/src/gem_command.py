@@ -2,6 +2,7 @@ import secsgem
 import secsgem.gem
 import secsgem.secs
 
+
 class GemCommands:
     """
     Class to handle common GEM commands.
@@ -22,7 +23,7 @@ class GemCommands:
             return {"status": "success", "data": response}
         except Exception as e:
             return {"status": "error", "message": str(e)}
-        
+
     @staticmethod
     def send_equipment_constant_request(host, cids=None):
         """
