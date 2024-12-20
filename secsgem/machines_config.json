@@ -1,0 +1,14 @@
+{
+    "hosts_settings": [
+        {
+            "machine_name": "TNF-61",
+            "address": "192.168.226.161",
+            "port": 5000,
+            "session_id": 61,
+            "connect_mode": "ACTIVE",
+            "device_type": "HOST",
+            "connection": "enabled",
+            "machine_model": "fcl"
+        }
+    ]
+}
