@@ -3,6 +3,7 @@ import json
 import shlex
 import secsgem
 import paho.mqtt.client as mqtt
+from src.gem_command import GemCommands
 from src.gem_host import DejtnfHost
 
 def on_mqtt_message(client, userdata, msg): 
@@ -75,86 +76,506 @@ def save_machine_config(hosts, config_file='machines_config.json'):
     print(f"Configuration saved to {config_file}")
 
 class MachineConfigCmd(cmd.Cmd):
-    """Sub-command loop for host configuration."""
-    prompt = "(hostconfig) "
+    """
+    Command-line interface for managing machine hosts.
+    """
+    intro = """
+    MachineConfigCmd is a command-line interface (CLI) class for managing machine configurations. 
+    It provides various commands to add, delete, edit, list, enable, disable, set online, and set offline machines.
+    Commands:
+        add <machine_name> <address> <port> <session_id> <connect_mode> <device_type> <connection> <machine_model>
+            Add a new machine with the specified parameters.
+        del <machine_name>
+            Delete an existing machine by its name.
+        edit <machine_name> <field> <new_value>
+            Edit a machine's configuration. Valid fields are: address, port, session_id, connect_mode, device_type, connection, machine_model.
+        list
+            List all machines, their statuses, and machine models.
+        conn <machine_name>
+            Enable connection for a specific machine.
+        dis <machine_name>
+            Disable connection for a specific machine.
+        online <machine_name>
+            Set a machine online.
+        offline <machine_name>
+            Set a machine offline.
+        back
+            Go back to the main menu.
+    """
 
-    def __init__(self, hosts, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def do_intro(self, arg):
+        """Show introduction and command usage."""
+        print(self.intro)
+    prompt = "(config) "
+
+    def __init__(self, hosts, mqtt_client):
+        super().__init__()
         self.hosts = hosts
+        self.mqtt_client = mqtt_client
 
     def emptyline(self):
         pass
 
     def do_add(self, arg):
-        """Add a new machine."""
+        """
+        Add a new machine.
+        Usage: add <machine_name> <address> <port> <session_id> <connect_mode> <device_type> <connection> <machine_model>
+        """
         print("Adding a new machine...")
+        try:
+            params = arg.split()
+            if len(params) != 8:
+                print("Usage: add <machine_name> <address> <port> <session_id> <connect_mode> <device_type> <connection> <machine_model>")
+                return
+
+            # Extract parameters
+            machine_name, address, port, session_id, connect_mode, device_type, connection, machine_model = params
+
+            # Check if machine_name already exists
+            if machine_name in self.hosts:
+                print(f"Machine {machine_name} already exists.")
+                return
+            
+            # Convert port and session_id to integers
+            port = int(port)
+            session_id = int(session_id)
+
+            # Validate and convert enums
+            valid_connect_modes = [mode.name for mode in secsgem.hsms.HsmsConnectMode]
+            if connect_mode not in valid_connect_modes:
+                print(f"Invalid connect_mode: {connect_mode}. Allowed values are: {', '.join(valid_connect_modes)}")
+                return
+            connect_mode = secsgem.hsms.HsmsConnectMode[connect_mode]
+
+            valid_device_types = [dtype.name for dtype in secsgem.common.DeviceType]
+            if device_type not in valid_device_types:
+                print(f"Invalid device_type: {device_type}. Allowed values are: {', '.join(valid_device_types)}")
+                return
+            device_type = secsgem.common.DeviceType[device_type]
+
+            # Create and configure HsmsSettings
+            settings = secsgem.hsms.HsmsSettings(
+                address=address,
+                port=port,
+                session_id=session_id,
+                connect_mode=connect_mode,
+                device_type=device_type
+            )
+            settings.machine_model = machine_model
+
+            # Initialize DejtnfHost with mqtt_client
+            host = DejtnfHost(settings, machine_name, self.mqtt_client)
+            if connection.lower() == "enable":
+                host.enable_host()
+
+            self.hosts[machine_name] = host
+            print(f"Added machine: {machine_name}")
+
+            host.mqtt_client.subscribe(f"hosts/{machine_name}/command")
+            print(f"Subscribed to hosts/{machine_name}/command")
+            
+            # Save configuration
+            save_machine_config(self.hosts)
+
+        except ValueError as e:
+            print(f"Invalid value: {e}")
+        except Exception as e:
+            print(f"Error adding machine: {e}")
 
     def do_del(self, arg):
-        """Delete an existing machine."""
+        """
+        Delete an existing machine.
+        Usage: del <machine_name>
+        """
         print("Deleting a machine...")
+        try:
+            machine_name = arg.strip()
+            if not machine_name:
+                print("Usage: del <machine_name>")
+                return
 
+            # Check if machine_name exists
+            if machine_name not in self.hosts:
+                print(f"Machine {machine_name} does not exist.")
+                return
+
+            # Disable the host if it is enabled
+            host = self.hosts[machine_name]
+            if host.enabled:
+                host.disable_host()
+                # print(f"Disabled host: {machine_name}")
+
+            # Unsubscribe from the MQTT topic
+            host.mqtt_client.unsubscribe(f"hosts/{machine_name}/command")
+            print(f"Unsubscribed from hosts/{machine_name}/command")
+
+            # Remove the host from the hosts dictionary
+            del self.hosts[machine_name]
+            # print(f"Deleted machine: {machine_name}")
+
+            # Save the updated configuration
+            save_machine_config(self.hosts)
+
+        except Exception as e:
+            print(f"Error deleting machine: {e}")
+ 
     def do_edit(self, arg):
-        """Edit an existing machine."""
-        print("Editing a machine...")
+        """
+        Edit a machine's configuration.
+        Usage: edit <machine_name> <field> <new_value>
+        Fields: address, port, session_id, connect_mode, device_type, connection, machine_model
+        """
+        import shlex
+
+        args = shlex.split(arg)
+
+        if len(args) != 3:
+            print("Usage: edit <machine_name> <field> <new_value>")
+            return
+
+        machine_name, field, new_value = args
+
+        if machine_name not in self.hosts:
+            print(f"Host '{machine_name}' not found.")
+            return
+
+        host = self.hosts[machine_name]
+        settings = host.settings
+
+        try:
+            # Update the specified field
+            if field == "address":
+                if hasattr(settings, "set_address"):
+                    settings.set_address(new_value)
+                elif hasattr(settings, "_address"):
+                    settings._address = new_value
+                else:
+                    print("Error: Cannot update address. No setter or direct access available.")
+                    return
+            elif field == "port":
+                if hasattr(settings, "set_port"):
+                    settings.set_port(int(new_value))
+                elif hasattr(settings, "_port"):
+                    settings._port = int(new_value)
+                else:
+                    print("Error: Cannot update port. No setter or direct access available.")
+                    return
+            elif field == "session_id":
+                if hasattr(settings, "set_session_id"):
+                    settings.set_session_id(int(new_value))
+                elif hasattr(settings, "_session_id"):
+                    settings._session_id = int(new_value)
+                else:
+                    settings.session_id = int(new_value)
+            elif field == "connect_mode":
+                if new_value not in secsgem.hsms.HsmsConnectMode.__members__:
+                    print(f"Invalid connect_mode: {new_value}. Valid values are: {list(secsgem.hsms.HsmsConnectMode.__members__.keys())}")
+                    return
+                if hasattr(settings, "set_connect_mode"):
+                    settings.set_connect_mode(secsgem.hsms.HsmsConnectMode[new_value])
+                elif hasattr(settings, "_connect_mode"):
+                    settings._connect_mode = secsgem.hsms.HsmsConnectMode[new_value]
+                else:
+                    print("Error: Cannot update connect_mode. No setter or direct access available.")
+                    return
+            elif field == "device_type":
+                if new_value not in secsgem.common.DeviceType.__members__:
+                    print(f"Invalid device_type: {new_value}. Valid values are: {list(secsgem.common.DeviceType.__members__.keys())}")
+                    return
+                if hasattr(settings, "set_device_type"):
+                    settings.set_device_type(secsgem.common.DeviceType[new_value])
+                elif hasattr(settings, "_device_type"):
+                    settings._device_type = secsgem.common.DeviceType[new_value]
+                else:
+                    settings.device_type = secsgem.common.DeviceType[new_value]
+            elif field == "connection":
+                if new_value.lower() not in ["enable", "disable"]:
+                    print("Invalid connection value. Use 'enable' or 'disable'.")
+                    return
+                if new_value.lower() == "enable":
+                    host.enable_host()
+                else:
+                    host.disable_host()
+            elif field == "machine_model":
+                if hasattr(settings, "set_machine_model"):
+                    settings.set_machine_model(new_value)
+                else:
+                    settings.machine_model = new_value
+            else:
+                print(f"Invalid field: {field}. Valid fields are: address, port, session_id, connect_mode, device_type, connection, machine_model")
+                return
+
+            if field != "connection" and getattr(host, "enabled", False):
+                print(f"Disabling and re-enabling connection for '{machine_name}'...")
+                host.disable_host()
+                host.enable_host()
+
+            print(f"Machine '{machine_name}' updated: {field} -> {new_value}")
+
+            save_machine_config(self.hosts)
+
+        except ValueError as e:
+            print(f"Error updating machine '{machine_name}': {e}")
+        except AttributeError as e:
+            print(f"Error accessing settings for '{machine_name}': {e}")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
 
     def do_list(self, arg):
-        """List all machines."""
+        """
+        List all machines, their statuses, and machine models.
+        Usage: list
+        """
         if not self.hosts:
-            print("No machines configured.")
-        else:
-            for name, host in self.hosts.items():
-                print(f"{name}: {host}")
+            print("No machines available. Use the 'add' command to add a new machine.")
+            return
+        for machine_name, host in self.hosts.items():
+            status = "enabled" if host.enabled else "disabled"
+            address = getattr(host.settings, 'address', 'unknown')
+            port = getattr(host.settings, 'port', 'unknown')            
+            session_id = getattr(host.settings, 'session_id', 'unknown')
+            connect_mode = getattr(host.settings, 'connect_mode', 'unknown')
+            device_type = getattr(host.settings, 'device_type', 'unknown')
+            connection = status
+            machine_model = getattr(host.settings, 'machine_model', 'unknown')
+            CommunicationState = host._communication_state.current.name
+
+            print(f"machine_name:{machine_name},status:{status}, address:{address}, port:{port}, session_id:{session_id}, connect_mode:{connect_mode}, device_type:{device_type}, connection:{connection} machine_model:{machine_model}, CommunicationState:{CommunicationState}")
 
     def do_conn(self, machine_name):
-        """Enable connection for a specific machine."""
+        """
+        Enable connection for a specific machine.
+        Usage: conn <machine_name>
+        """
         print(f"Enabling connection for {machine_name}...")
+        if machine_name not in self.hosts:
+            print(f"Machine {machine_name} does not exist.")
+            print("Usage: conn <machine_name>")
+            return
+
+        host = self.hosts[machine_name]
+        host.enable_host()
+        print(f"Connection enabled for {machine_name}")
 
     def do_dis(self, machine_name):
-        """Disable connection for a specific machine."""
+        """
+        Disable connection for a specific machine.
+        Usage: dis <machine_name>
+        """
         print(f"Disabling connection for {machine_name}...")
+        if machine_name not in self.hosts:
+            print(f"Machine {machine_name} does not exist.")
+            print("Usage: dis <machine_name>")
+            return
 
+        host = self.hosts[machine_name]
+        host.disable_host()
+        print(f"Connection disabled for {machine_name}")
+ 
     def do_online(self, machine_name):
-        """Set a machine online."""
+        """
+        Set a machine online.
+        Usage: online <machine_name>
+        """
         print(f"Setting {machine_name} online...")
+        if machine_name not in self.hosts:
+            print(f"Machine {machine_name} does not exist.")
+            print("Usage: online <machine_name>")
+            return
+
+        host = self.hosts[machine_name]
+        host.go_online(source="command")
+        print(f"Machine {machine_name} is now online")
 
     def do_offline(self, machine_name):
-        """Set a machine offline."""
+        """
+        Set a machine offline.
+        Usage: offline <machine_name>
+        """
         print(f"Setting {machine_name} offline...")
+        if machine_name not in self.hosts:
+            print(f"Machine {machine_name} does not exist.")
+            print("Usage: offline <machine_name>")
+            return
+
+        host = self.hosts[machine_name]
+        host.go_offline(source="command")
+        print(f"Machine {machine_name} is now offline")
 
     def do_back(self, arg):
         """Go back to the main menu."""
         return True
     
 class SecsCmd(cmd.Cmd):
-    """Sub-command loop for SECS commands."""
+    """
+    Attributes:
+        prompt (str): The command prompt string.
+        hosts (dict): A dictionary of host machines.
+    Methods:
+        __init__(hosts):
+            Initializes the SecsCmd instance with a dictionary of hosts.
+        emptyline():
+            Overrides the default behavior to do nothing on an empty input line.
+        do_rcmd(arg):
+            Runs a remote command on a specific machine.
+        do_ppdir(arg):
+            Gets the process program list (PPDIR) from a specified machine.
+        do_estatus(arg):
+            Sends an S1F3 Equipment Status Request to a machine.
+        do_econst(arg):
+            Handles the 'equipment_constant_request' command.
+        do_back(arg):
+            Returns to the main menu.
+    """
     prompt = "(secs) "
 
-    def __init__(self, hosts, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, hosts):
+        super().__init__()
         self.hosts = hosts
 
     def emptyline(self):
         pass
 
-    def do_send(self, arg):
-        """Send a SECS command."""
-        print("Sending SECS command...")
+    def do_rcmd(self, arg):
+        """
+        Run a remote command on a specific machine.
+        Usage: rcmd <machine_name> <command>
+        """
+        import shlex
+
+        try:
+            args = shlex.split(arg)
+            if len(args) < 2:
+                print("Usage: rcmd <machine_name> <command>")
+                return
+
+            machine_name = args[0]
+            command = ' '.join(args[1:])
+
+            if machine_name not in self.hosts:
+                print(f"Machine {machine_name} does not exist.")
+                return
+
+            host = self.hosts[machine_name]
+            if not host.enabled:
+                print(f"Machine {machine_name} is not enabled.")
+                return
+
+            # Execute the remote command
+            result = host.execute_command(command)
+            print(f"Command executed on {machine_name}: {command}")
+            print(f"Result: {result}")
+
+        except Exception as e:
+            print(f"Error executing remote command: {e}")
 
     def do_ppdir(self, arg):
-        """Get the process program directory."""
-        print("Getting process program directory...")
+        """
+        Get the process program list (PPDIR) from a specified machine.
+        Usage: ppdir <machine_name>
+        """
+        try:
+            machine_name = arg.strip()
+            if not machine_name:
+                print("Usage: ppdir <machine_name>")
+                return
 
-    def do_stream(self, arg):
-        """Send a SECS stream function."""
-        print("Sending SECS stream function...")
+            if machine_name not in self.hosts:
+                print(f"Machine {machine_name} does not exist.")
+                return
+
+            host = self.hosts[machine_name]
+            if not host.enabled:
+                print(f"Machine {machine_name} is not enabled.")
+                return
+
+            # Get the current working directory
+            cwd = host.get_process_program_list()
+            print(f"Current working directory on {machine_name}: {cwd}")
+
+        except Exception as e:
+            print(f"Error getting current working directory: {e}")
 
     def do_estatus(self, arg):
-        """Request equipment status."""
-        print("Requesting equipment status...")
+        """
+        Send an S1F3 Equipment Status Request to a machine.
+        Usage: estatus <machine_name> [svid1,svid2,...]
+        """
+        try:
+            args = arg.split()
+            if len(args) < 1:
+                print("Usage: estatus <machine_name> [svid1,svid2,...]")
+                return
+
+            # Extract machine name
+            machine_name = args[0]
+
+            # Check if machine exists
+            if machine_name not in self.hosts:
+                print(f"Host '{machine_name}' not found.")
+                return
+
+            # Parse SVIDs (if provided)
+            svids = []
+            if len(args) > 1:
+                try:
+                    svids = [int(svid) for svid in args[1].split(",")]
+                except ValueError:
+                    print("SVIDs must be a comma-separated list of integers.")
+                    return
+
+            # Get the host and ensure it's enabled
+            host = self.hosts[machine_name]
+            if not host.enabled:
+                print(f"Host '{machine_name}' is not enabled. Please enable it first.")
+                return
+
+            # Call send_equipment_status_request from GemCommands
+            response = GemCommands.send_equipment_status_request(host, svids)
+
+            # Print the response
+            print(f"Response from S1F3 on '{machine_name}':")
+            print(response)
+
+        except Exception as e:
+            print(f"Failed to send equipment status request: {e}")
+
 
     def do_econst(self, arg):
-        """Request equipment constants."""
-        print("Requesting equipment constants...")
+        """
+        Handle the 'equipment_constant_request' command.
+        Usage: econst <machine_name> [cid1,cid2,...]
+        """
+        try:
+            # Split user input
+            args = arg.split()
+            if len(args) < 1:
+                print("Usage: econst <machine_name> [cid1,cid2,...]")
+                return
+
+            # Extract machine_name and CIDs
+            machine_name = args[0]
+            cids = None
+            if len(args) > 1:
+                cids = list(map(int, args[1].split(',')))
+
+            # Validate host existence
+            if machine_name not in self.hosts:
+                print(f"Host '{machine_name}' not found.")
+                return
+
+            # Execute the command
+            host = self.hosts[machine_name]
+            response = GemCommands.send_equipment_constant_request(host, cids)
+
+            # Print the response
+            print(f"Response from S2F13 on '{machine_name}':")
+            print(response)
+
+        except ValueError:
+            print("CIDs must be integers separated by commas.")
+        except Exception as e:
+            print(f"Error executing equipment_constant_request: {e}")
 
     def do_back(self, arg):
         """Go back to the main menu."""
@@ -172,9 +593,16 @@ class MainCmd(cmd.Cmd):
     def emptyline(self):
         pass
 
-    def do_machineconfig(self, arg):
-        """Enter the host configuration sub-command loop."""
-        MachineConfigCmd(self.hosts).cmdloop()
+    def do_config(self, arg):
+        """
+        Executes the configuration command for the machine.
+        This method initializes and starts the command loop for the MachineConfigCmd
+        class, passing the hosts and MQTT client as arguments.
+        Args:
+            arg: The argument passed to the configuration command.
+        """
+        
+        MachineConfigCmd(self.hosts,self.mqtt_client).cmdloop()
 
     def do_secs(self, arg):
         """Enter the SECS commands sub-command loop."""
@@ -250,11 +678,13 @@ if __name__ == "__main__":
         try:
             for machine_name, host in hosts.items():
                 host.disable_host()
-                print(f"Disconnecting MQTT client for {machine_name}...")
-                mqtt_client.loop_stop()
-                mqtt_client.disconnect()
+                
+                host.mqtt_client.unsubscribe(f"hosts/{machine_name}/command")
+                print(f"Unsubscribed from hosts/{machine_name}/command")
+
+            print(f"Disconnecting MQTT client for {machine_name}...")
+            mqtt_client.loop_stop()
+            mqtt_client.disconnect()
             print("All MQTT clients disconnected.")
         except Exception as e:
             print(f"Error during MQTT cleanup: {e}")
-
-
