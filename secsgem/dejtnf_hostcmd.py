@@ -3,7 +3,7 @@ import json
 import shlex
 import secsgem
 import paho.mqtt.client as mqtt
-from gem_host import DejtnfHost
+from src.gem_host import DejtnfHost
 
 def on_mqtt_message(client, userdata, msg): 
     """

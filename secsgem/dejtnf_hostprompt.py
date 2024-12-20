@@ -1,7 +1,7 @@
 import json
 import paho.mqtt.client as mqtt
 import secsgem
-from gem_host import DejtnfHost
+from src.gem_host import DejtnfHost
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.validation import Validator, ValidationError

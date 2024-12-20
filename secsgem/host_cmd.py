@@ -8,8 +8,8 @@ import secsgem.secs
 import json
 import shlex
 import paho.mqtt.client as mqtt
-from gem_command import GemCommands
-from gem_host import DejtnfHost
+from src.gem_command import GemCommands
+from src.gem_host import DejtnfHost
 
 # Global pending hosts
 pending_hosts = []
