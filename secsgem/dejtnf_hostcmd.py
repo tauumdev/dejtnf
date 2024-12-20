@@ -202,7 +202,7 @@ class MachineConfigCmd(cmd.Cmd):
             # Disable the host if it is enabled
             host = self.hosts[machine_name]
             if host.enabled:
-                host.disable_host()
+                host.disable_host(source="CLI")
                 # print(f"Disabled host: {machine_name}")
 
             # Unsubscribe from the MQTT topic
