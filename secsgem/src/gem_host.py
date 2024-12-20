@@ -30,10 +30,39 @@ class DejtnfHost(secsgem.gem.GemHostHandler):
         self.enabled = False
         self.mqtt_client = mqtt_client
         self.register_stream_function(1,14,self.s01f14)
+        self.register_stream_function(9,1,self.s09f1)
+        self.register_stream_function(9,3,self.s09f3)
+        self.register_stream_function(9,5,self.s09f5)
+        self.register_stream_function(9,7,self.s09f7)
+        self.register_stream_function(9,9,self.s09f9)
+        self.register_stream_function(9,11,self.s09f11)
         self._protocol.events.disconnected += self.on_connection_closed
 
-    def s01f14(self,handle,packet):
+    def s09f1(self,handle,packet):
         machine_model = getattr(self.settings, 'machine_model', 'unknown')
+        print(f"{self.machine_name},{machine_model}, s09f1:Unrecognized Device ID (UDN)")
+
+    def s09f3(self,handle,packet):
+        machine_model = getattr(self.settings, 'machine_model', 'unknown')
+        print(f"{self.machine_name},{machine_model}, s09f3:Unrecognized Stream Function (SFCD)")
+
+    def s09f5(self,handle,packet):
+        machine_model = getattr(self.settings, 'machine_model', 'unknown')
+        print(f"{self.machine_name},{machine_model}, s09f5:Unrecognized Function Type (UFN)")
+
+    def s09f7(self,handle,packet):
+        machine_model = getattr(self.settings, 'machine_model', 'unknown')
+        print(f"{self.machine_name},{machine_model}, s09f7:Illegal Data (IDN)")
+
+    def s09f9(self,handle,packet):
+        machine_model = getattr(self.settings, 'machine_model', 'unknown')
+        print(f"{self.machine_name},{machine_model}, s09f9:Transaction Timer Timeout (TTN)")
+
+    def s09f11(self,handle,packet):
+        machine_model = getattr(self.settings, 'machine_model', 'unknown')
+        print(f"{self.machine_name},{machine_model}, s09f11:Data Too Long (DLN)")
+
+    def s01f14(self,handle,packet):
         self.mqtt_client.publish(f"hosts/{self.machine_name}/controlstate", "selected")
 
     def waitfor_communicating(self, timeout):

@@ -422,6 +422,15 @@ class SecsCmd(cmd.Cmd):
             Send an S1F3 Equipment Status Request to a machine.
         econst <machine_name> [cid1,cid2,...]
             Handle the 'equipment_constant_request' command.
+          clear_events <machine_name>
+        subscribe_event <machine_name> <event_id>
+        send_remote_command <machine_name> <command>
+        delete_process_programs <machine_name> <program_name>
+        get_process_program_list <machine_name>
+        enable_alarm <machine_name> <alarm_id>
+        disable_alarm <machine_name> <alarm_id>
+        list_alarms <machine_name> [alid1,alid2,...]
+        list_enabled_alarms <machine_name>    
         back
             Go back to the main menu.
     """
@@ -435,66 +444,7 @@ class SecsCmd(cmd.Cmd):
     def emptyline(self):
         pass
 
-    def do_rcmd(self, arg):
-        """
-        Run a remote command on a specific machine.
-        Usage: rcmd <machine_name> <command>
-        """
-        import shlex
-
-        try:
-            args = shlex.split(arg)
-            if len(args) < 2:
-                print("Usage: rcmd <machine_name> <command>")
-                return
-
-            machine_name = args[0]
-            command = ' '.join(args[1:])
-
-            if machine_name not in self.hosts:
-                print(f"Machine {machine_name} does not exist.")
-                return
-
-            host = self.hosts[machine_name]
-            if not host.enabled:
-                print(f"Machine {machine_name} is not enabled.")
-                return
-
-            # Execute the remote command
-            result = host.execute_command(command)
-            print(f"Command executed on {machine_name}: {command}")
-            print(f"Result: {result}")
-
-        except Exception as e:
-            print(f"Error executing remote command: {e}")
-
-    def do_ppdir(self, arg):
-        """
-        Get the process program list (PPDIR) from a specified machine.
-        Usage: ppdir <machine_name>
-        """
-        try:
-            machine_name = arg.strip()
-            if not machine_name:
-                print("Usage: ppdir <machine_name>")
-                return
-
-            if machine_name not in self.hosts:
-                print(f"Machine {machine_name} does not exist.")
-                return
-
-            host = self.hosts[machine_name]
-            if not host.enabled:
-                print(f"Machine {machine_name} is not enabled.")
-                return
-
-            # Get the current working directory
-            cwd = host.get_process_program_list()
-            print(f"Current working directory on {machine_name}: {cwd}")
-
-        except Exception as e:
-            print(f"Error getting current working directory: {e}")
-
+    #status
     def do_estatus(self, arg):
         """
         Send an S1F3 Equipment Status Request to a machine.
@@ -539,7 +489,6 @@ class SecsCmd(cmd.Cmd):
         except Exception as e:
             print(f"Failed to send equipment status request: {e}")
 
-
     def do_econst(self, arg):
         """
         Handle the 'equipment_constant_request' command.
@@ -575,6 +524,270 @@ class SecsCmd(cmd.Cmd):
             print("CIDs must be integers separated by commas.")
         except Exception as e:
             print(f"Error executing equipment_constant_request: {e}")
+
+    #control
+    def do_rcmd(self, arg):
+        """
+        Run a remote command on a specific machine.
+        Usage: rcmd <machine_name> <command>
+        """
+        import shlex
+
+        try:
+            args = shlex.split(arg)
+            if len(args) < 2:
+                print("Usage: rcmd <machine_name> <command>")
+                return
+
+            machine_name = args[0]
+            command = ' '.join(args[1:])
+
+            if machine_name not in self.hosts:
+                print(f"Machine {machine_name} does not exist.")
+                return
+
+            host = self.hosts[machine_name]
+            if not host.enabled:
+                print(f"Machine {machine_name} is not enabled.")
+                return
+
+            # Execute the remote command
+            result = host.execute_command(command)
+            print(f"Command executed on {machine_name}: {command}")
+            print(f"Result: {result}")
+
+        except Exception as e:
+            print(f"Error executing remote command: {e}")
+
+    def do_clear_events(self, machine_name):
+        """
+        Clear collection events for a specific machine.
+        Usage: clear_events <machine_name>
+        """
+        print(f"Clearing collection events for {machine_name}...")
+        if machine_name not in self.hosts:
+            print(f"Machine {machine_name} does not exist.")
+            print("Usage: clear_events <machine_name>")
+            return
+
+        host = self.hosts[machine_name]
+        if not host.enabled:
+            print(f"Machine {machine_name} is not enabled.")
+            return
+
+        try:
+            # Call the clear_collection_events method
+            response = host.clear_collection_events()
+            print(f"Collection events cleared for {machine_name}")
+            print(f"Response: {response}")
+        except Exception as e:
+            print(f"Error clearing collection events: {e}")
+
+    def do_subscribe_event(self, arg):
+        """
+        Subscribe to a collection event on a specific machine.
+        Usage: subscribe_event <machine_name> <event_id>
+        """
+        try:
+            args = arg.split()
+            if len(args) != 2:
+                print("Usage: subscribe_event <machine_name> <event_id>")
+                return
+
+            machine_name, event_id = args
+            event_id = int(event_id)
+
+            if machine_name not in self.hosts:
+                print(f"Machine {machine_name} does not exist.")
+                return
+
+            host = self.hosts[machine_name]
+            if not host.enabled:
+                print(f"Machine {machine_name} is not enabled.")
+                return
+
+            # Call the subscribe_collection_event method
+            response = host.subscribe_collection_event(event_id)
+            print(f"Subscribed to event {event_id} on {machine_name}")
+            print(f"Response: {response}")
+
+        except ValueError:
+            print("Event ID must be an integer.")
+        except Exception as e:
+            print(f"Error subscribing to event: {e}")
+
+    #recipe
+    def do_ppdel(self, arg):
+        """
+        Delete process programs on a specific machine.
+        Usage: ppdel <machine_name> <program_name>
+        """
+
+        try:
+            args = shlex.split(arg)
+            if len(args) < 2:
+                print("Usage: ppdel <machine_name> <program_name>")
+                return
+            machine_name = args[0]
+            program_name = args[1]
+
+            if machine_name not in self.hosts:
+                print(f"Machine {machine_name} does not exist.")
+                return
+
+            host = self.hosts[machine_name]
+            if not host.enabled:
+                print(f"Machine {machine_name} is not enabled.")
+                return
+
+            # Delete the process program
+            result = host.delete_process_program(program_name)
+            print(f"Process program '{program_name}' deleted on {machine_name}")
+            print(f"Result: {result}")
+
+        except Exception as e:
+            print(f"Error deleting process program: {e}")
+
+    def do_ppdir(self, machine_name):
+        """
+        Get the process program list from a specific machine.
+        Usage: ppdir <machine_name>
+        """
+        print(f"Getting process program list for {machine_name}...")
+        if machine_name not in self.hosts:
+            print(f"Machine {machine_name} does not exist.")
+            print("Usage: ppdir <machine_name>")
+            return
+
+        host = self.hosts[machine_name]
+        if not host.enabled:
+            print(f"Machine {machine_name} is not enabled.")
+            return
+
+        try:
+            # Call the get_process_program_list method
+            process_program_list = host.get_process_program_list()
+            print(f"Process program list for {machine_name}: {process_program_list}")
+        except Exception as e:
+            print(f"Error getting process program list: {e}")
+
+    #alarm
+    def do_enable_alarm(self, arg):
+        """
+        Enable an alarm on a specific machine.
+        Usage: enable_alarm <machine_name> <alarm_id>
+        """
+        try:
+            args = arg.split()
+            if len(args) != 2:
+                print("Usage: enable_alarm <machine_name> <alarm_id>")
+                return
+
+            machine_name, alarm_id = args
+            if machine_name not in self.hosts:
+                print(f"Machine {machine_name} does not exist.")
+                return
+
+            host = self.hosts[machine_name]
+            if not host.enabled:
+                print(f"Machine {machine_name} is not enabled.")
+                return
+
+            # Enable the alarm
+            host.enable_alarm(alarm_id)
+            print(f"Alarm {alarm_id} enabled on {machine_name}")
+
+        except Exception as e:
+            print(f"Error enabling alarm: {e}")
+
+    def do_disable_alarm(self, arg):
+        """
+        Disable an alarm on a specific machine.
+        Usage: disable_alarm <machine_name> <alarm_id>
+        """
+        try:
+            args = arg.split()
+            if len(args) != 2:
+                print("Usage: disable_alarm <machine_name> <alarm_id>")
+                return
+
+            machine_name, alarm_id = args
+            if machine_name not in self.hosts:
+                print(f"Machine {machine_name} does not exist.")
+                return
+
+            host = self.hosts[machine_name]
+            if not host.enabled:
+                print(f"Machine {machine_name} is not enabled.")
+                return
+
+            # Disable the alarm
+            host.disable_alarm(alarm_id)
+            print(f"Alarm {alarm_id} disabled on {machine_name}")
+
+        except Exception as e:
+            print(f"Error disabling alarm: {e}")
+
+    def do_list_alarms(self, arg):
+        """
+        List alarms on a specific machine.
+        Usage: list_alarms <machine_name> [alid1,alid2,...]
+        """
+        try:
+            args = arg.split()
+            if len(args) < 1:
+                print("Usage: list_alarms <machine_name> [alid1,alid2,...]")
+                return
+
+            machine_name = args[0]
+            alids = None
+            if len(args) > 1:
+                try:
+                    alids = list(map(int, args[1].split(',')))
+                except ValueError:
+                    print("ALIDs must be integers separated by commas.")
+                    return
+
+            if machine_name not in self.hosts:
+                print(f"Machine {machine_name} does not exist.")
+                return
+
+            host = self.hosts[machine_name]
+            if not host.enabled:
+                print(f"Machine {machine_name} is not enabled.")
+                return
+
+            # Call the list_alarms method
+            alarms = host.list_alarms(alids)
+            print(f"Alarms for {machine_name}: {alarms}")
+
+        except ValueError:
+            print("ALIDs must be integers separated by commas.")
+        except Exception as e:
+            print(f"Error listing alarms: {e}")
+
+    def do_list_enabled_alarms(self, machine_name):
+        """
+        List enabled alarms on a specific machine.
+        Usage: list_enabled_alarms <machine_name>
+        """
+        print(f"Listing enabled alarms for {machine_name}...")
+        if machine_name not in self.hosts:
+            print(f"Machine {machine_name} does not exist.")
+            print("Usage: list_enabled_alarms <machine_name>")
+            return
+
+        host = self.hosts[machine_name]
+        if not host.enabled:
+            print(f"Machine {machine_name} is not enabled.")
+            return
+
+        try:
+            # Call the list_enabled_alarms method
+            enabled_alarms = host.list_enabled_alarms()
+            print(f"Enabled alarms for {machine_name}: {enabled_alarms}")
+        except Exception as e:
+            print(f"Error listing enabled alarms: {e}")
 
     def do_back(self, arg):
         """Go back to the main menu."""

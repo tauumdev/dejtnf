@@ -22,7 +22,8 @@ class GemCommands:
             return {"status": "success", "data": response}
         except Exception as e:
             return {"status": "error", "message": str(e)}
-
+        
+    @staticmethod
     def send_equipment_constant_request(host, cids=None):
         """
         Send an S2F13 (Equipment Constant Request) command to the equipment.
