@@ -408,25 +408,24 @@ class MachineConfigCmd(cmd.Cmd):
     
 class SecsCmd(cmd.Cmd):
     """
-    Attributes:
-        prompt (str): The command prompt string.
-        hosts (dict): A dictionary of host machines.
-    Methods:
-        __init__(hosts):
-            Initializes the SecsCmd instance with a dictionary of hosts.
-        emptyline():
-            Overrides the default behavior to do nothing on an empty input line.
-        do_rcmd(arg):
-            Runs a remote command on a specific machine.
-        do_ppdir(arg):
-            Gets the process program list (PPDIR) from a specified machine.
-        do_estatus(arg):
-            Sends an S1F3 Equipment Status Request to a machine.
-        do_econst(arg):
-            Handles the 'equipment_constant_request' command.
-        do_back(arg):
-            Returns to the main menu.
+    Command-line interface for SECS commands.
     """
+    intro = """
+    SecsCmd is a command-line interface (CLI) class for managing SECS commands.
+    It provides various commands to run remote commands, get process program lists, send equipment status requests, and handle equipment constant requests.
+    Commands:
+        rcmd <machine_name> <command>
+            Run a remote command on a specific machine.
+        ppdir <machine_name>
+            Get the process program list (PPDIR) from a specified machine.
+        estatus <machine_name> [svid1,svid2,...]
+            Send an S1F3 Equipment Status Request to a machine.
+        econst <machine_name> [cid1,cid2,...]
+            Handle the 'equipment_constant_request' command.
+        back
+            Go back to the main menu.
+    """
+
     prompt = "(secs) "
 
     def __init__(self, hosts):
@@ -595,9 +594,11 @@ class MainCmd(cmd.Cmd):
 
     def do_config(self, arg):
         """
-        Executes the configuration command for the machine.
+        Enter the configuration command for the machine.
+
         This method initializes and starts the command loop for the MachineConfigCmd
         class, passing the hosts and MQTT client as arguments.
+
         Args:
             arg: The argument passed to the configuration command.
         """
@@ -605,7 +606,16 @@ class MainCmd(cmd.Cmd):
         MachineConfigCmd(self.hosts,self.mqtt_client).cmdloop()
 
     def do_secs(self, arg):
-        """Enter the SECS commands sub-command loop."""
+        """
+        Enter the SECS commands sub-command loop.
+
+        This method initializes and starts the command loop for SECS (SEMI Equipment Communication Standard) commands.
+        It creates an instance of the SecsCmd class, passing the current hosts, and then calls the cmdloop method
+        to begin the interactive command session.
+
+        Args:
+            arg (str): The argument passed to the SECS command. This is typically ignored in this method.
+        """
         SecsCmd(self.hosts).cmdloop()
 
     def do_exit(self, arg):
