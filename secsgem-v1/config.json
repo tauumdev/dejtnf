@@ -1,0 +1,22 @@
+{
+    "equipment": [
+        {
+            "equipment_name": "TNF-61",
+            "address": "192.168.226.161",
+            "port": 5000,
+            "session_id": 61,
+            "connect_mode": "ACTIVE",
+            "device_type": "HOST",
+            "enable": true
+        },
+        {
+            "equipment_name": "TNF-62",
+            "address": "192.168.226.62",
+            "port": 5000,
+            "session_id": 62,
+            "connect_mode": "ACTIVE",
+            "device_type": "HOST",
+            "enable": false
+        }
+    ]
+}
