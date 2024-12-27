@@ -163,18 +163,22 @@ class MachineConfigCmd(cmd.Cmd):
             session_id = int(session_id)
 
             # Validate and convert enums
-            valid_connect_modes = [mode.name for mode in secsgem.hsms.HsmsConnectMode]
+            valid_connect_modes = [
+                mode.name for mode in secsgem.hsms.HsmsConnectMode]
             if connect_mode not in valid_connect_modes:
                 print(
-                    f"Invalid connect_mode: {connect_mode}. Allowed values are: {', '.join(valid_connect_modes)}"
+                    f"Invalid connect_mode: {connect_mode}. Allowed values are: {
+                        ', '.join(valid_connect_modes)}"
                 )
                 return
             connect_mode = secsgem.hsms.HsmsConnectMode[connect_mode]
 
-            valid_device_types = [dtype.name for dtype in secsgem.common.DeviceType]
+            valid_device_types = [
+                dtype.name for dtype in secsgem.common.DeviceType]
             if device_type not in valid_device_types:
                 print(
-                    f"Invalid device_type: {device_type}. Allowed values are: {', '.join(valid_device_types)}"
+                    f"Invalid device_type: {device_type}. Allowed values are: {
+                        ', '.join(valid_device_types)}"
                 )
                 return
             device_type = secsgem.common.DeviceType[device_type]
@@ -300,11 +304,13 @@ class MachineConfigCmd(cmd.Cmd):
             elif field == "connect_mode":
                 if new_value not in secsgem.hsms.HsmsConnectMode.__members__:
                     print(
-                        f"Invalid connect_mode: {new_value}. Valid values are: {list(secsgem.hsms.HsmsConnectMode.__members__.keys())}"
+                        f"Invalid connect_mode: {new_value}. Valid values are: {
+                            list(secsgem.hsms.HsmsConnectMode.__members__.keys())}"
                     )
                     return
                 if hasattr(settings, "set_connect_mode"):
-                    settings.set_connect_mode(secsgem.hsms.HsmsConnectMode[new_value])
+                    settings.set_connect_mode(
+                        secsgem.hsms.HsmsConnectMode[new_value])
                 elif hasattr(settings, "_connect_mode"):
                     settings._connect_mode = secsgem.hsms.HsmsConnectMode[new_value]
                 else:
@@ -315,11 +321,13 @@ class MachineConfigCmd(cmd.Cmd):
             elif field == "device_type":
                 if new_value not in secsgem.common.DeviceType.__members__:
                     print(
-                        f"Invalid device_type: {new_value}. Valid values are: {list(secsgem.common.DeviceType.__members__.keys())}"
+                        f"Invalid device_type: {new_value}. Valid values are: {
+                            list(secsgem.common.DeviceType.__members__.keys())}"
                     )
                     return
                 if hasattr(settings, "set_device_type"):
-                    settings.set_device_type(secsgem.common.DeviceType[new_value])
+                    settings.set_device_type(
+                        secsgem.common.DeviceType[new_value])
                 elif hasattr(settings, "_device_type"):
                     settings._device_type = secsgem.common.DeviceType[new_value]
                 else:
@@ -339,12 +347,14 @@ class MachineConfigCmd(cmd.Cmd):
                     settings.machine_model = new_value
             else:
                 print(
-                    f"Invalid field: {field}. Valid fields are: address, port, session_id, connect_mode, device_type, connection, machine_model"
+                    f"Invalid field: {
+                        field}. Valid fields are: address, port, session_id, connect_mode, device_type, connection, machine_model"
                 )
                 return
 
             if field != "connection" and getattr(host, "enabled", False):
-                print(f"Disabling and re-enabling connection for '{machine_name}'...")
+                print(
+                    f"Disabling and re-enabling connection for '{machine_name}'...")
                 host.disable_host()
                 host.enable_host()
 
@@ -379,7 +389,8 @@ class MachineConfigCmd(cmd.Cmd):
             CommunicationState = host._communication_state.current.name
 
             print(
-                f"machine_name:{machine_name},status:{status}, address:{address}, port:{port}, session_id:{session_id}, connect_mode:{connect_mode}, device_type:{device_type}, connection:{connection} machine_model:{machine_model}, CommunicationState:{CommunicationState}"
+                f"machine_name:{machine_name},status:{status}, address:{address}, port:{port}, session_id:{session_id}, connect_mode:{
+                    connect_mode}, device_type:{device_type}, connection:{connection} machine_model:{machine_model}, CommunicationState:{CommunicationState}"
             )
 
     def do_conn(self, machine_name):
@@ -518,7 +529,8 @@ class SecsCmd(cmd.Cmd):
             # Get the host and ensure it's enabled
             host = self.hosts[machine_name]
             if not host.enabled:
-                print(f"Host '{machine_name}' is not enabled. Please enable it first.")
+                print(
+                    f"Host '{machine_name}' is not enabled. Please enable it first.")
                 return
 
             # Call send_equipment_status_request from GemCommands
@@ -577,7 +589,8 @@ class SecsCmd(cmd.Cmd):
             # Use shlex.split to handle arguments with spaces enclosed in quotes
             params = shlex.split(arg)
             if len(params) < 2:
-                print("Usage: rcmd <machine_name> <command_name> <param1=value1> <param2=value2> ...")
+                print(
+                    "Usage: rcmd <machine_name> <command_name> <param1=value1> <param2=value2> ...")
                 return
 
             # Extract machine name and command name from the arguments
@@ -602,12 +615,14 @@ class SecsCmd(cmd.Cmd):
                     return
 
             # Debug print to show the command being sent
-            print(f"Sending command to {machine_name}: {command_name} with params {param_list}")
+            print(f"Sending command to {machine_name}: {
+                  command_name} with params {param_list}")
 
             # Get the host object and check if it's enabled
             host = self.hosts[machine_name]
             if not host.enabled:
-                print(f"Machine '{machine_name}' is not enabled. Please enable it first.")
+                print(f"Machine '{
+                      machine_name}' is not enabled. Please enable it first.")
                 return
 
             # Send the command to the remote host
@@ -626,9 +641,11 @@ class SecsCmd(cmd.Cmd):
 
             # Check the response for validity and extract the response code
             if hasattr(response, "data") and len(response.data) > 0:
-                response_code = response.data[0].get()  # Adjust as per the actual API structure
+                # Adjust as per the actual API structure
+                response_code = response.data[0].get()
                 # Map response code to human-readable status
-                status = RESPONSE_CODES.get(response_code, f"Unknown code: {response_code}")
+                status = RESPONSE_CODES.get(
+                    response_code, f"Unknown code: {response_code}")
                 print(f"Command response: {status}")
             else:
                 print("Unexpected response format or missing data.")
@@ -636,7 +653,7 @@ class SecsCmd(cmd.Cmd):
         except Exception as e:
             # Catch and display any errors during execution
             print(f"Error sending command: {e}")
-    
+
     def do_clear_events(self, machine_name):
         """
         Clear collection events for a specific machine.
@@ -720,7 +737,8 @@ class SecsCmd(cmd.Cmd):
 
             # Delete the process program
             result = host.delete_process_program(program_name)
-            print(f"Process program '{program_name}' deleted on {machine_name}")
+            print(f"Process program '{
+                  program_name}' deleted on {machine_name}")
             print(f"Result: {result}")
 
         except Exception as e:
@@ -745,7 +763,8 @@ class SecsCmd(cmd.Cmd):
         try:
             # Call the get_process_program_list method
             process_program_list = host.get_process_program_list()
-            print(f"Process program list for {machine_name}: {process_program_list}")
+            print(f"Process program list for {
+                  machine_name}: {process_program_list}")
         except Exception as e:
             print(f"Error getting process program list: {e}")
 
@@ -954,9 +973,11 @@ if __name__ == "__main__":
                 ],
                 device_type=secsgem.common.DeviceType[host_settings["device_type"]],
             )
-            settings.machine_model = host_settings.get("machine_model", "unknown")
+            settings.machine_model = host_settings.get(
+                "machine_model", "unknown")
 
-            host = DejtnfHost(settings, host_settings["machine_name"], mqtt_client)
+            host = DejtnfHost(
+                settings, host_settings["machine_name"], mqtt_client)
             hosts[host_settings["machine_name"]] = host
 
             # Queue hosts to be enabled after MQTT connection

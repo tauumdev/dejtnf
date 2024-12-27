@@ -1,0 +1,14 @@
+mqtt:
+  broker: localhost
+  port: 1883
+  keepalive: 60
+  topics:
+    - sensor/data
+    - command/request
+
+cli:
+  prompt: "secsgem> "
+
+logging:
+  level: DEBUG
+  file: logs/app.log
