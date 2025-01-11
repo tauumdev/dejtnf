@@ -1,0 +1,7 @@
+{
+    "username": "your_username",
+    "password": "your_password",
+    "broker": "localhost",
+    "port": 1883,
+    "keepalive": 60
+}

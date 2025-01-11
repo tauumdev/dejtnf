@@ -1,75 +1,115 @@
 #!/bin/bash
 
-# สร้างโฟลเดอร์และไฟล์
-mkdir -p secsgem/src/cli
-mkdir -p secsgem/src/mqtt
-mkdir -p secsgem/src/hosthandler
-mkdir -p secsgem/src/utils
-mkdir -p secsgem/src/settings
-mkdir -p secsgem/tests/cli
-mkdir -p secsgem/tests/mqtt
-mkdir -p secsgem/tests/hosthandler
-mkdir -p secsgem/tests/utils
+# Create directory structure
+mkdir -p secs-gem/src/config
+mkdir -p secs-gem/src/core/handle_event
+mkdir -p secs-gem/src/core/handle_alarm
+mkdir -p secs-gem/src/secs-gem
+mkdir -p secs-gem/src/mqtt
+mkdir -p secs-gem/src/cli
 
-# สร้างไฟล์ใน src/cli
-touch secsgem/src/cli/cli_main.py
-touch secsgem/src/cli/cli_handler.py
-touch secsgem/src/cli/cli_parser.py
+# Create configuration files
+touch secs-gem/src/config/equipments.json
+cat <<EOL > secs-gem/src/config/mqtt.json
+{
+  "mqtt": {
+    "host": "localhost",
+    "port": 1883,
+    "keepalive": 60,
+    "username": "",
+    "password": ""
+  }
+}
+EOL
 
-# สร้างไฟล์ใน src/mqtt
-touch secsgem/src/mqtt/mqtt_client.py
-touch secsgem/src/mqtt/mqtt_handler.py
-touch secsgem/src/mqtt/topics.py
+# Create placeholder Python files
+touch secs-gem/src/main.py
 
-# สร้างไฟล์ใน src/hosthandler
-touch secsgem/src/hosthandler/host_handler.py
-touch secsgem/src/hosthandler/command_processor.py
-touch secsgem/src/hosthandler/state_manager.py
+touch secs-gem/src/core/host_manager.py
 
-# สร้างไฟล์ใน src/utils
-touch secsgem/src/utils/logger.py
-touch secsgem/src/utils/config_loader.py
-touch secsgem/src/utils/message_decoder.py
-touch secsgem/src/utils/communication_log_file_handler.py
+# Event handling
+cat <<EOL > secs-gem/src/core/handle_event/fcl_event.py
+# Event handling for FCL events
+def handle_fcl_event():
+    pass
+EOL
 
-# สร้างไฟล์ใน src/settings
-touch secsgem/src/settings/config.yaml
+cat <<EOL > secs-gem/src/core/handle_event/fclx_event.py
+# Event handling for FCLX events
+def handle_fclx_event():
+    pass
+EOL
 
-# สร้าง main.py
-touch secsgem/src/main.py
+# Alarm handling
+cat <<EOL > secs-gem/src/core/handle_alarm/fcl_alarm.py
+# Alarm handling for FCL alarms
+def handle_fcl_alarm():
+    pass
+EOL
 
-touch secsgem/src/__init__.py
-touch secsgem/tests/__init__.py
+cat <<EOL > secs-gem/src/core/handle_alarm/fclx_alarm.py
+# Alarm handling for FCLX alarms
+def handle_fclx_alarm():
+    pass
+EOL
 
-# สร้างไฟล์ใน tests/cli
-touch secsgem/tests/cli/test_cli_main.py
-touch secsgem/tests/cli/test_cli_handler.py
-touch secsgem/tests/cli/test_cli_parser.py
+# SECS-GEM core
+touch secs-gem/src/secs-gem/gemhost.py
 
-# สร้างไฟล์ใน tests/mqtt
-touch secsgem/tests/mqtt/test_mqtt_client.py
-touch secsgem/tests/mqtt/test_mqtt_handler.py
-touch secsgem/tests/mqtt/test_topics.py
+# MQTT components
+cat <<EOL > secs-gem/src/mqtt/mqtt_client.py
+# MQTT Client implementation
+class MQTTClient:
+    pass
+EOL
 
-# สร้างไฟล์ใน tests/hosthandler
-touch secsgem/tests/hosthandler/test_host_handler.py
-touch secsgem/tests/hosthandler/test_command_processor.py
-touch secsgem/tests/hosthandler/test_state_manager.py
+cat <<EOL > secs-gem/src/mqtt/mqtt_handle.py
+# MQTT Message handling
+def handle_mqtt_message():
+    pass
+EOL
 
-# สร้างไฟล์ใน tests/utils
-touch secsgem/tests/utils/test_logger.py
-touch secsgem/tests/utils/test_config_loader.py
-touch secsgem/tests/utils/test_message_decoder.py
-touch secsgem/tests/utils/test_communication_log_file_handler.py
+# CLI Commands
+cat <<EOL > secs-gem/src/cli/cli_command.py
+# CLI command implementation
+def run_cli_command():
+    pass
+EOL
 
-# สร้างไฟล์ integration test
-touch secsgem/tests/test_integration.py
+# Initialize README
+cat <<EOL > secs-gem/README.md
+# SecS/GEM Equipment Control System
 
-# สร้างไฟล์เสริมใน root directory
-touch secsgem/README.md
-touch secsgem/requirements.txt
-touch secsgem/.env
-touch secsgem/Dockerfile
+## Overview
+A project to control and monitor equipment using SECS/GEM and MQTT protocols.
 
-# แสดงผลโครงสร้าง
-tree secsgem/
+## Features
+- Equipment management (add, delete, enable, disable, etc.)
+- MQTT-based control and communication
+- CLI for manual interaction
+
+## Usage
+1. Configure MQTT settings in src/config/mqtt.json
+2. Run the main application:
+   ```bash
+   python3 src/main.py
+   ```
+
+## Directory Structure
+- src/config: Configuration files for MQTT and equipment.
+- src/core: Core logic for event and alarm handling.
+- src/secs-gem: SECS/GEM protocol handling.
+- src/mqtt: MQTT client and message processing.
+- src/cli: CLI commands for manual equipment control.
+
+## Future Improvements
+- Add logging and error handling.
+- Implement advanced SECS/GEM protocols.
+- Enhance CLI command capabilities.
+EOL
+
+# Make Python files executable
+chmod +x secs-gem/src/main.py
+
+# Finish
+echo "Project structure created successfully!"
