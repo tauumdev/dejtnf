@@ -82,10 +82,17 @@ class HandlerFcl:
         _state = ceid_code.get(ceid, f"Unknown code: {ceid}")
         logger.info("CEID: %s Message: %s", ceid.get(), _state)
 
-        rpt = decode.RPT
-        for report in rpt:
-            logger.info("Report: %s", report)
-            rptid = report.RPTID
-            logger.info("RPTID: %s", rptid)
-            values = report.V
-            logger.info("Values: %s", values)
+        if ceid.get() == 20:
+            rpt = decode.RPT
+            for report in rpt:
+                logger.info("Report: %s", report)
+                rptid = report.RPTID
+                logger.info("RPTID: %s", rptid)
+                values = report.V
+                lot_id, ppname = values
+                logger.info("lot_id: %s", lot_id.get())
+                logger.info("ppname: %s", ppname.get())
+
+                # logger.info("Values: %s", values)
+                handler.send_remote_command(rcmd="LOT_ACCEPT", params=[
+                                            ["LotID", lot_id.get()]])

@@ -102,7 +102,7 @@ class CommandCli(cmd.Cmd):
             kwargs[key] = value
         self.eq_manager.edit_equipment(equipment_name, **kwargs)
 
-    def do_clear_col_event(self, arg: str):
+    def do_clear_event(self, arg: str):
         """
         Clear all collection events by equipment name.
         Usage: clear_cl_event <equipment_name>
@@ -111,10 +111,8 @@ class CommandCli(cmd.Cmd):
 
     def do_enable_event(self, arg: str):
         """
-        Enable event report by equipment name and ceid.
-        Usage: enable_event <equipment_name> 
-        or
-        Usage: enable_event <equipment_name> <ceid1, ceid2, ...>
+        Enable event report by equipment name.
+        Usage: enable_event <equipment_name> [<ceid1, ceid2, ...>]
         """
         args = arg.split()
         equipment_name = args[0]
@@ -123,9 +121,9 @@ class CommandCli(cmd.Cmd):
                     ) if event_id else []
         self.eq_manager.enable_event_report(equipment_name, ceid)
 
-    def do_subscribe(self, arg: str):
+    def do_subscribe_col(self, arg: str):
         """
-        Subscribe to an equipment by name.
+        Subscribe to a collection event. by equipment_name.
         Usage: subscribe <equipment_name> <ceid> <dvs1, dvs2, ...> [<report_id>]
         """
         args = arg.split()
