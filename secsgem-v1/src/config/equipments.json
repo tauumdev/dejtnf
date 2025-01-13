@@ -1,0 +1,31 @@
+{
+    "equipments": [
+        {
+            "equipment_name": "TNF-61",
+            "equipment_model": "FCL",
+            "address": "192.168.226.161",
+            "port": 5000,
+            "active": true,
+            "session_id": 61,
+            "enable": true
+        },
+        {
+            "equipment_name": "TNF-62",
+            "equipment_model": "FCL",
+            "address": "192.168.226.62",
+            "port": 5000,
+            "active": true,
+            "session_id": 62,
+            "enable": false
+        },
+        {
+            "equipment_name": "TNF-63",
+            "equipment_model": "XXX",
+            "address": "192.168.226.163",
+            "port": 5000,
+            "active": true,
+            "session_id": 63,
+            "enable": false
+        }
+    ]
+}

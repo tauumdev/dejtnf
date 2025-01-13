@@ -8,7 +8,7 @@ from ..mqttclient.mqtt_client_wrapper import MqttClient
 from ..core.secs_handler_fcl import HandlerFcl
 from ..core.secs_handler_fclx import HandlerFclx
 
-logger = logging.getLogger("config_loader")
+logger = logging.getLogger("app_logger")
 
 
 class Equipment(secsgem.gem.GemHostHandler):
@@ -54,7 +54,7 @@ class Equipment(secsgem.gem.GemHostHandler):
         logger.info("%s Communication state: %s",
                     self.equipment_name, current_state)
         self.mqtt_client.client.publish(
-            f"equipments/status/communication_state/{self.equipment_name}", current_state)
+            f"equipments/status/communication_state/{self.equipment_name}", current_state, qos=1, retain=True)
         return super()._on_communicating(_)
 
     def _on_state_communicating(self, _):
@@ -65,9 +65,9 @@ class Equipment(secsgem.gem.GemHostHandler):
         logger.info("%s Communication state: %s",
                     self.equipment_name, current_state)
         self.mqtt_client.client.publish(
-            f"equipments/status/communication_state/{self.equipment_name}", current_state)
+            f"equipments/status/communication_state/{self.equipment_name}", current_state, qos=1, retain=True)
         self.mqtt_client.client.publish(
-            f"equipments/status/control_state/{self.equipment_name}", 'online')
+            f"equipments/status/control_state/{self.equipment_name}", 'selected', qos=1, retain=True)
         return super()._on_state_communicating(_)
 
     def on_connection_closed(self, _):
@@ -79,7 +79,9 @@ class Equipment(secsgem.gem.GemHostHandler):
         logger.info("%s Communication state: %s",
                     self.equipment_name, current_state)
         self.mqtt_client.client.publish(
-            f"equipments/status/communication_state/{self.equipment_name}", current_state)
+            f"equipments/status/communication_state/{self.equipment_name}", current_state, qos=1, retain=True)
+        self.mqtt_client.client.publish(
+            f"equipments/status/control_state/{self.equipment_name}", 'closed', qos=1, retain=True)
         return super().on_connection_closed(_)
 
     def s01f14(self, handle, packet):
@@ -119,12 +121,10 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.mqtt_client.client.publish(
             f"equipments/status/alarm/{self.equipment_name}", str(msg))
 
-# {"code": s5f1.ALCD, "alid": s5f1.ALID, "text": s5f1.ALTX, "handler": self.protocol, "peer": self},
-    # def _on_s05f01(self, handler, message):
-    #     super()._on_s05f01(handler, message)
-    #     s5f1 = self.settings.streams_functions.decode(message)
-    #     self.mqtt_client.client.publish(
-    #         f"equipments/status/s5f1/{self.equipment_name}", str(s5f1))
+        rsp = self.send_and_waitfor_response(self.stream_function(2, 13)([81]))
+
+        s02f14 = self.settings.streams_functions.decode(rsp)
+        logger.info("S2F14 response: %s", s02f14)
 
     def _on_s06f11(self, handler, message: secsgem.common.Message):
         self.send_response(self.stream_function(6, 12)(
@@ -134,36 +134,18 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.mqtt_client.client.publish(
             f"equipments/status/s6f11/{self.equipment_name}", str(s6f11))
 
-        if self.equipment_model == "FCL":
-            HandlerFcl().handle_s6f11(handler, message)
-        elif self.equipment_model == "FCLX":
-            HandlerFclx().handle_s6f11(handler, message)
+        # if self.equipment_model == "FCL":
+        #     HandlerFcl().handle_s6f11(handler, message)
+        # elif self.equipment_model == "FCLX":
+        #     HandlerFclx().handle_s6f11(handler, message)
 
-        # print("receive", s6f11)
-        # for report in s6f11.RPT:
-        #     print("rpt", report)
+        if s6f11.CEID.get() == 20:
+            # rsp = self.send_remote_command(
+            #     rcmd="LOT_ACCEPT", params=[["LotID", "123456"]])
+            # logger.info("Remote command response: %s", rsp)
 
-        # function = self.settings.streams_functions.decode(message)
+            print("CEID 20")
+            rsp = handler.settings.streams_functions.decode(handler.send_and_waitfor_response(
+                handler.stream_function(2, 13)([81])))
 
-        # for report in function.RPT:
-
-        #     report_dvs = self.report_subscriptions[report.RPTID.get()]
-        #     report_values = report.V.get()
-
-        #     values = []
-
-        #     for index, data_value_id in enumerate(report_dvs):
-        #         values.append(
-        #             {"dvid": data_value_id, "value": report_values[index]})
-
-        #     data = {
-        #         "ceid": function.CEID,
-        #         "rptid": report.RPTID,
-        #         "values": values,
-        #         "handler": self.protocol,
-        #         "peer": self,
-        #     }
-
-        #     logger.info("s6f11: %s", data)
-        #     self.mqtt_client.client.publish(
-        #         f"equipments/status/s6f11/{self.equipment_name}", str(data))
+            print(rsp)

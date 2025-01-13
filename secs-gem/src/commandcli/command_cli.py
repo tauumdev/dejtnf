@@ -2,7 +2,7 @@ import cmd
 import logging
 from src.core.equipment_manager import EquipmentManager
 
-logger = logging.getLogger("config_loader")
+logger = logging.getLogger("app_logger")
 
 
 class CommandCli(cmd.Cmd):

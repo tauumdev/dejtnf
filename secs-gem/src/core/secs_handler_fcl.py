@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.gemhsms.equipment_hsms import Equipment
 
-logger = logging.getLogger("config_loader")
+logger = logging.getLogger("app_logger")
 
 
 def fcl_ceid():
@@ -72,27 +72,85 @@ def fcl_vid():
 
 
 class HandlerFcl:
+
     def handle_s6f11(self, handler: 'Equipment', message: secsgem.common.Message):
 
-        logger.info("FCL Handling s6f11")
+        # logger.info("FCL Handling s6f11")
         decode = handler.settings.streams_functions.decode(message)
         ceid = decode.CEID
 
         ceid_code = fcl_ceid()
         _state = ceid_code.get(ceid, f"Unknown code: {ceid}")
-        logger.info("CEID: %s Message: %s", ceid.get(), _state)
 
-        if ceid.get() == 20:
-            rpt = decode.RPT
-            for report in rpt:
-                logger.info("Report: %s", report)
-                rptid = report.RPTID
-                logger.info("RPTID: %s", rptid)
-                values = report.V
-                lot_id, ppname = values
-                logger.info("lot_id: %s", lot_id.get())
-                logger.info("ppname: %s", ppname.get())
+        logger.info("FCL Handle s6f11 CEID: %s Message: %s",
+                    ceid.get(), _state)
 
-                # logger.info("Values: %s", values)
-                handler.send_remote_command(rcmd="LOT_ACCEPT", params=[
-                                            ["LotID", lot_id.get()]])
+        # Publish control state to MQTT
+        if ceid.get() in [8, 9, 10]:
+            handler.mqtt_client.client.publish(
+                f"equipments/status/control_state/{handler.equipment_name}", payload=_state, qos=1, retain=True)
+
+        if decode.RPT:
+            # logger.info("RPT: %s", decode.RPT)
+            for rpt in decode.RPT:
+                if rpt:
+                    logger.info("RPT: %s", rpt.get())
+                    rptid = rpt.RPTID
+                    values = rpt.V
+                    lot_id, ppname = values
+                    # print("rptid: ", rptid.get())
+                    # print(f"lot_id: {lot_id.get()}, ppname: {ppname.get()}")
+                    if rptid.get() == 1000:
+                        handler.send_remote_command(
+                            rcmd="LOT_ACCEPT", params=[["LotID", lot_id.get()]])
+                else:
+                    logger.info("No RPT")
+            # print("RPTID: ", rptid)
+            # if rptid.get() == 1000:
+            #     lot_id, ppname = values
+            #     logger.info("lot_id: %s", lot_id.get())
+            #     logger.info("ppname: %s", ppname.get())
+            #     handler.mqtt_client.client.publish(
+            #         f"equipments/status/lot_validate/{handler.equipment_name}", str(
+            #             {"lot_id": lot_id.get(), "ppname": ppname.get()}))
+        else:
+            logger.info("No RPT")
+
+        # for rpt in decode.RPT:
+        #     print(rpt)
+        #     if rpt:
+        #         logger.info("RPT: %s", rpt.get())
+        #     else:
+        #         logger.info("No RPT")
+
+        # if ceid.get() == 20:
+        #     for rpt in decode.RPT:
+        #         if rpt:
+        #             print("RPT: ", rpt.get())
+        #         else:
+        #             print("No RPT")
+
+            # rptid = rpt.RPTID
+            # logger.info("RPTID: %s", rptid)
+            # values = rpt.V
+            # lot_id, ppname = values
+            # logger.info("lot_id: %s", lot_id.get())
+            # logger.info("ppname: %s", ppname.get())
+
+            # for report in rpt:
+            #     logger.info("Report: %s", report)
+            #     rptid = report.RPTID
+            #     logger.info("RPTID: %s", rptid)
+            #     values = report.V
+            #     lot_id, ppname = values
+            #     logger.info("lot_id: %s", lot_id.get())
+            #     logger.info("ppname: %s", ppname.get())
+
+            #     # rsp_rcmd = handler.send_remote_command(
+            #     #     rcmd="LOT_ACCEPT", params=[["LotID", lot_id.get()]])
+
+            #     # self.lot_accept(handler, lot_id.get())
+
+            #     # handler.mqtt_client.client.publish(
+            #     #     f"equipments/status/lot_validate/{handler.equipment_name}", str(
+            #     #         {"lot_id": lot_id.get(), "ppname": ppname.get()}))

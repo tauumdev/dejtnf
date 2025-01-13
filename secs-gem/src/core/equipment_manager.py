@@ -8,9 +8,9 @@ import secsgem.secs
 from src.gemhsms.equipment_hsms import Equipment
 from src.mqttclient.mqtt_client_wrapper import MqttClient
 
-from src.config.config import EQ_CONFIG_PATH, MQTT_CONFIG_PATH, ENABLE_MQTT
+from src.config.config import EQ_CONFIG_PATH
 
-logger = logging.getLogger("config_loader")
+logger = logging.getLogger("app_logger")
 
 
 class EquipmentManager:
@@ -98,21 +98,24 @@ class EquipmentManager:
                 # Enable the equipment here
                 try:
                     if equipment.is_enabled:
-                        logger.info(
-                            "Equipment %s is already enabled.", equipment_name)
-                        return "Equipment %s is already enabled.", equipment_name
+                        msg = f"Equipment {
+                            equipment_name} is already enabled."
+                        logger.info(msg)
+                        return msg
                     else:
                         equipment.enable()
                         equipment.is_enabled = True
-                        logger.info("Equipment %s enabled.", equipment_name)
+                        msg = f"Equipment {equipment_name} enabled."
+                        logger.info(msg)
                         return True
                 except Exception as e:
-                    logger.error("Error enabling equipment: %s", e)
-                    return "Error enabling equipment: %s", e
-
-        logger.info("Equipment %s does not exist.", equipment_name)
+                    msg = f"Error enabling equipment: {e}"
+                    logger.error(msg)
+                    return msg
+        msg = f"Equipment {equipment_name} does not exist."
+        logger.info(msg)
         logger.info("Usage: enable %s", "<equipment_name>")
-        return "Equipment %s does not exist.", equipment_name
+        return msg
 
     def disable_equipment(self, equipment_name: str):
         """
@@ -126,20 +129,24 @@ class EquipmentManager:
                 # Disable the equipment here
                 try:
                     if not equipment.is_enabled:
-                        logger.info(
-                            "Equipment %s is already disabled.", equipment_name)
-                        return "Equipment %s is already disabled.", equipment_name
+                        msg = f"Equipment {
+                            equipment_name} is already disabled."
+                        logger.info(msg)
+                        return msg
                     else:
                         equipment.disable()
                         equipment.is_enabled = False
-                        logger.info("Equipment %s disabled.", equipment_name)
+                        msg = f"Equipment {equipment_name} disabled."
+                        logger.info(msg)
                         return True
                 except Exception as e:
-                    logger.error("Error disabling equipment: %s", e)
-                    return "Error disabling equipment: %s", e
-        logger.info("Equipment %s does not exist.", equipment_name)
+                    msg = f"Error disabling equipment: {e}"
+                    logger.error(msg)
+                    return msg
+        msg = f"Equipment {equipment_name} does not exist."
+        logger.info(msg)
         logger.info("Usage: disable %s", "<equipment_name>")
-        return "Equipment %s does not exist.", equipment_name
+        return msg
 
     def online_equipment(self, equipment_name: str):
         """
@@ -167,15 +174,18 @@ class EquipmentManager:
                         else:
                             return rsp_msg
                     else:
-                        logger.info(
-                            "Equipment %s is disabled. Enable it first.", equipment_name)
-                        return "Equipment %s is disabled. Enable it first.", equipment_name
+                        msg = f"Equipment {
+                            equipment_name} is disabled. Enable it first."
+                        logger.info(msg)
+                        return msg
                 except Exception as e:
-                    logger.error("Error setting equipment online: %s", e)
-                    return "Error setting equipment online: %s", e
-        logger.info("Equipment %s does not exist.", equipment_name)
+                    msg = f"Error setting equipment online: {e}"
+                    logger.error(msg)
+                    return msg
+        msg = f"Equipment {equipment_name} does not exist."
+        logger.info(msg)
         logger.info("Usage: online %s", "<equipment_name>")
-        return "Equipment %s does not exist.", equipment_name
+        return msg
 
     def offline_equipment(self, equipment_name: str):
         """
@@ -203,15 +213,18 @@ class EquipmentManager:
                         else:
                             return rsp_msg
                     else:
-                        logger.info(
-                            "Equipment %s is disabled. Enable it first.", equipment_name)
-                        return "Equipment %s is disabled. Enable it first.", equipment_name
+                        msg = f"Equipment {
+                            equipment_name} is disabled. Enable it first."
+                        logger.info(msg)
+                        return msg
                 except Exception as e:
-                    logger.error("Error setting equipment offline: %s", e)
-                    return "Error setting equipment offline: %s", e
-        logger.info("Equipment %s does not exist.", equipment_name)
+                    msg = f"Error setting equipment offline: {e}"
+                    logger.error(msg)
+                    return msg
+        msg = f"Equipment {equipment_name} does not exist."
+        logger.info(msg)
         logger.info("Usage: offline %s", "<equipment_name>")
-        return "Equipment %s does not exist.", equipment_name
+        return msg
 
     def add_equipment(self, equipment_name: str, equipment_model: str, address: str, port: int, session_id: int, connect_mode: str, device_type: str, is_enable: bool):
         """
@@ -348,6 +361,34 @@ class EquipmentManager:
             return "Error saving equipment: %s", e
 
     ########################################################
+
+    def send_remote_command(self, equipment_name: str, rcmd: int | str, params: list[str]):
+        """
+        Send remote command to the specified equipment.
+
+        Args:
+            equipment_name (str): Name of the equipment.
+            rcmd (int | str): Remote command ID.
+            params (list[str]): List of parameters for the remote command.
+        """
+        for equipment in self.equipments:
+            if equipment.equipment_name == equipment_name:
+                # Send remote command here
+                try:
+                    equipment.send_remote_command(rcmd, params)
+                    logger.info(
+                        "Remote command %s sent to equipment %s.", rcmd, equipment_name)
+                    return True
+                except Exception as e:
+                    msg = f"Error sending remote command: {e}"
+                    logger.error(msg)
+                    return msg
+        msg = f"Equipment {equipment_name} does not exist."
+        logger.info(msg)
+        logger.info("Usage: send_remote_command %s",
+                    "<equipment_name> <rcmd> <params>")
+        return msg
+
     def clear_collection_event(self, equipment_name: str):
         """
         Clear collection event for the specified equipment.
@@ -409,6 +450,7 @@ class EquipmentManager:
                     logger.error("Error subscribing collection event: %s", e)
                     return "Error subscribing collection event: %s", e
         logger.info("Equipment %s does not exist.", equipment_name)
+    ########################################################
 
     def exit(self):
         """

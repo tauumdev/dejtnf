@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.gemhsms.equipment_hsms import Equipment
 
-logger = logging.getLogger("config_loader")
+logger = logging.getLogger("app_logger")
 
 
 class HandlerFclx:
