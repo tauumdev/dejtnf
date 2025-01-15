@@ -1,21 +1,12 @@
 {
     "equipments": [
         {
-            "equipment_name": "TNF-61",
-            "equipment_model": "FCL",
-            "address": "192.168.226.161",
-            "port": 5000,
-            "active": true,
-            "session_id": 61,
-            "enable": true
-        },
-        {
             "equipment_name": "TNF-62",
             "equipment_model": "FCL",
             "address": "192.168.226.62",
-            "port": 5000,
-            "active": true,
+            "port": "5000",
             "session_id": 62,
+            "active": true,
             "enable": false
         },
         {
@@ -23,9 +14,27 @@
             "equipment_model": "XXX",
             "address": "192.168.226.163",
             "port": 5000,
-            "active": true,
             "session_id": 63,
+            "active": true,
             "enable": false
+        },
+        {
+            "equipment_name": "TNF-64",
+            "equipment_model": "FCL",
+            "address": "192.168.226.164",
+            "port": 5000,
+            "session_id": 64,
+            "active": true,
+            "enable": false
+        },
+        {
+            "equipment_name": "TNF-61",
+            "equipment_model": "FCL",
+            "address": "192.168.226.161",
+            "port": 5000,
+            "session_id": 61,
+            "active": true,
+            "enable": true
         }
     ]
 }

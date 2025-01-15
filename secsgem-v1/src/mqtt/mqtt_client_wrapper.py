@@ -3,6 +3,7 @@ import logging
 import paho.mqtt.client as mqtt
 
 # from src.core.mqtt_handler_message import MqttMessageHandler
+from src.handler.mqtt_handler_message import MqttMessageHandler
 from src.utils.config_loader import load_config
 from src.config.config import EQ_CONFIG_PATH, MQTT_CONFIG_PATH, MQTT_SUBSCRIBE_TOPIC, ENABLE_MQTT
 
@@ -24,7 +25,7 @@ class MqttClient:
         self.client = mqtt.Client()
         self.client.enable_logger(logger)
         self.client.on_connect = self.on_connect
-        # self.client.on_message = MqttMessageHandler().on_message
+        self.client.on_message = MqttMessageHandler().on_message
         self.client.on_disconnect = self.on_disconnect
 
         if ENABLE_MQTT:
