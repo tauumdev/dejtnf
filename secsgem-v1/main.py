@@ -16,10 +16,10 @@ commLogFileHandler = CommunicationLogFileHandler("logs", "h")
 commLogFileHandler.setFormatter(logging.Formatter('%(asctime)s: %(message)s'))
 logging.getLogger("hsms_communication").addHandler(commLogFileHandler)
 logging.getLogger("hsms_communication").propagate = False
-logging.basicConfig(level=logging.INFO)
+
 # Configure basic logging format and level
-# logging.basicConfig(
-#     format='%(asctime)s %(name)s.%(funcName)s: %(message)s', level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s %(name)s.%(funcName)s: %(message)s', level=logging.INFO)
 
 mqtt_client = MqttClient(MQTT_CONFIG_PATH)
 

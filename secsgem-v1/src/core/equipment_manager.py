@@ -1,7 +1,6 @@
 import ipaddress
 import json
 import logging
-import secsgem.common
 import secsgem.gem
 import secsgem.hsms
 import secsgem.secs

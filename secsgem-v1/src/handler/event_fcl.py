@@ -97,10 +97,10 @@ class HandlerFcl:
                     values = rpt.V
                     lot_id, ppname = values
                     if rptid.get() == 1000:
+                        print("Lot validate: ", lot_id.get())
                         handler.send_remote_command(
                             rcmd="LOT_ACCEPT", params=[["LotID", lot_id.get()]])
-                else:
-                    logger.info("No RPT")
-
-        else:
-            logger.info("No RPT")
+                    elif rptid.get() == 1001:
+                        logger.info("Lot open: %s", lot_id.get())
+                    elif rptid.get() == 1002:
+                        print("Lot closed: ", lot_id.get())

@@ -2,8 +2,14 @@ import cmd
 import ipaddress
 import json
 import logging
+import os
+
+from secsgem.secs.functionbase import SecsStreamFunction
+from secsgem.secs.functions import secsStreamsFunctions
 from src.core.equipment_manager import EquipmentManager
 
+from secsgem.secs.variables import SecsVarList
+from src.gem.equipment_hsms import Equipment
 logger = logging.getLogger("app_logger")
 
 
@@ -414,3 +420,83 @@ class CommandCli(cmd.Cmd):
         except ValueError:
             print("Invalid argument type")
             return
+
+    def do_doc_sf(self, arg: str):
+        """
+        Display documentation for a Stream Function.
+        Usage: doc_sf  <stream> <function>
+        """
+        print("Displaying documentation for Stream Function")
+        args = arg.split()
+        if len(args) != 2:
+            print("Usage: doc_sf <stream> <function>")
+            return
+
+        try:
+            stream = int(args[0])
+            function = int(args[1])
+
+            sf = self.eq_manager.equipments[0].secsStreamsFunctions.get(
+                stream, {}).get(function)
+            # sf = secsStreamsFunctions.get(stream, {}).get(function)
+            if not sf:
+                print(f"S{stream}F{function} not found.")
+                return
+
+            print(f"Found Stream Function:\nName: {
+                sf.__name__}\nDocumentation: {sf.__doc__}")
+
+        except ValueError:
+            print("Invalid argument type")
+            return
+
+    def do_send_sf(self, arg: str):
+        """
+        Send Stream Function.
+        Usage: send_sf <equipment_name> <stream> <function> <params>
+        """
+        print("Sending Stream Function")
+        parts = arg.split(maxsplit=3)
+        if len(parts) < 3:
+            print("Usage: send_sf <equipment_name> <stream> <function> <params>")
+            return
+
+        try:
+            equipment_name, stream, function = parts[0], int(
+                parts[1]), int(parts[2])
+            try:
+                # Try parsing params as JSON
+                params = json.loads(parts[3]) if len(parts) > 3 else []
+            except json.JSONDecodeError:
+                # If JSON parsing fails, try parsing as a list of integers
+                params = [int(x) for x in parts[3].strip(
+                    '[]').split(',')] if len(parts) > 3 else []
+        except ValueError as e:
+            print(f"Invalid arguments: {e}")
+            return
+
+        for equipment in self.eq_manager.equipments:
+            if equipment.name == equipment_name:
+                sf = equipment.secsStreamsFunctions.get(
+                    stream, {}).get(function)
+                if sf and getattr(sf, '_toEquipment', False):
+                    print(f"Sending S{stream}F{function} Params: {
+                          params} to {equipment_name}")
+                    params = [params] if isinstance(params, int) else params
+                    try:
+                        rsp = equipment.send_and_waitfor_response(
+                            equipment.stream_function(stream, function)(params)
+                        )
+                        print(f"Response: {equipment.secs_decode(rsp)}")
+                    except Exception as e:
+                        print(f"Error while sending request: {e}")
+                    return
+                elif not sf:
+                    print(f"S{stream}F{function} not found.")
+                    return
+                else:
+                    print(f"_toEquipment is False for S{
+                          stream}F{function}, skipping request.")
+                    return
+
+        print(f"Equipment {equipment_name} not found.")
