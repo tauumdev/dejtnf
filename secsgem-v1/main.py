@@ -1,7 +1,7 @@
 import cmd
 import logging
 from src.mqtt.mqtt_client_wrapper import MqttClient
-from src.core.equipment_manager import EquipmentManager
+from src.gem.equipment_manager import EquipmentManager
 from src.cli.command_cli import CommandCli
 from src.config.config import EQ_CONFIG_PATH, MQTT_CONFIG_PATH, ENABLE_MQTT
 from src.utils.app_logger import AppLogger

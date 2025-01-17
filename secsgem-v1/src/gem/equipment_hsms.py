@@ -41,6 +41,7 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.MDLN = "dejtnf"
         self.SOFTREV = "1.0.1"
         self.is_enabled = is_enable
+        self.lot_active = None
 
         self.secsStreamsFunctions[2].update({49: SecsS02F49, 50: SecsS02F50})
 
@@ -60,7 +61,7 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.alarm_fcl = HandlerAlarmFCL(self)
         self.alarm_fclx = HandlerAlarmFCLX(self)
 
-    def fcl_subscribe(self):
+    def fcl_lotcontrol_subscribe(self):
         """
         Subscribe lot control for FCL
         """
@@ -70,21 +71,21 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.subscribe_collection_event(21, [82, 33], 1001)  # LotOpened_LotID
         self.subscribe_collection_event(22, [83, 33], 1002)  # LotClosed_LotID
 
-    def fclx_subscribe(self):
+    def fclx_lotcontrol_subscribe(self):
         """
         Subscribe lot control for FCLX
         """
         self.disable_ceid_reports()
         self.subscribe_collection_event(
-            20, [81, 33], 1000)  # LotValidate_LotID
-        self.subscribe_collection_event(21, [82, 33], 1001)  # LotOpened_LotID
-        self.subscribe_collection_event(22, [83, 33], 1002)  # LotClosed_LotID
+            58, [3081, 7], 2000)  # LotValidate_LotID
+        self.subscribe_collection_event(40, [3026, 7], 2001)  # LotOpened_LotID
+        self.subscribe_collection_event(41, [3027, 7], 2002)  # LotClosed_LotID
 
     def delayed_task(self):
         """
         Delayed task for subscribe lot
         """
-        wait_seconds = 0.1
+        wait_seconds = 0.05
         logger.info("Task started, waiting for %s seconds...", wait_seconds)
         threading.Event().wait(wait_seconds)  # Non-blocking wait
         logger.info("%s seconds have passed!\n", wait_seconds)
@@ -108,11 +109,11 @@ class Equipment(secsgem.gem.GemHostHandler):
             if self.equipment_model == "FCL":
                 logger.info("FCL %s Subscribe lot control.",
                             self.equipment_name)
-                self.fcl_subscribe()
+                self.fcl_lotcontrol_subscribe()
             elif self.equipment_model == "FCLX":
                 logger.info("FCLX %s Subscribe lot control.",
                             self.equipment_name)
-                self.fclx_subscribe()
+                self.fclx_lotcontrol_subscribe()
             else:
                 logger.info("Unknown equipment model")
         except Exception as e:
@@ -132,7 +133,6 @@ class Equipment(secsgem.gem.GemHostHandler):
         # Start the thread
         thread = threading.Thread(target=self.delayed_task)
         thread.start()
-        # return super()._on_state_communicating(_)
 
     def on_connection_closed(self, connection):
         """
@@ -251,3 +251,14 @@ class Equipment(secsgem.gem.GemHostHandler):
         else:
             logger.warning("Unknown equipment model for %s",
                            self.equipment_model)
+
+    def _on_s10f01(self, handler, packet):
+        """
+        Handle S10F1
+        """
+        logger.info("Receive S10F1. %s", self.equipment_name)
+        decode = self.secs_decode(packet)
+        tid, text = decode
+
+        logger.info("Receive terminal S10F1: %s", text.get())
+        return super()._on_s10f01(handler, packet)

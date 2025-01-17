@@ -2,8 +2,10 @@ import logging
 from secsgem.hsms.packets import HsmsPacket
 from typing import TYPE_CHECKING
 
+from src.gem.command_rcmd import addlot_fclx, pp_select
 if TYPE_CHECKING:
     from src.gem.equipment_hsms import Equipment
+
 
 logger = logging.getLogger("app_logger")
 
@@ -294,7 +296,7 @@ class HandlerEventFclx:
                     ceid.get(), ceid_message)
 
         # Publish control state to MQTT
-        if ceid.get() in [8, 9, 10]:
+        if ceid.get() in [7, 8, 9, 10]:
             handler.mqtt_client.client.publish(
                 f"equipments/status/control_state/{handler.equipment_name}", payload=ceid_message, qos=1, retain=True)
 
@@ -305,8 +307,15 @@ class HandlerEventFclx:
                     rptid = rpt.RPTID
                     values = rpt.V
                     lot_id, ppname = values
-                    if rptid.get() == 1000:
-                        handler.send_remote_command(
-                            rcmd="LOT_ACCEPT", params=[["LotID", lot_id.get()]])
+                    if rptid.get() == 2000:  # collection scan lot
+                        logger.info("Scan lot %s, %s", lot_id.get(),
+                                    self.equipment.equipment_name)
+                        handler.send_remote_command(addlot_fclx(lot_id.get()))
+                    elif rptid.get() == 2001:  # collection open lot
+                        logger.info("Open lot %s, %s", lot_id.get(),
+                                    self.equipment.equipment_name)
+                    elif rptid.get() == 2002:  # collection closed lot
+                        logger.info("Closed lot %s, %s", lot_id.get(),
+                                    self.equipment.equipment_name)
                 else:
                     logger.info("No RPT")

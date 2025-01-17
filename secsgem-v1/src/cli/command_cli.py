@@ -4,13 +4,14 @@ import json
 import logging
 import os
 
-from secsgem.secs.functionbase import SecsStreamFunction
-from secsgem.secs.functions import secsStreamsFunctions
-from src.core.equipment_manager import EquipmentManager
+# from secsgem.secs.functionbase import SecsStreamFunction
+# from secsgem.secs.functions import secsStreamsFunctions
+import src.gem.recipe_manager as recipe
+from src.gem.equipment_manager import EquipmentManager
 
-from secsgem.secs.variables import SecsVarList
-from src.gem.equipment_hsms import Equipment
-import src.core.recipe_manager as recipe
+# from secsgem.secs.variables import SecsVarList
+# from src.gem.equipment_hsms import Equipment
+
 logger = logging.getLogger("app_logger")
 
 
@@ -116,14 +117,14 @@ class CommandCli(cmd.Cmd):
         Sample: remove TNF-01
         """
         print("Removing equipment")
-        arg = arg.split()
-        if len(arg) != 1:
+        args = arg.split()
+        if len(args) != 1:
             print("Invalid number of arguments")
             print("Usage: remove <equipment_name>")
             return
 
         try:
-            equipment_name = arg
+            equipment_name = args[0]
             rsp = self.eq_manager.remove_equipment(equipment_name)
 
             if not isinstance(rsp, bool):
@@ -182,13 +183,14 @@ class CommandCli(cmd.Cmd):
         Sample: enable TNF-01
         """
         print("Enabling equipment")
-        arg = arg.split()
-        if len(arg) != 1:
+
+        args = arg.split()
+        if len(args) != 1:
             print("Invalid number of arguments")
             print("Usage: enable <equipment_name>")
             return
         try:
-            equipment_name = arg
+            equipment_name = args[0]
             rsp = self.eq_manager.enable_equipment(equipment_name)
 
             if not isinstance(rsp, bool):
@@ -206,13 +208,13 @@ class CommandCli(cmd.Cmd):
         Sample: disable TNF-01
         """
         print("Disabling equipment")
-        arg = arg.split()
-        if len(arg) != 1:
+        args = arg.split()
+        if len(args) != 1:
             print("Invalid number of arguments")
             print("Usage: disable <equipment_name>")
             return
         try:
-            equipment_name = arg
+            equipment_name = args[0]
             rsp = self.eq_manager.disable_equipment(equipment_name)
 
             if not isinstance(rsp, bool):
@@ -230,13 +232,13 @@ class CommandCli(cmd.Cmd):
         Sample: online TNF-01
         """
         print("Online equipment")
-        arg = arg.split()
-        if len(arg) != 1:
+        args = arg.split()
+        if len(args) != 1:
             print("Invalid number of arguments")
             print("Usage: online <equipment_name>")
             return
         try:
-            equipment_name = arg
+            equipment_name = args[0]
             rsp = self.eq_manager.online_equipment(equipment_name)
 
             if not isinstance(rsp, bool):
@@ -254,13 +256,13 @@ class CommandCli(cmd.Cmd):
         Sample: offline TNF-01
         """
         print("Offline equipment")
-        arg = arg.split()
-        if len(arg) != 1:
+        args = arg.split()
+        if len(args) != 1:
             print("Invalid number of arguments")
             print("Usage: offline <equipment_name>")
             return
         try:
-            equipment_name = arg
+            equipment_name = args[0]
             rsp = self.eq_manager.offline_equipment(equipment_name)
 
             if not isinstance(rsp, bool):
@@ -324,13 +326,12 @@ class CommandCli(cmd.Cmd):
         Sample: disable_ceids TNF-01 1,2,3
         """
         print("Disabling collection events")
-        arg = arg.split()
-        if len(arg) < 1:
+        args = arg.split()
+        if len(args) < 1:
             print("Invalid number of arguments")
             print("Usage: disable_ceids <equipment_name> <ceid1, ceid2, ...>")
             return
         try:
-            args = arg.split()
             equipment_name = args[0]
             ceid = list(map(int, args[1].strip('[]').split(','))) if len(
                 args) > 1 else []
@@ -351,13 +352,12 @@ class CommandCli(cmd.Cmd):
         Sample: enable_ceids TNF-01 1,2,3
         """
         print("Enabling collection events")
-        arg = arg.split()
-        if len(arg) < 1:
+        args = arg.split()
+        if len(args) < 1:
             print("Invalid number of arguments")
             print("Usage: enable_ceids <equipment_name> <ceid1, ceid2, ...>")
             return
         try:
-            args = arg.split()
             equipment_name = args[0]
             ceid = list(map(int, args[1].strip('[]').split(','))) if len(
                 args) > 1 else []
@@ -374,16 +374,16 @@ class CommandCli(cmd.Cmd):
     def do_disable_ceid_report(self, arg: str):
         """
         Disable all Collection Event Reports.
-
+        Usage: disable_ceid_report <equipment_name>
         """
         print("Disabling collection event reports")
-        arg = arg.split()
-        if len(arg) != 1:
+        args = arg.split()
+        if len(args) != 1:
             print("Invalid number of arguments")
             print("Usage: disable_ceid_report <equipment_name>")
             return
         try:
-            equipment_name = int(arg)
+            equipment_name = args[0]
             rsp = self.eq_manager.disable_ceid_report(equipment_name)
 
             if not isinstance(rsp, bool):
@@ -401,14 +401,13 @@ class CommandCli(cmd.Cmd):
         Sample: subscribe_collection_event TNF-01 20 1,2,3
         """
         print("Subscribing to collection event")
-        arg = arg.split()
-        if len(arg) < 3:
+        args = arg.split()
+        if len(args) < 3:
             print("Invalid number of arguments")
             print(
                 "Usage: subscribe_collection_event <equipment_name> <ceid> <dvs> [<report_id>]")
             return
         try:
-            args = arg.split()
             equipment_name = args[0]
             ceid = int(args[1])
             dvs = list(map(int, args[2].strip('[]').split(',')))
@@ -422,15 +421,16 @@ class CommandCli(cmd.Cmd):
             print("Invalid argument type")
             return
 
-    def do_doc_sf(self, arg: str):
+    def do_doc_secs_sf(self, arg: str):
         """
         Display documentation for a Stream Function.
-        Usage: doc_sf  <stream> <function>
+        Usage: doc_secs_sf <stream> <function>
         """
         print("Displaying documentation for Stream Function")
         args = arg.split()
         if len(args) != 2:
-            print("Usage: doc_sf <stream> <function>")
+            print("Invalid number of arguments")
+            print("Usage: doc_secs_sf <stream> <function>")
             return
 
         try:

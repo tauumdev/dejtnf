@@ -8,7 +8,7 @@ import secsgem.secs
 from src.gem.equipment_hsms import Equipment
 from src.mqtt.mqtt_client_wrapper import MqttClient
 from src.config.config import EQ_CONFIG_PATH
-from src.core.recipe_manager import get_recipe_store, save_recipe_store
+from src.gem.recipe_manager import get_recipe_store, save_recipe_store
 logger = logging.getLogger("app_logger")
 
 
