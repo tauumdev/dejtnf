@@ -15,23 +15,11 @@ from src.gem.equipment_manager import EquipmentManager
 logger = logging.getLogger("app_logger")
 
 
-class CommandCli(cmd.Cmd):
-    """
-    Command line interface for managing equipment instances.
-    List of commands:
-        - list: List all equipment instances.
-        - add: Add a new equipment instance.
-        - remove: Remove an equipment instance.
-        - edit: Edit an equipment instance.
-        - enable: Enable an equipment instance.
-        - disable: Disable an equipment instance.
-        - exit: Exit the program.
-    """
-
+class Config(cmd.Cmd):
     def __init__(self, eq_manager: EquipmentManager):
         super().__init__()
         self.eq_manager = eq_manager
-        self.prompt = "> "
+        self.prompt = "config > "
 
     def emptyline(self):
         """
@@ -41,19 +29,16 @@ class CommandCli(cmd.Cmd):
 
     def do_exit(self, arg: str):
         """
-        Exit the program.
+        Exit configuration mode.
         Usage: exit
         """
-        rsp = self.eq_manager.exit()
-
-        if not isinstance(rsp, bool):
-            print(rsp)
         return True
 
     def do_list(self, arg: str):
         """
         List all equipment instances.
         Usage: list
+        Sample: list
         """
         print("Listing equipments")
         try:
@@ -137,7 +122,7 @@ class CommandCli(cmd.Cmd):
 
     def do_edit(self, arg: str):
         """
-        Edit an equipment instance.
+        Edit and update an equipment instance.
         Usage: edit <equipment_name> <key1=value1> <key2=value2> ...
         Args:
             equipment_name (str): The name of the equipment.
@@ -175,6 +160,27 @@ class CommandCli(cmd.Cmd):
         except ValueError:
             logger.error("Invalid argument type")
             return
+
+
+class Control(cmd.Cmd):
+    def __init__(self, eq_manager: EquipmentManager):
+        super().__init__()
+        self.eq_manager = eq_manager
+        self.prompt = "control > "
+
+    # communication
+    def emptyline(self):
+        """
+        Do nothing on empty input line.
+        """
+        pass
+
+    def do_exit(self, arg: str):
+        """
+        Exit control mode.
+        Usage: exit
+        """
+        return True
 
     def do_enable(self, arg: str):
         """
@@ -273,51 +279,7 @@ class CommandCli(cmd.Cmd):
             print("Invalid argument type")
             return
 
-    def do_rcmd(self, arg: str):
-        """
-        Send a remote command to an equipment instance.
-        Usage: rcmd <equipment_name> <rcmd> <params>
-
-        Args:
-            arg (str): Command-line argument string containing equipment name, rcmd, and parameters.
-
-        Sample: rcmd TNF-61 LOT_ACCEPT LotID=123456
-        """
-        print("Sending remote command")
-
-        args = arg.split()
-        if len(args) < 2:
-            print("Invalid number of arguments")
-            print("Usage: rcmd <equipment_name> <rcmd> <key=value ...>")
-            return
-
-        equipment_name = args[0]
-        rcmd = args[1]
-        params = []
-
-        # Parse parameters into a list of lists
-        for param in args[2:]:
-            if '=' in param:
-                key, value = param.split('=', 1)
-                params.append([key, value])  # Convert to list format
-            else:
-                print(f"Invalid parameter format: {param}")
-                return
-        print("Parsed command: equipment_name={}, rcmd={}, params={}".format(
-            equipment_name, rcmd, params
-        ))
-        try:
-            # Send the command
-            rsp = self.eq_manager.send_remote_command(
-                equipment_name, rcmd, params)
-
-            if rsp is not True:
-                print(rsp)
-                return
-            print("Remote command sent successfully.", equipment_name)
-        except ValueError:
-            print("Invalid argument type")
-            return
+    # event
 
     def do_disable_ceids(self, arg: str):
         """
@@ -375,6 +337,7 @@ class CommandCli(cmd.Cmd):
         """
         Disable all Collection Event Reports.
         Usage: disable_ceid_report <equipment_name>
+        Sample: disable_ceid_report TNF-01
         """
         print("Disabling collection event reports")
         args = arg.split()
@@ -421,16 +384,152 @@ class CommandCli(cmd.Cmd):
             print("Invalid argument type")
             return
 
-    def do_doc_secs_sf(self, arg: str):
+    # recipe management
+    def do_get_recipes(self, arg: str):
+        """
+        Get recipe store.
+        Usage: get_recipes <equipment_name> [<recipe_name>]
+        Sample: get_recipes TNF-01
+        Return:
+        - Recipe data if recipe_name is provided
+        - List of recipes if recipe_name is not provided
+        """
+        print("Getting recipe store")
+        arg = arg.split(maxsplit=1)
+        if len(arg) < 1:
+            print("Invalid number of arguments")
+            print("Usage: get_recipes <equipment_name> [<recipe_name>]")
+            return
+        try:
+            equipment_name = arg[0]
+            recipe_name = arg[1] if len(arg) > 1 else None
+            rec_receive = recipe.get_recipes(equipment_name, recipe_name)
+
+            if isinstance(rec_receive, list):
+                for rec in rec_receive:
+                    print(rec)
+                return
+            else:
+                print(rec_receive)
+                return
+        except ValueError:
+            print("Invalid argument type")
+            return
+
+    def do_send_recipe(self, arg: str):
+        """
+        Send recipe to equipment.
+        Usage: send_recipe <equipment_name> <recipe_name>
+        Sample: send_recipe TNF-01 recipe1
+        """
+        print("Sending recipe")
+        arg = arg.split(maxsplit=1)
+        if len(arg) != 2:
+            print("Invalid number of arguments")
+            print("Usage: send_recipe <equipment_name> <recipe_name>")
+            return
+        try:
+            equipment_name, recipe_name = arg
+            rsp = self.eq_manager.send_recipe_to_equipment(
+                equipment_name, recipe_name)
+            if not isinstance(rsp, bool):
+                print(rsp)
+                return
+        except ValueError:
+            print("Invalid argument type")
+            return
+
+    def do_request_recipe(self, arg: str):
+        """
+        Request recipe from equipment.
+        Usage: request_recipe <equipment_name> [<recipe_name>]
+        Return:
+            - receive recipe data if recipe_name is provided
+            - receive list of recipes if recipe_name is not provided
+        """
+        print("Requesting recipe")
+
+        arg = arg.split(maxsplit=1)
+        if len(arg) < 1:
+            print("Invalid number of arguments")
+            print("Usage: request_recipe <equipment_name> [<recipe_name>]")
+            return
+        try:
+            equipment_name = arg[0]
+            recipe_name = arg[1] if len(arg) > 1 else None
+            rec_receive = self.eq_manager.request_recipe_from_equipment(
+                equipment_name, recipe_name)
+
+            if isinstance(rec_receive, list):
+                for rec in rec_receive:
+                    print(rec)
+                return
+            else:
+                print(rec_receive)
+                # recipe.save_recipe(equipment_name, rec_receive)
+                return
+        except ValueError:
+            print("Invalid argument type")
+            return
+
+    # remote command
+    def do_rcmd(self, arg: str):
+        """
+        Send a remote command to an equipment instance.
+        Usage: rcmd <equipment_name> <rcmd> <params>
+
+        Args:
+            arg (str): Command-line argument string containing equipment name, rcmd, and parameters.
+
+        Sample: rcmd TNF-61 LOT_ACCEPT LotID=123456
+        """
+        print("Sending remote command")
+
+        args = arg.split()
+        if len(args) < 2:
+            print("Invalid number of arguments")
+            print("Usage: rcmd <equipment_name> <rcmd> <key=value ...>")
+            return
+
+        equipment_name = args[0]
+        rcmd = args[1]
+        params = []
+
+        # Parse parameters into a list of lists
+        for param in args[2:]:
+            if '=' in param:
+                key, value = param.split('=', 1)
+                params.append([key, value])  # Convert to list format
+            else:
+                print(f"Invalid parameter format: {param}")
+                return
+        print("Parsed command: equipment_name={}, rcmd={}, params={}".format(
+            equipment_name, rcmd, params
+        ))
+        try:
+            # Send the command
+            rsp = self.eq_manager.send_remote_command(
+                equipment_name, rcmd, params)
+
+            if rsp is not True:
+                print(rsp)
+                return
+            print("Remote command sent successfully.", equipment_name)
+        except ValueError:
+            print("Invalid argument type")
+            return
+
+    # stream function
+    def do_doc_stream_function(self, arg: str):
         """
         Display documentation for a Stream Function.
-        Usage: doc_secs_sf <stream> <function>
+        Usage: doc_stream_function <stream> <function>
         """
         print("Displaying documentation for Stream Function")
         args = arg.split()
         if len(args) != 2:
             print("Invalid number of arguments")
-            print("Usage: doc_secs_sf <stream> <function>")
+            print("Usage: doc_stream_function <stream> <function>")
             return
 
         try:
@@ -451,17 +550,18 @@ class CommandCli(cmd.Cmd):
             print("Invalid argument type")
             return
 
-    def do_send_sf(self, arg: str):
+    def do_send_stream_function(self, arg: str):
         """
         Send Stream Function.
         Args:
             arg (str): Command-line argument string containing equipment name, stream, function, and parameters.
-        Usage: send_sf <equipment_name> <stream> <function> <params>
+        Usage: do_send_stream_function <equipment_name> <stream> <function> <params>
         """
         print("Sending Stream Function")
         parts = arg.split(maxsplit=3)
         if len(parts) < 3:
-            print("Usage: send_sf <equipment_name> <stream> <function> <params>")
+            print(
+                "Usage: do_send_stream_function <equipment_name> <stream> <function> <params>")
             return
 
         try:
@@ -504,98 +604,52 @@ class CommandCli(cmd.Cmd):
 
         print(f"Equipment {equipment_name} not found.")
 
-    def do_get_recipe_store(self, arg: str):
-        """
-        Get recipe store.
-        Usage: get_recipe_store <equipment_name> [<recipe_name>]
-        Return:
-        - Recipe data if recipe_name is provided
-        - List of recipes if recipe_name is not provided
-        """
-        print("Getting recipe store")
-        arg = arg.split(maxsplit=1)
-        if len(arg) < 1:
-            print("Invalid number of arguments")
-            print("Usage: get_recipe_store <equipment_name> [<recipe_name>]")
-            return
-        try:
-            equipment_name = arg[0]
-            recipe_name = arg[1] if len(arg) > 1 else None
-            rec_receive = recipe.get_recipe_store(equipment_name, recipe_name)
 
-            if isinstance(rec_receive, list):
-                for rec in rec_receive:
-                    print(rec)
-                return
-            else:
-                print(rec_receive)
-                return
-        except ValueError:
-            print("Invalid argument type")
-            return
+class CommandCli(cmd.Cmd):
+    """
+    Command line interface for managing equipment instances.
+    List of commands:
+        - list: List all equipment instances.
+        - add: Add a new equipment instance.
+        - remove: Remove an equipment instance.
+        - edit: Edit an equipment instance.
+        - enable: Enable an equipment instance.
+        - disable: Disable an equipment instance.
+        - exit: Exit the program.
+    """
 
-    def do_send_recipe(self, arg: str):
-        """
-        Send recipe to equipment.
-        Usage: send_recipe <equipment_name> <recipe_name>
-        """
-        print("Sending recipe")
-        arg = arg.split(maxsplit=1)
-        if len(arg) != 2:
-            print("Invalid number of arguments")
-            print("Usage: send_recipe <equipment_name> <recipe_name>")
-            return
-        try:
-            equipment_name, recipe_name = arg
-            rsp = self.eq_manager.send_recipe_to_equipment(
-                equipment_name, recipe_name)
-            if not isinstance(rsp, bool):
-                print(rsp)
-                return
-        except ValueError:
-            print("Invalid argument type")
-            return
+    def __init__(self, eq_manager: EquipmentManager):
+        super().__init__()
+        self.eq_manager = eq_manager
+        self.prompt = "secsgem > "
 
-    def do_request_recipe(self, arg: str):
+    def emptyline(self):
         """
-        Request recipe from equipment.
-        Usage: request_recipe <equipment_name> <recipe_name>
+        Do nothing on empty input line.
         """
-        print("Requesting recipe")
-        # arg = arg.split(maxsplit=1)
-        # if len(arg) != 2:
-        #     print("Invalid number of arguments")
-        #     print("Usage: request_recipe <equipment_name> <recipe_name>")
-        #     return
-        # try:
-        #     equipment_name, recipe_name = arg
-        #     rsp = self.eq_manager.request_recipe_from_equipment(
-        #         equipment_name, recipe_name)
-        #     if not isinstance(rsp, bool):
-        #         print(rsp)
-        #         return
-        # except ValueError:
-        #     print("Invalid argument type")
-        #     return
+        pass
 
-        arg = arg.split(maxsplit=1)
-        if len(arg) < 1:
-            print("Invalid number of arguments")
-            print("Usage: get_recipe_store <equipment_name> [<recipe_name>]")
-            return
-        try:
-            equipment_name = arg[0]
-            recipe_name = arg[1] if len(arg) > 1 else None
-            rec_receive = self.eq_manager.request_recipe_from_equipment(
-                equipment_name, recipe_name)
+    def do_exit(self, arg: str):
+        """
+        Exit the program.
+        Usage: exit
+        """
+        rsp = self.eq_manager.exit()
 
-            if isinstance(rec_receive, list):
-                for rec in rec_receive:
-                    print(rec)
-                return
-            else:
-                print(rec_receive)
-                return
-        except ValueError:
-            print("Invalid argument type")
-            return
+        if not isinstance(rsp, bool):
+            print(rsp)
+        return True
+
+    def do_config(self, arg: str):
+        """
+        Enter configuration mode to config equipment.
+        Usage: config
+        """
+        Config(self.eq_manager).cmdloop()
+
+    def do_control(self, arg: str):
+        """
+        Enter control mode to control equipment.
+        Usage: control
+        """
+        Control(self.eq_manager).cmdloop()

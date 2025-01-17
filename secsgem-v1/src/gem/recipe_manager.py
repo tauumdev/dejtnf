@@ -1,13 +1,28 @@
 
 import logging
 import os
+import xml.etree.ElementTree as ET
 
 logger = logging.getLogger("app_logger")
 
 path = "files/recipes"
 
 
-def get_recipe_store(equipment_name: str, recipe_name: str = None):
+def get_version_receipe(ppbody: str):
+    """
+    Get version of recipe
+    Args:
+    - recipe: str
+    """
+    try:
+        _hml = ET.fromstring(ppbody.decode("utf-8"))
+        _version = _html.
+    except Exception as e:
+        logger.warning(f"Error in get_version_receipe: {e}")
+        return None
+
+
+def get_recipes(equipment_name: str, recipe_name: str = None):
     """
     Get recipe store
     Args:
@@ -28,7 +43,7 @@ def get_recipe_store(equipment_name: str, recipe_name: str = None):
         return {"error": "Error in get_recipe_store"}
 
 
-def save_recipe_store(equipment_name: str, recipe_name: str, recipe_data: str):
+def save_recipe(equipment_name: str, recipe_name: str, recipe_data: str):
     """
     Save recipe store
     """

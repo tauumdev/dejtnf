@@ -10,6 +10,17 @@ def acceptlot_fcl(lot_id: str):
     return {"RCMD": "LOT_ACCEPT", "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}]}
 
 
+def rejectlot_fcl(lot_id: str):
+    """
+    Reject lot.
+    :param lot_id: lot id to reject
+    :type lot_id: str
+    use on s2f41
+    """
+
+    return {"RCMD": "LOT_REJECT", "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}]}
+
+
 def pp_select(ppid: str):
     """
     Select process program.
@@ -29,4 +40,16 @@ def addlot_fclx(lot_id: str):
     use on s2f49
     """
 
-    return {"DATAID": 123, "OBJSPEC": "LOTCONTROL", "RCMD": "ADD_LOT", "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}]}
+    return {"DATAID": 100, "OBJSPEC": "LOTCONTROL", "RCMD": "ADD_LOT", "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}]}
+
+
+def rejectlot_fclx(lot_id: str, reason: str):
+    """
+    Reject lot.
+    :param lot_id: lot id to reject
+    :reason: reason to reject
+    :type lot_id: str
+    use on s2f49
+    """
+
+    return {"DATAID": 101, "OBJSPEC": "LOTCONTROL", "RCMD": "REJECT_LOT", "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}, {"CPNAME": "LotID", "CPVAL": reason}]}

@@ -8,7 +8,7 @@ import secsgem.secs
 from src.gem.equipment_hsms import Equipment
 from src.mqtt.mqtt_client_wrapper import MqttClient
 from src.config.config import EQ_CONFIG_PATH
-from src.gem.recipe_manager import get_recipe_store, save_recipe_store
+from src.gem.recipe_manager import get_recipes, save_recipe
 logger = logging.getLogger("app_logger")
 
 
@@ -22,6 +22,7 @@ class EquipmentManager:
     Args:
         mqtt_client_instance (MqttClient): An instance of the MQTT client to be used by the equipment.
     """
+    # initialize equipment manager
 
     def __init__(self, mqtt_client_instance: MqttClient):
         """
@@ -390,7 +391,6 @@ class EquipmentManager:
         return msg
 
     # secs control
-
     def send_remote_command(self, equipment_name: str, rcmd: int | str, params: list[str]):
         """
         Send remote command to the specified equipment.
@@ -562,7 +562,7 @@ class EquipmentManager:
         for equipment in self.equipments:
             if equipment.equipment_name == equipment_name:
                 try:
-                    recipe_data = get_recipe_store(equipment_name, recipe_name)
+                    recipe_data = get_recipes(equipment_name, recipe_name)
                     if "error" in recipe_data:
                         return recipe_data["error"]
 
@@ -619,7 +619,7 @@ class EquipmentManager:
                                 "Received null ppbody from equipment %s", equipment_name)
                             return f"Received null from equipment : {equipment_name}"
 
-                        save_recipe_store(
+                        save_recipe(
                             equipment_name, ppid.get(), ppbody.get())
                         return True
                     else:
@@ -634,3 +634,19 @@ class EquipmentManager:
                     return "Error requesting recipe: %s", e
         logger.info("Equipment %s does not exist.", equipment_name)
         return f"Equipment does not exist. {equipment_name}"
+
+    # recipe manager
+    def list_recipes(self, equipment_name: str, recipe_name: str = None):
+        """
+        List all recipes in the specified equipment.
+        Args:
+            equipment_name (str): Name of the equipment.
+            recipe_name (str): Recipe to list.
+        Sample: list_recipes TNF-01 "RECIPE"
+        """
+        logger.info("Listing recipes from equipment %s.", equipment_name)
+        try:
+            return get_recipes(equipment_name, recipe_name)
+        except Exception as e:
+            logger.error("Error listing recipes: %s", e)
+            return "Error listing recipes: %s", e
