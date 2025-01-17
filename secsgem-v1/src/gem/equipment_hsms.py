@@ -10,8 +10,8 @@ from secsgem.hsms.packets import HsmsPacket
 
 from src.gem.custom_streamfunction import SecsS02F49, SecsS02F50
 from src.mqtt.mqtt_client_wrapper import MqttClient
-from src.handler.event_fcl import HandlerFcl
-from src.handler.event_fclx import HandlerFclx
+from src.handler.event_fcl import HandlerEventFcl
+from src.handler.event_fclx import HandlerEventFclx
 from src.handler.alarm_fcl import HandlerAlarmFCL
 from src.handler.alarm_fclx import HandlerAlarmFCLX
 import json
@@ -228,7 +228,8 @@ class Equipment(secsgem.gem.GemHostHandler):
             elif _model == "FCLX":
                 self.alarm_fclx.handle_alarm_fclx(
                     ppname.get(), lot_id.get(), alid, alcd, altx)
-
+        else:
+            logger.warning("Unknown equipment model")
         # if self.equipment_model in ["FCL", "FCLX"]:
         #     if self.equipment_model == "FCL":
         #         s2f4 = self.send_and_waitfor_response(
@@ -261,8 +262,8 @@ class Equipment(secsgem.gem.GemHostHandler):
             ACKC6.ACCEPTED), packet.header.system)
 
         if self.equipment_model == "FCL":
-            HandlerFcl.handle_s6f11(self, handler, packet)
+            HandlerEventFcl.handle_s6f11(self, handler, packet)
         elif self.equipment_model == "FCLX":
-            HandlerFclx.handle_s6f11(self, handler, packet)
+            HandlerEventFclx.handle_s6f11(self, handler, packet)
         else:
             logger.warning("Unknown equipment model")

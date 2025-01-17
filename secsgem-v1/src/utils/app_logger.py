@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 
@@ -23,10 +24,11 @@ class AppLogger:
                 self.stream = self._open()
                 super().emit(record)
 
-    def __init__(self, log_dir='logs', log_file='app.log'):
+    def __init__(self, log_dir='logs'):
         # Initialize logger configuration
+        self.date = datetime.datetime.now().strftime('%Y-%m-%d')
         self.log_dir = log_dir
-        self.log_file = log_file
+        self.log_file = f"app-{self.date}.log"
         self.logger = self.setup_logger()
 
     def setup_logger(self):

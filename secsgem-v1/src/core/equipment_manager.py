@@ -8,7 +8,7 @@ import secsgem.secs
 from src.gem.equipment_hsms import Equipment
 from src.mqtt.mqtt_client_wrapper import MqttClient
 from src.config.config import EQ_CONFIG_PATH
-
+from src.core.recipe import get_recipe_store, save_recipe_store
 logger = logging.getLogger("app_logger")
 
 
@@ -545,5 +545,90 @@ class EquipmentManager:
                 except Exception as e:
                     logger.error("Error disabling collection events: %s", e)
                     return "Error disabling collection events: %s", e
+        logger.info("Equipment %s does not exist.", equipment_name)
+        return f"Equipment does not exist. {equipment_name}"
+
+    def send_recipe_to_equipment(self, equipment_name: str, recipe_name: str):
+        """
+        Send recipe to the specified equipment.
+        Args:
+            equipment_name (str): Name of the equipment.
+            recipe_name (str): Recipe to send.
+        Sample: send_recipe TNF-01 "RECIPE"
+        """
+        logger.info("Sending recipe to equipment %s.", equipment_name)
+        for equipment in self.equipments:
+            if equipment.equipment_name == equipment_name:
+                try:
+                    recipe_data = get_recipe_store(equipment_name, recipe_name)
+                    if "error" in recipe_data:
+                        return recipe_data["error"]
+
+                    ppbody = secsgem.secs.variables.SecsVarBinary(
+                        recipe_data["recipe_data"])
+                    s7f4 = equipment.send_and_waitfor_response(
+                        equipment.stream_function(7, 3)(
+                            {"PPID": recipe_name, "PPBODY": ppbody})
+                    )
+
+                    decode_s7f4 = equipment.secs_decode(s7f4)
+                    print(decode_s7f4.__dir__)
+                    rsp_code = {0x0: "Accepted", 0x1: "Permission not granted", 0x2: "length error", 0x3: "matrix overflow",
+                                0x4: "PPID not found", 0x5: "unsupported mode", 0x6: "initiated for asynchronous completion", 0x7: "storage limit error"}
+
+                    if decode_s7f4.get() == 0:
+                        logger.info("Recipe sent successfully.")
+                        return True
+                    logger.info("Error sending recipe: %s", rsp_code.get(
+                        decode_s7f4.get(), "unknown"))
+                    return rsp_code.get(decode_s7f4.get(), "unknown")
+                except Exception as e:
+                    logger.error("Error sending recipe: %s", e)
+                    return "Error sending recipe: %s", e
+        logger.info("Equipment %s does not exist.", equipment_name)
+        return f"Equipment does not exist. {equipment_name}"
+
+    def request_recipe_from_equipment(self, equipment_name: str, recipe_name: str = None):
+        """
+        Request recipe from the specified equipment.
+        Args:
+            equipment_name (str): Name of the equipment.
+            recipe_name (str): Recipe to request.
+            Sample: request_recipe TNF-01 "RECIPE"
+        Usage: request_recipe <equipment_name> [<recipe_name>]  
+        Returns:
+            - Recipe data if recipe_name is provided
+            - Recipe list if recipe_name is not provided  
+        """
+        logger.info("Requesting recipe from equipment %s.", equipment_name)
+        for equipment in self.equipments:
+            if equipment.equipment_name == equipment_name:
+                try:
+                    if recipe_name:
+                        s7f6 = equipment.send_and_waitfor_response(
+                            equipment.stream_function(7, 5)(recipe_name)
+                        )
+
+                        decode_s7f6 = equipment.secs_decode(s7f6)
+                        ppid, ppbody = decode_s7f6
+
+                        if ppid.get() is None or ppbody.get() is None:
+                            logger.error(
+                                "Received null ppbody from equipment %s", equipment_name)
+                            return f"Received null from equipment : {equipment_name}"
+
+                        save_recipe_store(
+                            equipment_name, ppid.get(), ppbody.get())
+                        return True
+                    else:
+                        s7f20 = equipment.send_and_waitfor_response(
+                            equipment.stream_function(7, 19)()
+                        )
+                        decode_s7f20 = equipment.secs_decode(s7f20).get()
+                        return decode_s7f20
+
+                except Exception as e:
+                    logger.error("Error requesting recipe: %s", e)
+                    return "Error requesting recipe: %s", e
         logger.info("Equipment %s does not exist.", equipment_name)
         return f"Equipment does not exist. {equipment_name}"

@@ -10,6 +10,7 @@ from src.core.equipment_manager import EquipmentManager
 
 from secsgem.secs.variables import SecsVarList
 from src.gem.equipment_hsms import Equipment
+import src.core.recipe as recipe
 logger = logging.getLogger("app_logger")
 
 
@@ -453,6 +454,8 @@ class CommandCli(cmd.Cmd):
     def do_send_sf(self, arg: str):
         """
         Send Stream Function.
+        Args:
+            arg (str): Command-line argument string containing equipment name, stream, function, and parameters.
         Usage: send_sf <equipment_name> <stream> <function> <params>
         """
         print("Sending Stream Function")
@@ -500,3 +503,99 @@ class CommandCli(cmd.Cmd):
                     return
 
         print(f"Equipment {equipment_name} not found.")
+
+    def do_get_recipe_store(self, arg: str):
+        """
+        Get recipe store.
+        Usage: get_recipe_store <equipment_name> [<recipe_name>]
+        Return:
+        - Recipe data if recipe_name is provided
+        - List of recipes if recipe_name is not provided
+        """
+        print("Getting recipe store")
+        arg = arg.split(maxsplit=1)
+        if len(arg) < 1:
+            print("Invalid number of arguments")
+            print("Usage: get_recipe_store <equipment_name> [<recipe_name>]")
+            return
+        try:
+            equipment_name = arg[0]
+            recipe_name = arg[1] if len(arg) > 1 else None
+            rec_receive = recipe.get_recipe_store(equipment_name, recipe_name)
+
+            if isinstance(rec_receive, list):
+                for rec in rec_receive:
+                    print(rec)
+                return
+            else:
+                print(rec_receive)
+                return
+        except ValueError:
+            print("Invalid argument type")
+            return
+
+    def do_send_recipe(self, arg: str):
+        """
+        Send recipe to equipment.
+        Usage: send_recipe <equipment_name> <recipe_name>
+        """
+        print("Sending recipe")
+        arg = arg.split(maxsplit=1)
+        if len(arg) != 2:
+            print("Invalid number of arguments")
+            print("Usage: send_recipe <equipment_name> <recipe_name>")
+            return
+        try:
+            equipment_name, recipe_name = arg
+            rsp = self.eq_manager.send_recipe_to_equipment(
+                equipment_name, recipe_name)
+            if not isinstance(rsp, bool):
+                print(rsp)
+                return
+        except ValueError:
+            print("Invalid argument type")
+            return
+
+    def do_request_recipe(self, arg: str):
+        """
+        Request recipe from equipment.
+        Usage: request_recipe <equipment_name> <recipe_name>
+        """
+        print("Requesting recipe")
+        # arg = arg.split(maxsplit=1)
+        # if len(arg) != 2:
+        #     print("Invalid number of arguments")
+        #     print("Usage: request_recipe <equipment_name> <recipe_name>")
+        #     return
+        # try:
+        #     equipment_name, recipe_name = arg
+        #     rsp = self.eq_manager.request_recipe_from_equipment(
+        #         equipment_name, recipe_name)
+        #     if not isinstance(rsp, bool):
+        #         print(rsp)
+        #         return
+        # except ValueError:
+        #     print("Invalid argument type")
+        #     return
+
+        arg = arg.split(maxsplit=1)
+        if len(arg) < 1:
+            print("Invalid number of arguments")
+            print("Usage: get_recipe_store <equipment_name> [<recipe_name>]")
+            return
+        try:
+            equipment_name = arg[0]
+            recipe_name = arg[1] if len(arg) > 1 else None
+            rec_receive = self.eq_manager.request_recipe_from_equipment(
+                equipment_name, recipe_name)
+
+            if isinstance(rec_receive, list):
+                for rec in rec_receive:
+                    print(rec)
+                return
+            else:
+                print(rec_receive)
+                return
+        except ValueError:
+            print("Invalid argument type")
+            return

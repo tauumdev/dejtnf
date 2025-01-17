@@ -70,7 +70,7 @@ def fclx_vid():
     return vid_code
 
 
-class HandlerFclx:
+class HandlerEventFclx:
 
     def handle_s6f11(self, handler: 'Equipment', message: HsmsPacket):
 

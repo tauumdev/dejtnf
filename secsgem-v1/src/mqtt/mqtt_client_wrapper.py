@@ -25,7 +25,7 @@ class MqttClient:
         self.client = mqtt.Client()
         self.client.enable_logger(logger)
         self.client.on_connect = self.on_connect
-        self.client.on_message = MqttMessageHandler().on_message
+        self.client.on_message = MqttMessageHandler(self).on_message
         self.client.on_disconnect = self.on_disconnect
 
         if ENABLE_MQTT:
