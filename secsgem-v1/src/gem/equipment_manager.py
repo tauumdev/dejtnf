@@ -550,6 +550,22 @@ class EquipmentManager:
         logger.info("Equipment %s does not exist.", equipment_name)
         return f"Equipment does not exist. {equipment_name}"
 
+    # recipe manager
+    def list_recipes(self, equipment_name: str, recipe_name: str = None):
+        """
+        List all recipes in the specified equipment.
+        Args:
+            equipment_name (str): Name of the equipment.
+            recipe_name (str): Recipe to list.
+        Sample: list_recipes TNF-01 "RECIPE"
+        """
+        logger.info("Listing recipes from equipment %s.", equipment_name)
+        try:
+            return get_current_recipes(equipment_name, recipe_name)
+        except Exception as e:
+            logger.error("Error listing recipes: %s", e)
+            return "Error listing recipes: %s", e
+
     def send_recipe_to_equipment(self, equipment_name: str, recipe_name: str):
         """
         Send recipe to the specified equipment.
@@ -635,19 +651,3 @@ class EquipmentManager:
                     return "Error requesting recipe: %s", e
         logger.info("Equipment %s does not exist.", equipment_name)
         return f"Equipment does not exist. {equipment_name}"
-
-    # recipe manager
-    def list_recipes(self, equipment_name: str, recipe_name: str = None):
-        """
-        List all recipes in the specified equipment.
-        Args:
-            equipment_name (str): Name of the equipment.
-            recipe_name (str): Recipe to list.
-        Sample: list_recipes TNF-01 "RECIPE"
-        """
-        logger.info("Listing recipes from equipment %s.", equipment_name)
-        try:
-            return get_current_recipes(equipment_name, recipe_name)
-        except Exception as e:
-            logger.error("Error listing recipes: %s", e)
-            return "Error listing recipes: %s", e
