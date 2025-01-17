@@ -8,7 +8,7 @@ import secsgem.secs
 from src.gem.equipment_hsms import Equipment
 from src.mqtt.mqtt_client_wrapper import MqttClient
 from src.config.config import EQ_CONFIG_PATH
-from src.core.recipe import get_recipe_store, save_recipe_store
+from src.core.recipe_manager import get_recipe_store, save_recipe_store
 logger = logging.getLogger("app_logger")
 
 
@@ -75,6 +75,7 @@ class EquipmentManager:
 
         return True
 
+    # config equipment
     def list_equipments(self):
         """
         List all equipment instances.
@@ -263,6 +264,7 @@ class EquipmentManager:
             logger.error("Error saving equipment: %s", e)
             return "Error saving equipment: %s", e
 
+    # control equipment
     def enable_equipment(self, equipment_name: str):
         """
         Enable an equipment instance.
@@ -387,7 +389,7 @@ class EquipmentManager:
         logger.info(msg)
         return msg
 
-####################################################################################################
+    # secs control
 
     def send_remote_command(self, equipment_name: str, rcmd: int | str, params: list[str]):
         """

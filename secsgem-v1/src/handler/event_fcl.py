@@ -72,6 +72,9 @@ def fcl_vid():
 
 class HandlerEventFcl:
 
+    def __init__(self, equipment: 'Equipment'):
+        self.equipment = equipment
+
     def handle_s6f11(self, handler: 'Equipment', message: HsmsPacket):
 
         # logger.info("FCL Handling s6f11")

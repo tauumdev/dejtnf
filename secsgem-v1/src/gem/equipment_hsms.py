@@ -8,13 +8,12 @@ import secsgem.secs
 from secsgem.secs.dataitems import ACKC6, ACKC5
 from secsgem.hsms.packets import HsmsPacket
 
-from src.gem.custom_streamfunction import SecsS02F49, SecsS02F50
 from src.mqtt.mqtt_client_wrapper import MqttClient
+from src.gem.custom_streamfunction import SecsS02F49, SecsS02F50
 from src.handler.event_fcl import HandlerEventFcl
 from src.handler.event_fclx import HandlerEventFclx
 from src.handler.alarm_fcl import HandlerAlarmFCL
 from src.handler.alarm_fclx import HandlerAlarmFCLX
-import json
 
 logger = logging.getLogger("app_logger")
 
@@ -54,6 +53,9 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.register_stream_function(9, 11, self.s09f11)
 
         self.mqtt_client = mqtt_client
+
+        self.event_fcl = HandlerEventFcl(self)
+        self.event_fclx = HandlerEventFclx(self)
 
         self.alarm_fcl = HandlerAlarmFCL(self)
         self.alarm_fclx = HandlerAlarmFCLX(self)
@@ -199,12 +201,9 @@ class Equipment(secsgem.gem.GemHostHandler):
         Handle S5F1
         """
 
+        # first response
         self.send_response(self.stream_function(5, 2)(
             ACKC5.ACCEPTED), packet.header.system)
-
-        # logger.info("Lot ID: %s, PPName: %s", lot_id.get(), ppname.get())
-
-        # logger.info("Receive S5F1. %s", self.equipment_name)
 
         s5f1 = self.secs_decode(packet)
         alid = s5f1.ALID.get()
@@ -217,42 +216,24 @@ class Equipment(secsgem.gem.GemHostHandler):
         _model = self.equipment_model
         if _model in ['FCL', 'FCLX']:
             _vid = vid[_model]
+            # Get PPName and Lot on operate
             s2f4 = self.send_and_waitfor_response(
                 self.stream_function(1, 3)(_vid))
             decode_s2f4 = self.secs_decode(s2f4)
+
             lot_id, ppname = decode_s2f4
 
             if _model == "FCL":
+                # handle alarm for FCL
                 self.alarm_fcl.handle_alarm_fcl(
                     ppname.get(), lot_id.get(), alid, alcd, altx)
             elif _model == "FCLX":
+                # handle alarm for FCLX
                 self.alarm_fclx.handle_alarm_fclx(
                     ppname.get(), lot_id.get(), alid, alcd, altx)
         else:
-            logger.warning("Unknown equipment model")
-        # if self.equipment_model in ["FCL", "FCLX"]:
-        #     if self.equipment_model == "FCL":
-        #         s2f4 = self.send_and_waitfor_response(
-        #             self.stream_function(1, 3)([82, 33]))
-        #         decode_s2f4 = self.secs_decode(s2f4)
-        #         lot_id, ppname = decode_s2f4
-
-        #     # Get PPName and Lot on operate
-
-        #     s2f4 = self.send_and_waitfor_response(
-        #         self.stream_function(1, 3)([82, 33]))
-        #     decode_s2f4 = self.secs_decode(s2f4)
-        #     lot_id, ppname = decode_s2f4
-
-        # if self.equipment_model == "FCL":
-
-        #     self.alarm_fcl.handle_alarm_fcl(
-        #         ppname.get(), lot_id.get(), alid, alcd, altx)
-
-        # msg = json.dumps({"ALID": alid, "ALCD": alcd, "ALTX": altx})
-        # logger.info("%s Alarm: %s", self.equipment_name, msg)
-        # self.mqtt_client.client.publish(
-        #     f"equipments/status/alarm/{self.equipment_name}", msg, qos=1, retain=True)
+            logger.warning("Unknown equipment model for %s",
+                           self.equipment_model)
 
     def _on_s06f11(self, handler, packet: HsmsPacket):
         """
@@ -262,8 +243,11 @@ class Equipment(secsgem.gem.GemHostHandler):
             ACKC6.ACCEPTED), packet.header.system)
 
         if self.equipment_model == "FCL":
-            HandlerEventFcl.handle_s6f11(self, handler, packet)
+            # HandlerEventFcl.handle_s6f11(self, handler, packet)
+            self.event_fcl.handle_s6f11(handler, packet)
         elif self.equipment_model == "FCLX":
-            HandlerEventFclx.handle_s6f11(self, handler, packet)
+            # HandlerEventFclx.handle_s6f11(self, handler, packet)
+            self.event_fclx.handle_s6f11(handler, packet)
         else:
-            logger.warning("Unknown equipment model")
+            logger.warning("Unknown equipment model for %s",
+                           self.equipment_model)

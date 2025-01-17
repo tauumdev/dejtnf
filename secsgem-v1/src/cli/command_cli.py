@@ -10,7 +10,7 @@ from src.core.equipment_manager import EquipmentManager
 
 from secsgem.secs.variables import SecsVarList
 from src.gem.equipment_hsms import Equipment
-import src.core.recipe as recipe
+import src.core.recipe_manager as recipe
 logger = logging.getLogger("app_logger")
 
 
