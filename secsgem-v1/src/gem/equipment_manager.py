@@ -8,7 +8,7 @@ import secsgem.secs
 from src.gem.equipment_hsms import Equipment
 from src.mqtt.mqtt_client_wrapper import MqttClient
 from src.config.config import EQ_CONFIG_PATH
-from src.gem.recipe_manager import get_recipes, save_recipe
+from src.gem.recipe_manager import get_current_recipes, save_recipe
 logger = logging.getLogger("app_logger")
 
 
@@ -343,7 +343,8 @@ class EquipmentManager:
                         else:
                             return rsp_msg
                     else:
-                        msg = f"Equipment {equipment_name} is disabled. Enable it first."
+                        msg = f"Equipment {
+                            equipment_name} is disabled. Enable it first."
                         logger.info(msg)
                         return msg
                 except Exception as e:
@@ -377,7 +378,8 @@ class EquipmentManager:
                         else:
                             return rsp_msg
                     else:
-                        msg = f"Equipment {equipment_name} is disabled. Enable it first."
+                        msg = f"Equipment {
+                            equipment_name} is disabled. Enable it first."
                         logger.info(msg)
                         return msg
                 except Exception as e:
@@ -560,7 +562,8 @@ class EquipmentManager:
         for equipment in self.equipments:
             if equipment.equipment_name == equipment_name:
                 try:
-                    recipe_data = get_recipes(equipment_name, recipe_name)
+                    recipe_data = get_current_recipes(
+                        equipment_name, recipe_name)
                     if "error" in recipe_data:
                         return recipe_data["error"]
 
@@ -644,7 +647,7 @@ class EquipmentManager:
         """
         logger.info("Listing recipes from equipment %s.", equipment_name)
         try:
-            return get_recipes(equipment_name, recipe_name)
+            return get_current_recipes(equipment_name, recipe_name)
         except Exception as e:
             logger.error("Error listing recipes: %s", e)
             return "Error listing recipes: %s", e

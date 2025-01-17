@@ -384,26 +384,28 @@ class Control(cmd.Cmd):
             print("Invalid argument type")
             return
 
-    # recipe management
-    def do_get_recipes(self, arg: str):
+    # recipe management on server
+    def do_get_current_recipes(self, arg: str):
         """
-        Get recipe store.
-        Usage: get_recipes <equipment_name> [<recipe_name>]
-        Sample: get_recipes TNF-01
+        Get current recipes recipe store.
+        Usage: do_get_current_recipes <equipment_name> [<recipe_name>]
+        Sample: do_get_current_recipes TNF-01
         Return:
         - Recipe data if recipe_name is provided
         - List of recipes if recipe_name is not provided
         """
-        print("Getting recipe store")
+        print("Getting current recipe store")
         arg = arg.split(maxsplit=1)
         if len(arg) < 1:
             print("Invalid number of arguments")
-            print("Usage: get_recipes <equipment_name> [<recipe_name>]")
+            print(
+                "Usage: do_get_current_recipes <equipment_name> [<recipe_name>]")
             return
         try:
             equipment_name = arg[0]
             recipe_name = arg[1] if len(arg) > 1 else None
-            rec_receive = recipe.get_recipes(equipment_name, recipe_name)
+            rec_receive = recipe.get_current_recipes(
+                equipment_name, recipe_name)
 
             if isinstance(rec_receive, list):
                 for rec in rec_receive:
@@ -416,6 +418,66 @@ class Control(cmd.Cmd):
             print("Invalid argument type")
             return
 
+    def do_get_upload_recipes(self, arg: str):
+        """
+        Get upload recipes recipe store.
+        Usage: do_get_upload_recipes <equipment_name> [<recipe_name>]
+        Sample: do_get_upload_recipes TNF-01
+        Return:
+        - Recipe data if recipe_name is provided
+        - List of recipes if recipe_name is not provided
+        """
+        print("Getting upload recipe store")
+        arg = arg.split(maxsplit=1)
+        if len(arg) < 1:
+            print("Invalid number of arguments")
+            print(
+                "Usage: do_get_upload_recipes <equipment_name> [<recipe_name>]")
+            return
+        try:
+            equipment_name = arg[0]
+            recipe_name = arg[1] if len(arg) > 1 else None
+            rec_receive = recipe.get_upload_recipes(
+                equipment_name, recipe_name)
+
+            if isinstance(rec_receive, list):
+                for rec in rec_receive:
+                    print(rec)
+                return
+            else:
+                print(rec_receive)
+                return
+        except ValueError:
+            print("Invalid argument type")
+            return
+
+    def do_get_recipe_version(self, arg: str):
+        """
+        Get recipe version from server.
+        Usage: get_recipe_version <equipment_name> <recipe_name>
+        Sample: get_recipe_version TNF-01 recipe1
+        """
+        print("Getting recipe version")
+        arg = arg.split(maxsplit=1)
+        if len(arg) < 1:
+            print("Invalid number of arguments")
+            print("Usage: get_recipe_version <equipment_name> <recipe_name>")
+            return
+        try:
+            equipment_name = arg[0]
+            recipe_name = arg[1] if len(arg) > 1 else None
+
+            _recipe = recipe.get_upload_recipes(equipment_name, recipe_name)
+            ppid = _recipe["recipe_name"]
+            ppbody = _recipe["recipe_data"]
+            print(type(ppbody))
+            rsp = recipe.get_version_receipe(ppbody)
+            print(rsp)
+        except ValueError:
+            print("Invalid argument type")
+            return
+
+    # recipe management from equipment
     def do_send_recipe(self, arg: str):
         """
         Send recipe to equipment.
@@ -468,53 +530,6 @@ class Control(cmd.Cmd):
                 print(rec_receive)
                 # recipe.save_recipe(equipment_name, rec_receive)
                 return
-        except ValueError:
-            print("Invalid argument type")
-            return
-
-    # remote command
-    def do_rcmd(self, arg: str):
-        """
-        Send a remote command to an equipment instance.
-        Usage: rcmd <equipment_name> <rcmd> <params>
-
-        Args:
-            arg (str): Command-line argument string containing equipment name, rcmd, and parameters.
-
-        Sample: rcmd TNF-61 LOT_ACCEPT LotID=123456
-        """
-        print("Sending remote command")
-
-        args = arg.split()
-        if len(args) < 2:
-            print("Invalid number of arguments")
-            print("Usage: rcmd <equipment_name> <rcmd> <key=value ...>")
-            return
-
-        equipment_name = args[0]
-        rcmd = args[1]
-        params = []
-
-        # Parse parameters into a list of lists
-        for param in args[2:]:
-            if '=' in param:
-                key, value = param.split('=', 1)
-                params.append([key, value])  # Convert to list format
-            else:
-                print(f"Invalid parameter format: {param}")
-                return
-        print("Parsed command: equipment_name={}, rcmd={}, params={}".format(
-            equipment_name, rcmd, params
-        ))
-        try:
-            # Send the command
-            rsp = self.eq_manager.send_remote_command(
-                equipment_name, rcmd, params)
-
-            if rsp is not True:
-                print(rsp)
-                return
-            print("Remote command sent successfully.", equipment_name)
         except ValueError:
             print("Invalid argument type")
             return
@@ -603,6 +618,53 @@ class Control(cmd.Cmd):
                     return
 
         print(f"Equipment {equipment_name} not found.")
+
+    # remote command
+    def do_rcmd(self, arg: str):
+        """
+        Send a remote command to an equipment instance.
+        Usage: rcmd <equipment_name> <rcmd> <params>
+
+        Args:
+            arg (str): Command-line argument string containing equipment name, rcmd, and parameters.
+
+        Sample: rcmd TNF-61 LOT_ACCEPT LotID=123456
+        """
+        print("Sending remote command")
+
+        args = arg.split()
+        if len(args) < 2:
+            print("Invalid number of arguments")
+            print("Usage: rcmd <equipment_name> <rcmd> <key=value ...>")
+            return
+
+        equipment_name = args[0]
+        rcmd = args[1]
+        params = []
+
+        # Parse parameters into a list of lists
+        for param in args[2:]:
+            if '=' in param:
+                key, value = param.split('=', 1)
+                params.append([key, value])  # Convert to list format
+            else:
+                print(f"Invalid parameter format: {param}")
+                return
+        print("Parsed command: equipment_name={}, rcmd={}, params={}".format(
+            equipment_name, rcmd, params
+        ))
+        try:
+            # Send the command
+            rsp = self.eq_manager.send_remote_command(
+                equipment_name, rcmd, params)
+
+            if rsp is not True:
+                print(rsp)
+                return
+            print("Remote command sent successfully.", equipment_name)
+        except ValueError:
+            print("Invalid argument type")
+            return
 
 
 class CommandCli(cmd.Cmd):

@@ -8,21 +8,29 @@ logger = logging.getLogger("app_logger")
 path = "files/recipes"
 
 
-# def get_version_receipe(ppbody: str):
-#     """
-#     Get version of recipe
-#     Args:
-#     - recipe: str
-#     """
-#     try:
-#         _hml = ET.fromstring(ppbody.decode("utf-8"))
-#         _version = _html.
-#     except Exception as e:
-#         logger.warning(f"Error in get_version_receipe: {e}")
-#         return None
+def get_version_receipe(ppbody: str):
+    """
+    Get version of recipe
+    Args:
+    - recipe: str
+    Return:
+    - dict:
+        - ppid: str
+        - version: str
+    """
+    try:
+        # _hml = ET.fromstring(ppbody.decode("utf-8"))
+        logger.info(ppbody)
+        _hml = ET.fromstring(ppbody)
+        _ppid = _hml.attrib["id"]
+        _version = _hml.attrib["revision"]
+        return {"ppid": _ppid, "version": _version}
+    except Exception as e:
+        logger.warning(f"Error in get_version_receipe: {e}")
+        return None
 
 
-def get_recipes(equipment_name: str, recipe_name: str = None):
+def get_current_recipes(equipment_name: str, recipe_name: str = None):
     """
     Get recipe store
     Args:
@@ -32,6 +40,26 @@ def get_recipes(equipment_name: str, recipe_name: str = None):
 
     try:
         equipment_path = os.path.join(path, equipment_name + "/" + "current")
+        if not os.path.exists(equipment_path):
+            return {"error": "Equipment not found"}
+        if recipe_name is not None:
+            with open(os.path.join(equipment_path, recipe_name), "r") as f:
+                return {"recipe_name": recipe_name, "recipe_data": f.read()}
+        return [f for f in os.listdir(equipment_path) if os.path.isfile(os.path.join(equipment_path, f))]
+    except Exception as e:
+        logger.warning(f"Error in get_recipe_store: {e}")
+        return {"error": "Error in get_recipe_store"}
+
+
+def get_upload_recipes(equipment_name: str, recipe_name: str = None):
+    """
+    Get recipe store
+    Args:
+    - equipment_name: str
+    - recipe_name: str if not None, get data recipe by name else get all recipes in equipment
+    """
+    try:
+        equipment_path = os.path.join(path, equipment_name + "/" + "upload")
         if not os.path.exists(equipment_path):
             return {"error": "Equipment not found"}
         if recipe_name is not None:
