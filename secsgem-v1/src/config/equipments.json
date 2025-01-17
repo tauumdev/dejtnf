@@ -34,6 +34,15 @@
             "port": 5000,
             "session_id": 61,
             "active": true,
+            "enable": false
+        },
+        {
+            "equipment_name": "TNF-70",
+            "equipment_model": "FCLX",
+            "address": "192.168.226.8",
+            "port": 5000,
+            "session_id": 70,
+            "active": true,
             "enable": true
         }
     ]

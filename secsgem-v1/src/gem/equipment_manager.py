@@ -343,8 +343,7 @@ class EquipmentManager:
                         else:
                             return rsp_msg
                     else:
-                        msg = f"Equipment {
-                            equipment_name} is disabled. Enable it first."
+                        msg = f"Equipment {equipment_name} is disabled. Enable it first."
                         logger.info(msg)
                         return msg
                 except Exception as e:
@@ -378,8 +377,7 @@ class EquipmentManager:
                         else:
                             return rsp_msg
                     else:
-                        msg = f"Equipment {
-                            equipment_name} is disabled. Enable it first."
+                        msg = f"Equipment {equipment_name} is disabled. Enable it first."
                         logger.info(msg)
                         return msg
                 except Exception as e:
@@ -620,7 +618,7 @@ class EquipmentManager:
                             return f"Received null from equipment : {equipment_name}"
 
                         save_recipe(
-                            equipment_name, ppid.get(), ppbody.get())
+                            equipment_name, ppid.get(), ppbody.get().decode("utf-8"))
                         return True
                     else:
                         s7f20 = equipment.send_and_waitfor_response(

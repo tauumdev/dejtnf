@@ -310,7 +310,9 @@ class HandlerEventFclx:
                     if rptid.get() == 2000:  # collection scan lot
                         logger.info("Scan lot %s, %s", lot_id.get(),
                                     self.equipment.equipment_name)
-                        handler.send_remote_command(addlot_fclx(lot_id.get()))
+                        # handler.send_remote_command(addlot_fclx(lot_id.get()))
+                        handler.send_and_waitfor_response(
+                            handler.stream_function(2, 49)(addlot_fclx(lot_id.get())))
                     elif rptid.get() == 2001:  # collection open lot
                         logger.info("Open lot %s, %s", lot_id.get(),
                                     self.equipment.equipment_name)

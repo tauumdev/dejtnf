@@ -543,8 +543,8 @@ class Control(cmd.Cmd):
                 print(f"S{stream}F{function} not found.")
                 return
 
-            print(f"Found Stream Function:\nName: {
-                sf.__name__}\nDocumentation: {sf.__doc__}")
+            print(
+                f"Found Stream Function:\nName: {sf.__name__}\nDocumentation: {sf.__doc__}")
 
         except ValueError:
             print("Invalid argument type")
@@ -583,8 +583,8 @@ class Control(cmd.Cmd):
                 sf = equipment.secsStreamsFunctions.get(
                     stream, {}).get(function)
                 if sf and getattr(sf, '_toEquipment', False):
-                    print(f"Sending S{stream}F{function} Params: {
-                          params} to {equipment_name}")
+                    print(
+                        f"Sending S{stream}F{function} Params: {params} to {equipment_name}")
                     params = [params] if isinstance(params, int) else params
                     try:
                         rsp = equipment.send_and_waitfor_response(
@@ -598,8 +598,8 @@ class Control(cmd.Cmd):
                     print(f"S{stream}F{function} not found.")
                     return
                 else:
-                    print(f"_toEquipment is False for S{
-                          stream}F{function}, skipping request.")
+                    print(
+                        f"_toEquipment is False for S{stream}F{function}, skipping request.")
                     return
 
         print(f"Equipment {equipment_name} not found.")

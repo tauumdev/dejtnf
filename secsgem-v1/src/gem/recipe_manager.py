@@ -8,18 +8,18 @@ logger = logging.getLogger("app_logger")
 path = "files/recipes"
 
 
-def get_version_receipe(ppbody: str):
-    """
-    Get version of recipe
-    Args:
-    - recipe: str
-    """
-    try:
-        _hml = ET.fromstring(ppbody.decode("utf-8"))
-        _version = _html.
-    except Exception as e:
-        logger.warning(f"Error in get_version_receipe: {e}")
-        return None
+# def get_version_receipe(ppbody: str):
+#     """
+#     Get version of recipe
+#     Args:
+#     - recipe: str
+#     """
+#     try:
+#         _hml = ET.fromstring(ppbody.decode("utf-8"))
+#         _version = _html.
+#     except Exception as e:
+#         logger.warning(f"Error in get_version_receipe: {e}")
+#         return None
 
 
 def get_recipes(equipment_name: str, recipe_name: str = None):

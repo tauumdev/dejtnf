@@ -211,7 +211,7 @@ class Equipment(secsgem.gem.GemHostHandler):
         altx = s5f1.ALTX.get().strip()
 
         # define vid for FCL and FCLX
-        vid = {'FCL': [82, 33], 'FCLX': [7, 40]}
+        vid = {'FCL': [82, 33], 'FCLX': [3081, 7]}
 
         _model = self.equipment_model
         if _model in ['FCL', 'FCLX']:

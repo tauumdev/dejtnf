@@ -179,8 +179,7 @@ class MqttMessageHandler:
 
                 rsp = eq_manager.send_remote_command(
                     machine_name, rcmd="LOT_ACCEPT", params=[["LotID", "123456"]])
-                rsp_msg = f"Equipment {
-                    machine_name} send remote command. response: {rsp}"
+                rsp_msg = f"Equipment {machine_name} send remote command. response: {rsp}"
                 client.publish(rsp_topic_control, rsp_msg)
 
         else:
