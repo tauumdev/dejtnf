@@ -102,12 +102,11 @@ class HandlerEventFcl:
                     lot_id, ppname = values
                     if rptid.get() == 1000:
                         print("Lot validate: ", lot_id.get())
-                        # handler.send_remote_command(
-                        #     rcmd="LOT_ACCEPT", params=[["LotID", lot_id.get()]])
                         handler.send_and_waitfor_response(
-                            handler.stream_function(2, 41)(acceptlot_fcl)
+                            handler.stream_function(2, 41)(acceptlot_fcl(lot_id.get()))
                         )
                     elif rptid.get() == 1001:
                         logger.info("Lot open: %s", lot_id.get())
                     elif rptid.get() == 1002:
                         print("Lot closed: ", lot_id.get())
+
