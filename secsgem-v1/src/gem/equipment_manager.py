@@ -1,6 +1,7 @@
 import ipaddress
 import json
 import logging
+import os
 import secsgem.gem
 import secsgem.hsms
 import secsgem.secs
@@ -33,13 +34,23 @@ class EquipmentManager:
         self.equipments: list[Equipment] = []
         self.mqtt_client = mqtt_client_instance
 
-        with open(EQ_CONFIG_PATH, "r", encoding="utf-8") as f:
-            eq_configs = json.load(f)
-            for eq_config in eq_configs.get("equipments", []):
-                # Initialize equipment instances here
-                self.init_equipment(eq_config)
+        try:
+            with open(EQ_CONFIG_PATH, "r", encoding="utf-8") as f:
+                eq_configs = json.load(f)
+                for eq_config in eq_configs.get("equipments", []):
+                    # Initialize equipment instances here
+                    self.init_equipment(eq_config)
 
-        mqtt_client_instance.client.user_data_set(self)
+            mqtt_client_instance.client.user_data_set(self)
+        except FileNotFoundError:
+            logger.error("Equipment configuration file not found.")
+            logger.info(
+                "Creating a new equipment configuration file. at %s", EQ_CONFIG_PATH)
+            os.makedirs(os.path.dirname(EQ_CONFIG_PATH), exist_ok=True)
+            logger.info("Please add equipment configurations to the new file.")
+        except json.JSONDecodeError as e:
+            logger.error(
+                "Failed to parse JSON in equipment configuration: %s", e)
 
     def init_equipment(self, eq_config: dict):
         """
@@ -343,8 +354,7 @@ class EquipmentManager:
                         else:
                             return rsp_msg
                     else:
-                        msg = f"Equipment {
-                            equipment_name} is disabled. Enable it first."
+                        msg = f"Equipment {equipment_name} is disabled. Enable it first."
                         logger.info(msg)
                         return msg
                 except Exception as e:
@@ -378,8 +388,7 @@ class EquipmentManager:
                         else:
                             return rsp_msg
                     else:
-                        msg = f"Equipment {
-                            equipment_name} is disabled. Enable it first."
+                        msg = f"Equipment {equipment_name} is disabled. Enable it first."
                         logger.info(msg)
                         return msg
                 except Exception as e:

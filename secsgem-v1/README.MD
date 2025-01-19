@@ -44,4 +44,15 @@ secsgem-v1
         ├── config_loader.py
         ├── gem_logger.py
 
+handler scan lot fclx
+- check recipe
+- check lot active on machine
+- check lot plan on machine
+- get lot details
 
+handler pp-select
+- read config pkg_code
+- send ppbody to equipment
+- select recipe
+- delete old recipe
+- 

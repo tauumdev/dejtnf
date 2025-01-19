@@ -144,7 +144,6 @@ class Equipment(secsgem.gem.GemHostHandler):
                     self.equipment_name, current_state)
         self.mqtt_client.client.publish(
             f"equipments/status/communication_state/{self.equipment_name}", current_state, qos=1, retain=True)
-        # return super().on_connection_closed(connection)
 
     def _on_state_disconnect(self):
         """
@@ -156,7 +155,6 @@ class Equipment(secsgem.gem.GemHostHandler):
                     self.equipment_name, current_state)
         self.mqtt_client.client.publish(
             f"equipments/status/communication_state/{self.equipment_name}", current_state, qos=1, retain=True)
-        # return super()._on_state_disconnect()
 
     def _on_s01f13(self, handler, packet):
         """
@@ -164,7 +162,6 @@ class Equipment(secsgem.gem.GemHostHandler):
         """
         super()._on_s01f13(handler, packet)
         logger.info("Receive S1F13. %s", self.equipment_name)
-        # return super()._on_s01f13(handler, packet)
 
     def s01f14(self, handler, packet: HsmsPacket):
         """
