@@ -1,0 +1,13 @@
+{
+    "equipments": [
+        {
+            "equipment_name": "TNF-61",
+            "equipment_model": "FCL",
+            "address": "192.168.226.161",
+            "port": 5000,
+            "session_id": 61,
+            "active": true,
+            "enable": true
+        }
+    ]
+}

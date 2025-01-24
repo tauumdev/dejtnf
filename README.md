@@ -61,7 +61,7 @@ chmod +x create_project.sh
 ```
 
 ### 2. Install Dependencies
-Create a virtual environment and install dependencies:
+Create a virtual environment and install depend
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
@@ -171,3 +171,15 @@ MIT License
         - mqtt/response/config
     - mqtt/control
         - mqtt/response/control
+
+create app next
+(.venv) tauum@dev:~/dejtnf$ npx create-next-app@latest next
+✔ Would you like to use TypeScript? … No / Yes
+✔ Would you like to use ESLint? … No / Yes
+✔ Would you like to use Tailwind CSS? … No / Yes
+✔ Would you like your code inside a `src/` directory? … No / Yes
+✔ Would you like to use App Router? (recommended) … No / Yes
+✔ Would you like to use Turbopack for `next dev`? … No / Yes
+✔ Would you like to customize the import alias (`@/*` by default)? … No / Yes
+✔ What import alias would you like configured? … @/*
+Creating a new Next.js app in /home/tauum/dejtnf/next.

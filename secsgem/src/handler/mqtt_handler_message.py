@@ -28,7 +28,8 @@ class MqttMessageHandler:
             eq_manager (EquipmentManager): The user data containing equipment manager.
             message (mqtt.MQTTMessage): The received MQTT message.
         """
-        from src.core.equipment_manager import EquipmentManager
+        # from src.core.equipment_manager import EquipmentManager
+        from src.gem.equipment_manager import EquipmentManager
         # Ensure user data is set correctly and includes "equipments"
         if not isinstance(eq_manager, EquipmentManager):
             logger.error(
@@ -108,7 +109,7 @@ class MqttMessageHandler:
 
     def handler_control_command(self, client: mqtt.Client, eq_manager, message: mqtt.MQTTMessage, topic_parts):
 
-        from src.core.equipment_manager import EquipmentManager
+        from src.gem.equipment_manager import EquipmentManager
         # Ensure user data is set correctly and includes "equipments"
         if not isinstance(eq_manager, EquipmentManager):
             logger.error(
@@ -179,7 +180,8 @@ class MqttMessageHandler:
 
                 rsp = eq_manager.send_remote_command(
                     machine_name, rcmd="LOT_ACCEPT", params=[["LotID", "123456"]])
-                rsp_msg = f"Equipment {machine_name} send remote command. response: {rsp}"
+                rsp_msg = f"Equipment {
+                    machine_name} send remote command. response: {rsp}"
                 client.publish(rsp_topic_control, rsp_msg)
 
         else:
@@ -188,7 +190,7 @@ class MqttMessageHandler:
                            f"Equipment {machine_name} not found.")
 
     def handler_config_command(self, client: mqtt.Client, eq_manager, message: mqtt.MQTTMessage, topic_parts):
-        from src.core.equipment_manager import EquipmentManager
+        from src.gem.equipment_manager import EquipmentManager
         # Ensure user data is set correctly and includes "equipments"
         if not isinstance(eq_manager, EquipmentManager):
             logger.error(

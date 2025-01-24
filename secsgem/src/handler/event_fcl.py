@@ -87,6 +87,8 @@ class HandlerEventFcl:
 
         logger.info("FCL Handle s6f11 CEID: %s Message: %s",
                     ceid.get(), ceid_message)
+        handler.mqtt_client.client.publish(
+            f"equipments/events/{handler.equipment_name}", payload=ceid_message, qos=1, retain=False)
 
         # Publish control state to MQTT
         if ceid.get() in [8, 9, 10]:
@@ -103,10 +105,10 @@ class HandlerEventFcl:
                     if rptid.get() == 1000:
                         print("Lot validate: ", lot_id.get())
                         handler.send_and_waitfor_response(
-                            handler.stream_function(2, 41)(acceptlot_fcl(lot_id.get()))
+                            handler.stream_function(2, 41)(
+                                acceptlot_fcl(lot_id.get()))
                         )
                     elif rptid.get() == 1001:
                         logger.info("Lot open: %s", lot_id.get())
                     elif rptid.get() == 1002:
                         print("Lot closed: ", lot_id.get())
-
