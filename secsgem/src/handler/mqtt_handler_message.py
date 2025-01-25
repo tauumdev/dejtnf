@@ -1,6 +1,8 @@
 import logging
 import paho.mqtt.client as mqtt
 
+from src.validate.validate_add import validateAddEquipment
+
 
 logger = logging.getLogger("app_logger")
 
@@ -51,7 +53,7 @@ class MqttMessageHandler:
                 client.publish("equipments/error/mqtt",
                                f"Unknown command: {topic_parts[2]}")
         elif len(topic_parts) == 3 and topic_parts[0] == "equipments" and topic_parts[1] == "config":
-            if topic_parts[2] in ["help", "list"]:
+            if topic_parts[2] in ["help", "list", "add"]:
                 self.handler_config_command(
                     client, eq_manager, message, topic_parts)
             else:
@@ -186,7 +188,7 @@ class MqttMessageHandler:
 
         else:
             logger.warning("Equipment %s not found.", machine_name)
-            client.publish("equipments/response/error",
+            client.publish(rsp_topic_control,
                            f"Equipment {machine_name} not found.")
 
     def handler_config_command(self, client: mqtt.Client, eq_manager, message: mqtt.MQTTMessage, topic_parts):
@@ -220,6 +222,18 @@ class MqttMessageHandler:
             eq_list = eq_manager.list_equipments()
             client.publish("equipments/response/config/" +
                            topic_parts[2], str(eq_list))
+        elif topic_parts[2] == "add":
+
+            validate_payload = validateAddEquipment(payload)
+
+            if "error" in validate_payload:
+                client.publish(rsp_topic_config, validate_payload["error"])
+                return
+
+            resp = eq_manager.add_equipment(validate_payload["equipment_name"], validate_payload["equipment_model"], validate_payload["address"],
+                                            validate_payload["port"], validate_payload["session_id"], validate_payload["active"], validate_payload["enable"])
+            client.publish("equipments/response/config/" +
+                           topic_parts[2], str(resp))
         else:
             logger.warning("Unknown command: %s", command)
             client.publish(rsp_topic_config, f"Unknown command. {command}")

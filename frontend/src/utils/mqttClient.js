@@ -1,5 +1,5 @@
-import { Client, Message as PahoMessage } from 'paho-mqtt';
-
+// import { Client, Message as PahoMessage } from 'paho-mqtt';
+import { Client } from 'paho-mqtt';
 const MQTT_CONFIG = {
     host: process.env.NEXT_PUBLIC_MQTT_HOST || 'localhost',
     port: parseInt(process.env.NEXT_PUBLIC_MQTT_PORT) || 8081, // Changed to typical MQTT-WS port
@@ -78,7 +78,11 @@ export const subscribe = (topic, callback) => {
             onSuccess: () => {
                 console.log(`Subscribed to ${topic}`);
                 // Send test message to confirm subscription
-                // publish(`${topic}/test`, 'Subscription test');
+
+                let hello_topic = "website/Connection";
+                let hello_payload = "hello from website";
+                client.publish(hello_topic, hello_payload);
+
             },
             onFailure: (error) => {
                 console.error(`Subscribe failed: ${error.errorMessage}`);
@@ -92,11 +96,7 @@ export const subscribe = (topic, callback) => {
 export const publish = (topic, payload) => {
     if (client && client.isConnected()) {
         try {
-            const message = new PahoMessage(payload);
-            message.destinationName = topic;
-            message.qos = 0;
-            message.retained = false;
-            client.send(message);
+            client.send(topic, payload, 0, false);
             console.log('Message sent:', { topic, payload });
         } catch (error) {
             console.error('Failed to send message:', error);
@@ -107,4 +107,18 @@ export const publish = (topic, payload) => {
     }
 };
 
+export const unsubscribe = (topic) => {
+    if (client && client.isConnected()) {
+        client.unsubscribe(topic, {
+            onSuccess: () => {
+                console.log(`Unsubscribed from ${topic}`);
+            },
+            onFailure: (error) => {
+                console.error(`Unsubscribe failed: ${error.errorMessage}`);
+            }
+        });
+    } else {
+        console.warn('MQTT client not connected');
+    }
+};
 export default client;

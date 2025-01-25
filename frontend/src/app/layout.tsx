@@ -3,6 +3,9 @@ import { NextAppProvider } from '@toolpad/core/nextjs';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import LayersIcon from '@mui/icons-material/Layers';
+import DescriptionIcon from '@mui/icons-material/Description';
+
 import type { Navigation } from '@toolpad/core/AppProvider';
 import { SessionProvider, signIn, signOut } from 'next-auth/react';
 import { auth } from '../auth';
@@ -24,9 +27,26 @@ const NAVIGATION: Navigation = [
     icon: <ShoppingCartIcon />,
   },
   {
-    segment: 'secsgem',
-    title: 'Secs/gem',
-    icon: <ShoppingCartIcon />,
+    segment: 'equipment',
+    title: 'Equipments',
+    icon: <LayersIcon />,
+    children: [
+      {
+        segment: 'monitor',
+        title: 'Monitor',
+        icon: <DescriptionIcon />,
+      },
+      {
+        segment: 'config',
+        title: 'Config',
+        icon: <DescriptionIcon />,
+      },
+      {
+        segment: 'control',
+        title: 'Control',
+        icon: <DescriptionIcon />,
+      },
+    ]
   },
   {
     segment: 'datalot',
@@ -49,7 +69,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
 
   return (
     <html lang="en" data-toolpad-color-scheme="light">
-      <head>
+      {/* <head>
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -64,7 +84,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
             `,
           }}
         />
-      </head>
+      </head> */}
       <body>
         <SessionProvider session={session}>
           <AppRouterCacheProvider options={{ enableCssLayer: true }}>
