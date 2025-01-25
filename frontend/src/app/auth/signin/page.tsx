@@ -23,6 +23,7 @@ export default function SignIn() {
           // Detect a `NEXT_REDIRECT` error and re-throw it
           if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
             throw error;
+            // return;
           }
           // Handle Auth.js errors
           if (error instanceof AuthError) {
