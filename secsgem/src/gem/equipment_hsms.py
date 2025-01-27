@@ -115,7 +115,8 @@ class Equipment(secsgem.gem.GemHostHandler):
                             self.equipment_name)
                 self.fclx_lotcontrol_subscribe()
             else:
-                logger.info("Unknown equipment model")
+                logger.info("Unknown equipment model for %s",
+                            self.equipment_name)
         except Exception as e:
             logger.error("Error: %s", e)
 
@@ -231,6 +232,9 @@ class Equipment(secsgem.gem.GemHostHandler):
         else:
             logger.warning("Unknown equipment model for %s",
                            self.equipment_model)
+            decode = self.secs_decode(packet)
+            logger.info("Receive S5F1. %s", self.equipment_name)
+            logger.info("Receive terminal S5F1: %s", decode.get())
 
     def _on_s06f11(self, handler, packet: HsmsPacket):
         """
@@ -248,6 +252,9 @@ class Equipment(secsgem.gem.GemHostHandler):
         else:
             logger.warning("Unknown equipment model for %s",
                            self.equipment_model)
+            decode = self.secs_decode(packet)
+            logger.info("Receive S6F11. %s", self.equipment_name)
+            logger.info("Receive terminal S6F11: %s", decode.get())
 
     def _on_s10f01(self, handler, packet):
         """
