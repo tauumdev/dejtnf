@@ -1,14 +1,14 @@
-# secsgem Project Setup
+# SECS/GEM Project
 
-## Concept
-The "secsgem" project is designed to manage communication between industrial equipment using the SECS/GEM protocol and supports remote control via MQTT and CLI. Its goal is to enable efficient control and monitoring of equipment states and operations.
+## Overview
+Project for managing SECS/GEM equipment communication with MQTT integration and CLI control.
 
-### Key Features:
-- **SECS/GEM Protocol Support:** Implements SECS/GEM standards for industrial automation.
-- **MQTT Integration:** Allows IoT and Industry 4.0 compatibility with MQTT broker support.
-- **Command Line Interface (CLI):** Provides tools to control and monitor devices.
-- **Flexible Configuration:** Supports customizable settings through config files and logging.
-- **Testing Framework:** Includes unit tests to ensure code quality and reliability.
+## Features
+- SECS/GEM protocol support
+- MQTT control interface
+- Equipment state management
+- Configuration management
+- CLI tools
 
 ## Project Structure
 ```
@@ -26,7 +26,7 @@ secsgem/
 │   │   ├── events/
 │   │   │   ├── fcl_event.py        # Handles FCL events
 │   │   │   ├── fclx_event.py       # Handles FCLX events
-│   │   ├── alarms/
+│   ├── alarms/
 │   │   │   ├── fcl_alarm.py        # Handles FCL alarms
 │   │   │   ├── fclx_alarm.py       # Handles FCLX alarms
 │   ├── secs_gem/
@@ -91,95 +91,34 @@ docker build -t secsgem:latest -f secsgem/src/Dockerfile .
 - Customize MQTT and Logging settings as needed.
 - CLI commands can be accessed and executed via the `cli` folder.
 
+## MQTT Topics Structure
+
+### Equipment Config
+- add_equipment
+- delete_equipment
+- edit_equipment
+- get_equipment
+
+### Equipment Status
+- enable                    ** by equipment name
+- communication_state       ** by equipment name
+    - equipment_status/communication_state/<machine> <state>
+- control_state             ** by equipment name
+    - equipment_status/control_state/<machine> <state>
+- equipment_event           ** by equipment name
+    - equipment_status/event/<machine> <message>
+- equipment_alarm           ** by equipment name
+    - equipment_status/alarm/<machine> <message>
+
+### Equipment Control
+- enable                    ** by equipment name
+    - topic mqtt/control/enable payload <machine>
+- disable                   ** by equipment name
+    - topic mqtt/control/disable payload <machine>
+- online                    ** by equipment name    
+    - topic mqtt/control/online payload <machine>
+- offline                   ** by equipment name
+    - topic mqtt/control/offline payload <machine>
+
 ## License
 MIT License
-
-
-- secs/gem
-    - src
-        - main.py
-        - config
-            - equipments.json
-            - mqtt.json
-        - core 
-            - host_manager.py
-            - handle_event
-                - fcl_event.py
-                - fclx_event.py
-            - handle_alarm
-                - fcl_alarm.py
-                - fclx_alarm.py
-        - secs-gem
-            - gemhost.py
-        - mqtt
-            - mqtt_client.py
-            - mqtt_handle.py
-        - cli
-            - cli_command.py
-
-- function manager
-    - add equipment
-    - delete equipment
-    - edit equipment
-    - get equipment
-    - enable equipment
-    - disable equipment
-    - online equipment
-    - offline equipment
-    - list equipment
-    - get status equipment by machine
-    - gets status equipment all machine
-    - secs-gem
-        - define function secs-gem
-
-- mqtt
-    - equipment_config
-        - add_equipment
-        - delete_equipment
-        - edit_equipment
-        - get_equipment
-        
-    - equipment_status 
-        - enable                    ** by equipment name
-        - communication_state       ** by equipment name
-            - equipment_status/communication_state/<machine> <state>
-        - control_state             ** by equipment name
-            - equipment_status/control_state/<machine> <state>
-        - equipment_event           ** by equipment name
-            - equipment_status/event/<machine> <message>
-        - equipment_alarm           ** by equipment name
-            - equipment_status/alarm/<machine> <message>
-
-    - equipment_control
-        - enable                    ** by equipment name
-            - topic mqtt/control/enable payload <machine>
-        - disable                   ** by equipment name
-            - topic mqtt/control/disable payload <machine>
-        - online                    ** by equipment name    
-            - topic mqtt/control/online payload <machine>
-        - offline                   ** by equipment name
-            - topic mqtt/control/offline payload <machine>
-            
-- cli
-    - call all function manager
-
-
-
-- Mqtt
-    - equipments/status
-    - mqtt/config
-        - mqtt/response/config
-    - mqtt/control
-        - mqtt/response/control
-
-create app next
-(.venv) tauum@dev:~/dejtnf$ npx create-next-app@latest next
-✔ Would you like to use TypeScript? … No / Yes
-✔ Would you like to use ESLint? … No / Yes
-✔ Would you like to use Tailwind CSS? … No / Yes
-✔ Would you like your code inside a `src/` directory? … No / Yes
-✔ Would you like to use App Router? (recommended) … No / Yes
-✔ Would you like to use Turbopack for `next dev`? … No / Yes
-✔ Would you like to customize the import alias (`@/*` by default)? … No / Yes
-✔ What import alias would you like configured? … @/*
-Creating a new Next.js app in /home/tauum/dejtnf/next.
