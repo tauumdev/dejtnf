@@ -12,6 +12,7 @@ def extract_package_code(package, selection_code):
         - 3rd digit: Use 13-14
         - 4th digit: Use 15
     """
+
     # Ensure the package code is exactly 15 characters long
     if len(package) != 15:
         return "Invalid package code length. Should be 15 characters."
