@@ -5,23 +5,6 @@ System for managing DEJ/TNF equipment communication using SECS/GEM protocol with
 
 ## Project Structure
 ```
-### Plan
-1. Create main project overview
-2. Document project structure
-3. Detail setup instructions
-4. Explain MQTT integration
-5. Add configuration details
-
-```markdown
-
-
-# DEJ/TNF Equipment Management System
-
-## Overview
-System for managing DEJ/TNF equipment communication using SECS/GEM protocol with MQTT integration and web-based control interface.
-
-## Project Structure
-```
 dejtnf/
 ├── frontend/               # Next.js web application
 │   ├── src/               # Source code
@@ -119,4 +102,3 @@ equipment_control/
 
 ## License
 MIT License
-```
