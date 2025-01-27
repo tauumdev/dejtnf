@@ -16,16 +16,7 @@
             "port": 5000,
             "session_id": 62,
             "active": true,
-            "enable": true
-        },
-        {
-            "equipment_name": "TNF-99",
-            "equipment_model": "XXX",
-            "address": "192.168.226.199",
-            "port": 5000,
-            "session_id": 99,
-            "active": true,
-            "enable": true
+            "enable": false
         }
     ]
 }
