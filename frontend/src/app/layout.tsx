@@ -10,7 +10,6 @@ import type { Navigation } from '@toolpad/core/AppProvider';
 import { SessionProvider, signIn, signOut } from 'next-auth/react';
 import { auth } from '../auth';
 import theme from '../theme';
-import { Account } from '@toolpad/core';
 
 const NAVIGATION: Navigation = [
   // {
@@ -97,6 +96,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
 
             >
               {props.children}
+
             </NextAppProvider>
           </AppRouterCacheProvider>
         </SessionProvider>
