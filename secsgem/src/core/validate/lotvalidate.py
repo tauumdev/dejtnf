@@ -32,6 +32,7 @@ def extract_package_code(package, selection_code):
     part_13_14 = package[12:14] if use_13_14 else ""
     part_15 = package[14] if use_15 else ""
 
+    print("code result: ", part_1_8 + part_12 + part_13_14 + part_15)
     return part_1_8 + part_12 + part_13_14 + part_15
 
     # # Sample usage
