@@ -35,6 +35,22 @@ class Control(cmd.Cmd):
         """
         return True
 
+    def do_list(self, arg: str):
+        """
+        List all equipment instances.
+        Usage: list
+        Sample: list
+        """
+        print("Listing equipments")
+        try:
+            equipments = self.eq_manager.list_equipments()
+            if not isinstance(equipments, list):
+                print(equipments)
+                return
+            print(json.dumps(equipments, indent=4))
+        except Exception as e:
+            print(e)
+
     def do_enable(self, arg: str):
         """
         Enable an equipment instance.
@@ -133,7 +149,6 @@ class Control(cmd.Cmd):
             return
 
     # event
-
     def do_disable_ceids(self, arg: str):
         """
         Disable all collection events of an equipment instance.
