@@ -24,7 +24,7 @@ class AppLogger:
                 self.stream = self._open()
                 super().emit(record)
 
-    def __init__(self, log_dir='logs'):
+    def __init__(self, log_dir='logs/app'):
         # Initialize logger configuration
         self.date = datetime.datetime.now().strftime('%Y-%m-%d')
         self.log_dir = log_dir

@@ -1,2 +1,0 @@
-paho-mqtt
-secsgem==0.1.0

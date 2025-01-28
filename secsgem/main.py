@@ -1,32 +1,18 @@
-import cmd
-import logging
-from src.mqtt.mqtt_client_wrapper import MqttClient
-from src.gem.equipment_manager import EquipmentManager
-from src.cli.command_cli import CommandCli
-from src.config.config import EQ_CONFIG_PATH, MQTT_CONFIG_PATH, ENABLE_MQTT
-from src.utils.app_logger import AppLogger
-from src.utils.gem_logger import CommunicationLogFileHandler
+from src.cli.command_cli import Cli
+from src.equipment_manager.eq_manager import EquipmentManager
+from src.equipment_manager.equipment.equipment import Equipment
+from src.mqtt.client.mqtt_client import MqttClient
+from src.utils.logger.app_logger import AppLogger
 
 app_logger = AppLogger()
 logger = app_logger.get_logger()
 
-# logger.level = logging.WARNING
-
-# Configure communication log file handler for HSMS communication
-commLogFileHandler = CommunicationLogFileHandler("logs", "h")
-commLogFileHandler.setFormatter(logging.Formatter('%(asctime)s: %(message)s'))
-logging.getLogger("hsms_communication").addHandler(commLogFileHandler)
-logging.getLogger("hsms_communication").propagate = False
-
-# Configure basic logging format and level
-logging.basicConfig(
-    format='%(asctime)s %(name)s.%(funcName)s: %(message)s', level=logging.INFO)
-
-mqtt_client = MqttClient(MQTT_CONFIG_PATH)
-
-
 if __name__ == "__main__":
+
     logger.info("Starting program...")
-    equipment_manager = EquipmentManager(mqtt_client)
-    cmd = CommandCli(equipment_manager)
+
+    mqtt_client = MqttClient()
+    eq_manager = EquipmentManager(mqtt_client)
+
+    cmd = Cli(eq_manager)
     cmd.cmdloop()

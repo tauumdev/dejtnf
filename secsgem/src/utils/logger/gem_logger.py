@@ -22,14 +22,13 @@ import logging
 class CommunicationLogFileHandler(logging.Handler):
     def __init__(self, path, prefix=""):
         logging.Handler.__init__(self)
-
         self.path = path
         self.prefix = prefix
         self.date = datetime.datetime.now().strftime('%Y-%m-%d')
 
     def emit(self, record):
         filename = os.path.join(
-            self.path, "{}-{}.log".format(record.remoteName, self.date))
+            self.path, "{}/{}-{}.log".format(record.remoteName, record.remoteName, self.date))
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, 'a') as f:
             f.write(self.format(record) + "\n")
