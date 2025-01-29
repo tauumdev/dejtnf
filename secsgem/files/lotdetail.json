@@ -1,0 +1,602 @@
+[
+    {
+        "Status": true,
+        "Message": "Success",
+        "OutputLotInfo": [
+            {
+                "FieldName": "LOT PARAMETERS",
+                "Value": "MZ1PS0001.2",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "QTY",
+                "Value": "6460",
+                "Description": "Lot Qty",
+                "Condition": ""
+            },
+            {
+                "FieldName": "LOT_STATUS",
+                "Value": "RUN",
+                "Description": "LOT_STATUS",
+                "Condition": ""
+            },
+            {
+                "FieldName": "STAGE_UTL_WIP_OPTN_CODE",
+                "Value": "TNF",
+                "Description": "STAGE_UTL_WIP_OPTN_CODE",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SUB_QTY",
+                "Value": "0",
+                "Description": "SUB_QTY",
+                "Condition": ""
+            },
+            {
+                "FieldName": "PRODUCTAREA_CODE",
+                "Value": "PEOL",
+                "Description": "PRODUCTAREA_CODE",
+                "Condition": ""
+            },
+            {
+                "FieldName": "LOCATION_CODE",
+                "Value": "PE6TNF",
+                "Description": "LOCATION_CODE",
+                "Condition": ""
+            },
+            {
+                "FieldName": "PROCEDURE_CODE",
+                "Value": "AXM04609",
+                "Description": "PROCEDURE_CODE",
+                "Condition": ""
+            },
+            {
+                "FieldName": "PARENT_LOT_ID",
+                "Value": "-",
+                "Description": "PARENT_LOT_ID",
+                "Condition": ""
+            },
+            {
+                "FieldName": "EQUIPMENT_ID",
+                "Value": "-",
+                "Description": "EQUIPMENT_ID",
+                "Condition": ""
+            },
+            {
+                "FieldName": "EQUIPMENT_STATUS",
+                "Value": "-",
+                "Description": "EQUIPMENT_STATUS",
+                "Condition": ""
+            },
+            {
+                "FieldName": "OPERATION_SEQ",
+                "Value": "18",
+                "Description": "OPERATION_SEQ",
+                "Condition": ""
+            },
+            {
+                "FieldName": "ON_OPERATION",
+                "Value": "TNF",
+                "Description": "On Operation",
+                "Condition": ""
+            },
+            {
+                "FieldName": "OPERATION_CODE",
+                "Value": "TNF",
+                "Description": "Operation Code",
+                "Condition": "same On Operation"
+            },
+            {
+                "FieldName": "ON_WIP_OPTN_CODE",
+                "Value": "TNF",
+                "Description": "ON WIP OPTN CODE",
+                "Condition": ""
+            },
+            {
+                "FieldName": "ACUSTLOTID",
+                "Value": "MW8009250300002",
+                "Description": "Cust assy lot",
+                "Condition": ""
+            },
+            {
+                "FieldName": "WAFERQTY",
+                "Value": "1",
+                "Description": "Wafer Quantity",
+                "Condition": ""
+            },
+            {
+                "FieldName": "WAFERLOTNO",
+                "Value": "D006",
+                "Description": "Wafer Lot No.",
+                "Condition": ""
+            },
+            {
+                "FieldName": "ASWR1",
+                "Value": "-",
+                "Description": "???",
+                "Condition": ""
+            },
+            {
+                "FieldName": "ASWR2",
+                "Value": "-",
+                "Description": "???",
+                "Condition": ""
+            },
+            {
+                "FieldName": "STAMPCODE",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "WAFERMAP",
+                "Value": "INK",
+                "Description": "Wafer Map",
+                "Condition": ""
+            },
+            {
+                "FieldName": "ASWR3",
+                "Value": "MZ10005P C",
+                "Description": "BOM No. and Rev.",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SVDIESIZE",
+                "Value": "154.7X170.5",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SVFINALWAFERTHICKNESS",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "PROCEDURE PARAMETERS",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "ACUSTDEVICE",
+                "Value": "MW8009G01QRE",
+                "Description": "Product No.",
+                "Condition": ""
+            },
+            {
+                "FieldName": "ACUSTOMPARTID",
+                "Value": "MTM_48L_LQFP7X7_MW8009M03QRE",
+                "Description": "CUST_BOM_NO",
+                "Condition": ""
+            },
+            {
+                "FieldName": "ACUSTOMPARTOP",
+                "Value": "MTM_48L_LQFP7X7_MW8009M03QRE",
+                "Description": "CUST_BOM_NO",
+                "Condition": ""
+            },
+            {
+                "FieldName": "PRODMODE",
+                "Value": "PROD",
+                "Description": "Production Mode",
+                "Condition": "If order type 'P' return 'PROD' else 'ENGG'"
+            },
+            {
+                "FieldName": "SASSYPACKAGE",
+                "Value": "LQFA048MS2GNSDM",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SABG-PGM",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SAMOUNT-PGM",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SAMNT-WFID-PGM",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SAMNT-TAPE-PN",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SABGRD-TAPE-PN",
+                "Value": "|",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SAWTAPELAM-PGM",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SASAW-PGM",
+                "Value": "MZ10005P C D1",
+                "Description": "Saw Program Name",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SASAWBLADE-PN",
+                "Value": "N/A",
+                "Description": "Blade Z1 Description",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SASAWBLADE2-PN",
+                "Value": "N/A",
+                "Description": "Blade Z2 Description",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SASBLADSAP-PN",
+                "Value": "N/A",
+                "Description": "Blade Z1 Part No",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SASBLADSAP2-PN",
+                "Value": "N/A",
+                "Description": "Blade Z1 Part No",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SADA-PGM",
+                "Value": "-",
+                "Description": "Die Bond 1 Recipe Name",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SADA-COLLET-PN",
+                "Value": "-",
+                "Description": "Die Bond 1 Collet Part Nos",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SADA-EPOXY-PN",
+                "Value": "-",
+                "Description": "Die Bond 1 Epoxy Part Nos",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SADA-LEADF1-PN",
+                "Value": "-",
+                "Description": "Die Bond Lead Frame Part Description",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SADA-LEADF2-PN",
+                "Value": "-",
+                "Description": "Die Bond Lead Frame Part Nos",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SADA2-COLLE-PN",
+                "Value": "-",
+                "Description": "Die Bond 2 Collet Part Nos",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SADA2-EPOXY-PN",
+                "Value": "-",
+                "Description": "Die Bond 2 Epoxy Part Nos",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SADA2-PGM",
+                "Value": "-",
+                "Description": "Die Bond 2 Recipe Name",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SADA-SUBST-PN",
+                "Value": "-",
+                "Description": "Die Bond Substrate Description",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SADA-SUBST2-PN",
+                "Value": "-",
+                "Description": "Die Bond Substrate Part Nos",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SABOND-CAPI-PN",
+                "Value": "-()",
+                "Description": "Bond 1 Capilliary Part No",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SABOND-WIRE-PN",
+                "Value": "0.7mil Au UB(GZ0044)",
+                "Description": "Bond 1 Wire Part No",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SABOND-PGM",
+                "Value": "MZ10005P.C",
+                "Description": "Bond 1 Recipe Name",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SAWB2-PGM",
+                "Value": "-",
+                "Description": "Bond 2 Recipe Name",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SAWB2-CAPI-PN",
+                "Value": "-",
+                "Description": "Bond 2 Capilliary Part No",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SAWB2-WIRE-PN",
+                "Value": "-",
+                "Description": "Bond 2 Wire Part No",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SABONDPAST-PGM",
+                "Value": "-",
+                "Description": "Bond 2 Recipe Name",
+                "Condition": ""
+            },
+            {
+                "FieldName": "CATEGORY",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "ADEVICENAME",
+                "Value": "0005",
+                "Description": "",
+                "Condition": "SUBSTR(BOM_NO, 3, 4)"
+            },
+            {
+                "FieldName": "01",
+                "Value": "MZ1",
+                "Description": "Customer Code.",
+                "Condition": ""
+            },
+            {
+                "FieldName": "02",
+                "Value": "-",
+                "Description": "Product Family",
+                "Condition": ""
+            },
+            {
+                "FieldName": "03",
+                "Value": "SMD",
+                "Description": "Package Code",
+                "Condition": ""
+            },
+            {
+                "FieldName": "04",
+                "Value": "LQFA048MS2GNSDM",
+                "Description": "Pin Count",
+                "Condition": ""
+            },
+            {
+                "FieldName": "05",
+                "Value": "MW8009G01QRE",
+                "Description": "Device Name",
+                "Condition": ""
+            },
+            {
+                "FieldName": "06",
+                "Value": "-",
+                "Description": "Die Revision",
+                "Condition": ""
+            },
+            {
+                "FieldName": "07",
+                "Value": "QFP 7x7 (A)",
+                "Description": "Package Size",
+                "Condition": ""
+            },
+            {
+                "FieldName": "08",
+                "Value": "-",
+                "Description": "Strip Matrix",
+                "Condition": ""
+            },
+            {
+                "FieldName": "MATERIAL1",
+                "Value": "-",
+                "Description": "Material type POLY",
+                "Condition": ""
+            },
+            {
+                "FieldName": "MATERIAL2",
+                "Value": "-",
+                "Description": "Material 2",
+                "Condition": "ITEM_GROUP;ITEM_NO;ITEM_LOT_NO;ITEM_BOX_NO;EXPIRE_DATE;FLAG_USE;ITE_DESCRIPTION"
+            },
+            {
+                "FieldName": "MATERIAL3",
+                "Value": "-",
+                "Description": "Material 3",
+                "Condition": ""
+            },
+            {
+                "FieldName": "OPTFIELD4",
+                "Value": "-",
+                "Description": "Material 4",
+                "Condition": ""
+            },
+            {
+                "FieldName": "OPTFIELD5",
+                "Value": "-",
+                "Description": "Material 5",
+                "Condition": ""
+            },
+            {
+                "FieldName": "MACHINE_NO",
+                "Value": "TNF-66",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "PL",
+                "Value": "NM",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SOURCELOTID",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "WIP_OPTN_GROUP",
+                "Value": "TNF",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SEQ_ON_SAME_OPTN",
+                "Value": "1",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "STAGE",
+                "Value": "A000-TNF",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "DIE-SIZE",
+                "Value": "154.7X170.5",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "FINAL-THICKNESS",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "AUTOMOTIVE-FLAG",
+                "Value": "N",
+                "Description": "Y=Automative",
+                "Condition": ""
+            },
+            {
+                "FieldName": "STAGING_DATETIME",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "STAGING_OPTN",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "STRIP_QTY",
+                "Value": "59.81",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "MAGAZINE_NO",
+                "Value": "CB0106",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "FRAME_PANELS",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "FRAME_ROWS",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "FRAME_COLUMNS",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "BOND_DIAGRAM_ID",
+                "Value": "MZ10005P",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "BOND_DIAGRAM_REV",
+                "Value": "C",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "FLAG_BONDING",
+                "Value": "N",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "PACKAGE_GROUP",
+                "Value": "QFP",
+                "Description": "Package Group",
+                "Condition": ""
+            },
+            {
+                "FieldName": "DICING_TYPE",
+                "Value": "[{\"STOCK_NO\":\"17080406\",\"OPERATION_SEQ\":\"2\",\"OPERATION_CODE\":\"WF-MOUNT\",\"DIE_ID\":\"M3252\"}]",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "BOAC",
+                "Value": "N/A",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "SATA-PGM",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "STRIP_NO",
+                "Value": "-",
+                "Description": "",
+                "Condition": ""
+            },
+            {
+                "FieldName": "MC_NO",
+                "Value": "LB_KNS-197/P,LB_KNS-194/P,LB_KNS-192/P",
+                "Description": "",
+                "Condition": ""
+            }
+        ]
+    }
+]

@@ -48,19 +48,19 @@ class AppLogger:
         file_handler = self.CustomFileHandler(log_file_path, mode='a')
         file_handler.setLevel(logging.DEBUG)
 
-        # Create a console handler for logging to the terminal
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.DEBUG)
+        # # Create a console handler for logging to the terminal
+        # console_handler = logging.StreamHandler() # remove comment to enable console logging
+        # console_handler.setLevel(logging.DEBUG) # remove comment to enable console logging
 
         # Create a log format for both handlers
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s')
         file_handler.setFormatter(formatter)
-        console_handler.setFormatter(formatter)
+        # console_handler.setFormatter(formatter) #remove comment to enable console logging
 
         # Add the handlers to the logger
         logger.addHandler(file_handler)
-        logger.addHandler(console_handler)
+        # logger.addHandler(console_handler) #remove comment to enable console logging
 
         # Log a startup message to confirm setup
         logger.info("Logger setup complete. Log file: %s", log_file_path)

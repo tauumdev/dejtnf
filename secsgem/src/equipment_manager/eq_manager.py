@@ -1,8 +1,10 @@
-import json
 import logging
 from src.equipment_manager.core.load_config import load_equipment_config
 from src.equipment_manager.equipment.equipment import Equipment
 from src.mqtt.client.mqtt_client import MqttClient
+
+from src.equipment_manager.manager.equipment_config import EquipmentConfig
+from src.equipment_manager.manager.equipment_control import EquipmentControl
 
 logger = logging.getLogger("app_logger")
 
@@ -15,16 +17,22 @@ class EquipmentManager:
     def __init__(self, mqtt_client: MqttClient, eq_config_path: str = "files/equipments.json"):
         self.equipments: list[Equipment] = []
         self.mqtt_client = mqtt_client
-        self.init_equipments(load_equipment_config(eq_config_path))
+        self.eq_config_path = eq_config_path
 
-    def init_equipments(self, eq_config: json):
+        self.config = EquipmentConfig(self)
+        self.control = EquipmentControl(self)
+
+        self.load_equipments(self.eq_config_path)
+
+    def load_equipments(self, eq_path: str):
         """
         Initialize equipment instances.
         Args:
-            eq_config (json): A JSON object containing equipment configurations.
+            eq_path (str): Path to the JSON file containing equipment configurations.
         """
+        json_data = load_equipment_config(eq_path)
         try:
-            for equipment in eq_config.get("equipments", []):
+            for equipment in json_data.get("equipments", []):
                 equipment = Equipment(equipment["equipment_name"], equipment["equipment_model"], equipment["address"],
                                       equipment["port"], equipment["session_id"], equipment["active"], equipment["enable"], self.mqtt_client)
 
@@ -36,7 +44,6 @@ class EquipmentManager:
                             equipment.equipment_name)
 
             self.mqtt_client.client.user_data_set(self)
-
         except Exception as e:
             logger.error("Error initializing equipment: %s", e)
 
@@ -44,7 +51,7 @@ class EquipmentManager:
         """
         Exit program.
         """
-        self.save_equipments()
+        self.config.save_equipments()
         try:
             for equipment in self.equipments:
                 try:
@@ -85,59 +92,3 @@ class EquipmentManager:
         except Exception as e:
             logger.error("Error listing equipment: %s", e)
             return f"Error listing equipment: {e}"
-
-    def save_equipments(self, eq_config_path: str = "files/equipments.json"):
-        """
-        Save equipment configurations to a JSON file.
-        Args:
-            eq_config_path (str): Path to the JSON file.
-        """
-        try:
-            eq_config = {
-                "equipments": [
-                    {
-                        "equipment_name": equipment.equipment_name,
-                        "equipment_model": equipment.equipment_model,
-                        "address": equipment.address,
-                        "port": equipment.port,
-                        "session_id": equipment.sessionID,
-                        "active": equipment.active,
-                        "enable": equipment.is_enabled
-                    }
-                    for equipment in self.equipments
-                ]
-            }
-
-            with open(eq_config_path, "w", encoding="utf-8") as f:
-                json.dump(eq_config, f, indent=4)
-
-            logger.info("Equipment configurations saved to %s", eq_config_path)
-        except Exception as e:
-            logger.error("Error saving equipment configurations: %s", e)
-
-    def add_equipment(self, equipment_name: str, equipment_model: str, address: str, port: int, session_id: int, active: bool,  enable: bool):
-        """
-        Add a new equipment instance.
-        Args:
-            equipment_name (str): Equipment name.
-            equipment_model (str): Equipment model.
-            address (str): Equipment address.
-            port (int): Equipment port.
-            session_id (int): Equipment session ID.
-            active (bool): Equipment active status.            
-            enable (bool): Equipment enable status.
-        """
-        try:
-            equipment = Equipment(equipment_name, equipment_model, address,
-                                  port, session_id, active, enable, self.mqtt_client)
-
-            if equipment.is_enabled:
-                equipment.enable()
-
-            self.equipments.append(equipment)
-            self.save_equipments()
-            logger.info("Equipment %s added", equipment_name)
-            return {"status": "success", "message": f"Equipment {equipment_name} added"}
-        except Exception as e:
-            logger.error("Error adding equipment: %s", e)
-            return {"status": "error", "message": f"Error adding equipment: {e}"}

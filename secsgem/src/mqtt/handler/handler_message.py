@@ -17,6 +17,5 @@ class HandlerMessage:
         Callback function for when a PUBLISH message is received from the server.
         """
         logger.info(f"Received message on topic {
-                    message.topic}: {message.payload}")
+            message.topic}: {message.payload}")
         # Add message handling logic here
-        pass

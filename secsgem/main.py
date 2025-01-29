@@ -1,11 +1,12 @@
+import logging
 from src.cli.command_cli import Cli
 from src.equipment_manager.eq_manager import EquipmentManager
-from src.equipment_manager.equipment.equipment import Equipment
 from src.mqtt.client.mqtt_client import MqttClient
 from src.utils.logger.app_logger import AppLogger
 
 app_logger = AppLogger()
 logger = app_logger.get_logger()
+logger.setLevel(logging.INFO)
 
 if __name__ == "__main__":
 
