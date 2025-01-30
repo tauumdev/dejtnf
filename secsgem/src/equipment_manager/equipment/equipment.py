@@ -39,7 +39,7 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.MDLN = "dejtnf"
         self.SOFTREV = "1.0.1"
         self.is_enabled = is_enable
-        # self.lot_active = None
+        self.lot_active = None
 
         self.secsStreamsFunctions[2].update({49: SecsS02F49, 50: SecsS02F50})
 
@@ -59,6 +59,20 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.register_stream_function(6, 11, self.handle_event._on_s06f11)
 
         self.fc_control = FunctionControl(self)
+
+    def _on_hsms_packet_received(self, packet):
+        """
+        Handle HSMS packet received
+        """
+        super()._on_hsms_packet_received(packet)
+        try:
+            topic = f"equipments/status/secs_message/{self.equipment_name}"
+            message = self.secs_decode(packet)
+            self.mqtt_client.client.publish(topic, str(message))
+        except Exception as e:
+            logger.error("Error on publish message: %s", e)
+
+        # return super()._on_hsms_packet_received(packet)
 
     def delayed_task(self):
         """

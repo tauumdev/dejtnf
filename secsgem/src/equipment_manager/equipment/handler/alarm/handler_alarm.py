@@ -38,7 +38,7 @@ class AlarmCallbacks:
         altx = s5f1.ALTX.get().strip()
 
         # define vid for FCL and FCLX
-        vid = {'FCL': [82, 33], 'FCLX': [3081, 7]}
+        vid = {'FCL': [33], 'FCLX': [7]}
 
         _model = self.equipment.equipment_model
         if _model in ['FCL', 'FCLX']:
@@ -48,26 +48,21 @@ class AlarmCallbacks:
                 self.equipment.stream_function(1, 3)(_vid))
             decode_s2f4 = self.equipment.secs_decode(s2f4)
 
-            lot_id, ppname = decode_s2f4
+            ppname = decode_s2f4
             logger.info("Receive S5F1. %s", self.equipment.equipment_name)
 
             topic = f"equipments/status/alarm/{self.equipment.equipment_name}"
+
             message = {
-                "ppname": ppname.get(),
-                "lot_id": lot_id.get(),
+                "pp_name": ppname.get(),
+                "lot_id": self.equipment.lot_active,
                 "alid": alid,
                 "alcd": alcd,
                 "altx": altx
             }
+
             self.equipment.mqtt_client.client.publish(topic, str(message))
-            # if _model == "FCL":
-            #     # handle alarm for FCL
-            #     self.alarm_fcl.handle_alarm_fcl(
-            #         ppname.get(), lot_id.get(), alid, alcd, altx)
-            # elif _model == "FCLX":
-            #     # handle alarm for FCLX
-            #     self.alarm_fclx.handle_alarm_fclx(
-            #         ppname.get(), lot_id.get(), alid, alcd, altx)
+
         else:
             logger.warning("Unknown equipment model for %s",
                            self.equipment.equipment_model)

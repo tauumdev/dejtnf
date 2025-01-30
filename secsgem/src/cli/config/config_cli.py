@@ -136,7 +136,6 @@ class ConfigCli(cmd.Cmd):
         Edit and update an equipment instance.
         Usage: edit <equipment_name> <key1=value1> <key2=value2> ...
         Args:
-            equipment_name (str): The name of the equipment.
             equipment_model (str): The model of the equipment.
             address (str): The IP address of the equipment.
             port (int): The port of the equipment.
@@ -171,6 +170,11 @@ class ConfigCli(cmd.Cmd):
             if rsp.get("status") == "success":
                 logger.info("Equipment updated successfully")
                 print("Equipment updated successfully")
+            else:
+                logger.error("Error edit equipment")
+                print("Error edit equipment")
+                logger.error(rsp.get("message"))
+                print(rsp.get("message"))
         except ValueError:
             logger.error("Invalid argument type")
             print("Invalid argument type")

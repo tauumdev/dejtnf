@@ -171,15 +171,17 @@ class EquipmentConfig:
             logger.error("Error removing equipment: %s", e)
             return {"status": "error", "message": f"Error removing equipment: {e}"}
 
-    def edit_equipment(self, equipment_name: str, **kwargs):
+    def edit_equipment(self, equipment_name_: str, **kwargs):
         """
         Edit the attributes of the specified equipment.
         Args:
             equipment_name (str): The name of the equipment.
             kwargs: The attributes to be edited.
         """
+        if "equipment_name" in kwargs:
+            return {"status": "error", "message": "Modifying equipment_name is not allowed"}
+
         valid_keys = {
-            "equipment_name": str,
             "equipment_model": str,
             "address": "ip",  # Special case for IP address validation
             "port": int,
@@ -190,8 +192,10 @@ class EquipmentConfig:
 
         try:
             for equipment in self.manager.equipments:
-                if equipment.equipment_name == equipment_name:
+                if equipment.equipment_name == equipment_name_:
                     for key, value in kwargs.items():
+                        # if key == "equipment_name":
+                        #     return {"status": "error", "message": f"equipment_name is not alow to change"}
                         if key not in valid_keys:
                             logger.warning("Invalid key: %s", key)
                             return {"status": "error", "message": f"Invalid key: {key}"}
@@ -207,7 +211,7 @@ class EquipmentConfig:
 
                             # Check for duplicate IP address
                             for existing_equipment in self.manager.equipments:
-                                if existing_equipment.address == value and existing_equipment.equipment_name != equipment_name:
+                                if existing_equipment.address == value and existing_equipment.equipment_name != equipment_name_:
                                     logger.warning(
                                         "IP address %s already exists for another equipment.", value)
                                     return {"status": "error", "message": f"IP address {value} already exists for another equipment."}
@@ -234,17 +238,17 @@ class EquipmentConfig:
                         if key == "enable":
                             if value:
                                 if equipment.is_enabled:
-                                    return {"status": "error", "message": f"Equipment {equipment_name} is already enabled."}
+                                    return {"status": "error", "message": f"Equipment {equipment_name_} is already enabled."}
                                 equipment.enable()
                             else:
                                 if not equipment.is_enabled:
-                                    return {"status": "error", "message": f"Equipment {equipment_name} is already disabled."}
+                                    return {"status": "error", "message": f"Equipment {equipment_name_} is already disabled."}
                                 equipment.disable()
                     logger.info(
-                        "Equipment %s edited successfully.", equipment_name)
+                        "Equipment %s edited successfully.", equipment_name_)
                     self.save_equipments()
-                    return {"status": "success", "message": f"Equipment {equipment_name} edited successfully."}
-            return {"status": "error", "message": f"Equipment {equipment_name} not found"}
+                    return {"status": "success", "message": f"Equipment {equipment_name_} edited successfully."}
+            return {"status": "error", "message": f"Equipment {equipment_name_} not found"}
         except Exception as e:
             logger.error("Error editing equipment: %s", e)
             return {"status": "error", "message": f"Error editing equipment: {e}"}
