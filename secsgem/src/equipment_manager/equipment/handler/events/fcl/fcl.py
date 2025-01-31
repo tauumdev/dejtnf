@@ -1,7 +1,9 @@
 import logging
 from secsgem.hsms.packets import HsmsPacket
-from src.equipment_manager.core.validation.lot_information import LotInformation
 from typing import TYPE_CHECKING
+
+from src.equipment_manager.core.validation.lot_info import LotInformation
+
 if TYPE_CHECKING:
     from src.equipment_manager.equipment.equipment import Equipment
 

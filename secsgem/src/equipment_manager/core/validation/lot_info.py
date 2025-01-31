@@ -1,8 +1,11 @@
 
 import json
+import logging
 import requests
 from typing import Optional, Union, List, Dict
 from urllib.parse import urlencode, quote
+
+logger = logging.getLogger("app_logger")
 
 
 class LotInformation:
@@ -97,17 +100,21 @@ class LotInformation:
                     data = response.json()
                     # for lot in data:
                     if not isinstance(data, list):
-                        raise ValueError("Unexpected response format")
+                        # raise ValueError("Unexpected response format")
+                        logger.warning("Unexpected response format")
                     return data
 
                 except requests.exceptions.RequestException as e:
-                    print(
-                        f"API request failed(attempt {attempt+1}/{max_retries}): {str(e)}")
+                    # print(
+                    #     f"API request failed(attempt {attempt+1}/{max_retries}): {str(e)}")
+                    logger.error("API request failed(attempt %d/%d): %s",
+                                 attempt + 1, max_retries, str(e))
                     if attempt == max_retries - 1:
                         return None
 
                 except json.JSONDecodeError:
-                    print("Failed to parse JSON response")
+                    # print("Failed to parse JSON response")
+                    logger.error("Failed to parse JSON response")
                     return None
 
             return None
@@ -135,10 +142,12 @@ class LotInformation:
                         self.field_by_desc[field["Description"]] = field
 
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"Error: {str(e)}")
+            # print(f"Error: {str(e)}")
+            logger.error("Error: %s", str(e))
 
     def _load_data(self):
-        print("Loading data from API")
+        # print("Loading data from API")
+        logger.info("Loading data from API")
         try:
             with open('files/lotdetail.json', 'r', encoding='utf-8') as file:
                 self.lot_data = json.load(file)
@@ -149,7 +158,8 @@ class LotInformation:
                         if "Description" in field:
                             self.field_by_desc[field["Description"]] = field
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"Error: {str(e)}")
+            # print(f"Error: {str(e)}")
+            logger.error("Error: %s", str(e))
 
     def get_field_value(self, field_names: Union[str, List[str]]) -> Dict:
         """

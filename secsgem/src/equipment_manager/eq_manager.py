@@ -1,5 +1,5 @@
 import logging
-from src.equipment_manager.core.load_config import load_equipment_config
+from src.utils.config.load_config import load_equipment_config
 from src.equipment_manager.equipment.equipment import Equipment
 from src.mqtt.client.mqtt_client import MqttClient
 
