@@ -1,5 +1,6 @@
 import cmd
 import json
+import paho.mqtt.client as mqtt
 import secsgem.common
 import secsgem.gem
 import secsgem.hsms
@@ -16,6 +17,44 @@ from secsgem.secs.dataitems import MDLN, SVID, SV, SVNAME, UNITS, COMMACK, OFLAC
     ATTRDATA, ATTRRELN, OBJACK
 
 
+class MqttClient:
+    def __init__(self):
+        self.client = mqtt.Client()
+        # self.client.enable_logger(logger)
+        self.client.on_connect = self.on_connect
+        self.client.on_message = self._HandlerMessage(self).on_message
+        self.client.on_disconnect = self.on_disconnect
+
+    def on_connect(self, client, userdata, flags, rc):
+        """
+        Callback function for when the client receives a CONNACK response from the server.
+        """
+        if rc == 0:
+            print("Connected to MQTT broker.")
+            for topic in ["equipments/config/#", "equipments/control/#"]:
+                self.client.subscribe(topic)
+                print(f"Subscribed to topic: {topic}")
+        else:
+            print(f"Connection failed with result code {rc}")
+
+    def on_disconnect(self, client, userdata, rc):
+        """
+        Callback function for when the client disconnects from the server.
+        """
+        if rc != 0:
+            print("Unexpected disconnection. Reconnecting...")
+            self.client.reconnect()
+        else:
+            print("Disconnected from MQTT broker")
+
+    class _HandlerMessage:
+        def __init__(self, mqtt_client: "MqttClient"):
+            self.mqtt_client = mqtt_client
+
+        def on_message(self, client, userdata, msg: mqtt.MQTTMessage):
+            print(f"Received message: {msg.payload}")
+
+
 class Equipment(secsgem.gem.GemHostHandler):
     def __init__(self, equipment_name, equipment_model, address, port, session_id, active, enable, custom_connection_handler=None):
         super().__init__(address, port, active, session_id,
@@ -23,6 +62,10 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.equipment_name = equipment_name
         self.equipment_model = equipment_model
         self.is_enabled = enable
+
+        self.custom_stream_function = self.CustomStreamFunction
+        self.secsStreamsFunctions[2].update(
+            {49: self.custom_stream_function.SecsS02F49, 50: self.custom_stream_function.SecsS02F50})
 
         self.register_callbacks = self.CommunicationCallbacks(self)
         self.register_stream_function(1, 14, self.register_callbacks.s01f14)
@@ -32,6 +75,8 @@ class Equipment(secsgem.gem.GemHostHandler):
 
         self.handle_alarm = self.HandlerAlarms(self)
         self.register_stream_function(5, 1, self.handle_alarm.s05f01)
+
+        self.secs_control = self.SecsControl(self)
 
     def _on_state_communicating(self, _):
         print("<<-- State Communicating")
@@ -214,10 +259,8 @@ class Equipment(secsgem.gem.GemHostHandler):
             print("<<-- S06F11")
             decode = self.equipment.secs_decode(packet)
 
-            print("type\n", type(decode))
-            print("class\n", decode.__class__)
-            print("dict\n", decode.__dict__)
-            # ceid = decode.CEID.get()
+            ceid = decode.CEID.get()
+            print("CEID: ", ceid)
 
     class HandlerAlarms:
         def __init__(self, equipment: "Equipment"):
@@ -231,6 +274,126 @@ class Equipment(secsgem.gem.GemHostHandler):
                 ACKC5.ACCEPTED), packet.header.system)
 
             print("<<-- S05F01")
+
+    class SecsControl:
+        def __init__(self, equipment: "Equipment"):
+            self.equipment = equipment
+            self.recipe_management = self._RecipeManagement(self.equipment)
+            self.lot_management = self._LotManagement(self.equipment)
+
+        class _LotManagement:
+            def __init__(self, equipment: "Equipment"):
+                self.equipment = equipment
+
+            def accept_lot_fcl(self, lot_id: str):
+                """
+                accept lot
+                """
+                return self.equipment.send_remote_command({"RCMD": "LOT_ACCEPT", "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}]})
+
+            def reject_lot_fcl(self, lot_id: str):
+                """
+                reject lot
+                """
+                return self.equipment.send_remote_command({"RCMD": "LOT_REJECT", "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}]})
+
+            def add_lot_fclx(self, lot_id: str):
+                """
+                add lot fclx
+                """
+                s2f49 = self.equipment.send_and_waitfor_response(
+                    self.equipment.stream_function(2, 49)({"DATAID": 123, "OBJSPEC": "OBJ", "RCMD": "ADD_LOT", "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}]}))
+                return self.equipment.secs_decode(s2f49)
+
+            def reject_lot_fclx(self, lot_id: str, reason: str):
+                """
+                reject lot fclx
+                """
+                s2f49 = self.equipment.send_and_waitfor_response(
+                    self.equipment.stream_function(2, 49)({"DATAID": 101, "OBJSPEC": "LOTCONTROL", "RCMD": "REJECT_LOT", "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}, {"CPNAME": "LotID", "CPVAL": reason}]}))
+                return self.equipment.secs_decode(s2f49)
+
+        class _RecipeManagement:
+            def __init__(self, equipment: "Equipment"):
+                self.equipment = equipment
+
+            def pp_dir(self):
+                """
+                s7f19
+                """
+                return self.equipment.get_process_program_list()
+
+            def pp_request(self, pp_name: str):
+                """
+                s7f5
+                """
+                return self.equipment.request_process_program(ppid=pp_name)
+
+            def pp_send(self, pp_name: str, pp_body: str):
+                """
+                s7f3
+                """
+                return self.equipment.send_process_program(ppid=pp_name, ppbody=pp_body)
+
+            def pp_delete(self, pp_name: str):
+                """
+                s7f17
+                """
+                return self.equipment.delete_process_programs(ppids=[pp_name])
+
+        def req_equipment_status(self, svids: list[int]):
+            """
+            s1f3
+            """
+            s1f4 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(1, 3)(svids))
+            return self.equipment.secs_decode(s1f4)
+
+        def req_equipment_constant(self, ceids: list[int] = None):
+            """
+            s2f13
+            """
+            s2f14 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(2, 13)(ceids))
+            return self.equipment.secs_decode(s2f14)
+
+        def req_constant_namelist(self, ecids: list[int] = None):
+            """
+            s2f29
+            """
+            s2f30 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(2, 29)(ecids))
+            return self.equipment.secs_decode(s2f30)
+
+        def enable_events(self, ceids: list[int] = None):
+            """
+            s2f37 CEED=True
+            """
+            s2f38 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(2, 37)({"CEED": True, "CEID": ceids}))
+            return self.equipment.secs_decode(s2f38)
+
+        def disable_events(self, ceids: list[int] = None):
+            """
+            s2f37 CEED=False
+            """
+            s2f38 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(2, 37)({"CEED": False, "CEID": ceids}))
+            return self.equipment.secs_decode(s2f38)
+
+        def subscribe_events(self, ceid: int, dvs: list[int], report_id: int = None):
+            """
+            s2f33
+            """
+            return self.equipment.subscribe_collection_event(ceid=ceid, dvs=dvs, report_id=report_id)
+
+        def unsubscribe_events(self, report_id: list[int] = None):
+            """
+            s2f35
+            """
+            s2f36 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(2, 35)({"DATAID": 0, "DATA": report_id}))
+            return self.equipment.secs_decode(s2f36)
 
 
 class EquipmentManager:
@@ -269,7 +432,6 @@ class EquipmentManager:
             ]
         }
 
-        # json_data = eq_conf
         try:
             for equipment in eq_conf.get("equipments", []):
                 equipment = Equipment(equipment["equipment_name"], equipment["equipment_model"], equipment["address"],
