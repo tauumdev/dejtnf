@@ -11,9 +11,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger("app_logger")
 
 
-class HandlerEventFCL:
+class HandlerEventFCLX:
     """
-    Class to handle FCL events
+    Class to handle FCLX events
     """
 
     def __init__(self, equipment: "Equipment"):
@@ -27,7 +27,7 @@ class HandlerEventFCL:
             decode = self.equipment.secs_decode(packet)
             ceid = decode.CEID
             if ceid == 1:
-                self.handle_fcl_initial()
+                self.handle_fclx_initial()
             for rpt in decode.RPT:
                 if rpt:
                     rptid = rpt.RPTID
@@ -36,8 +36,11 @@ class HandlerEventFCL:
 
                     lot_id = lot_id.get().strip().upper()
                     pp_name = pp_name.get().strip()
+
                     try:
                         if rptid == 1000:
+                            if lot_id.split(",")[1] == "RECIPE":
+                                print("Equipment request Recipe")
                             self._handle_validation_lot(
                                 pp_name, lot_id)
                         elif rptid == 1001:
@@ -55,13 +58,13 @@ class HandlerEventFCL:
         except Exception as e:
             logger.error("Error handling FCL event: %s", e)
 
-    def handle_fcl_initial(self):
+    def handle_fclx_initial(self):
         """
-        Handle FCL init
+        Handle FCLX init
         """
-        logger.info("FCL init")
+        logger.info("FCLX init")
         s1f4 = self.equipment.send_and_waitfor_response(
-            self.equipment.stream_function(1, 3)([33]))
+            self.equipment.stream_function(1, 3)([7]))
 
         decode_s1f4 = self.equipment.secs_decode(s1f4)
         self.equipment.pp_name = decode_s1f4[0].get()

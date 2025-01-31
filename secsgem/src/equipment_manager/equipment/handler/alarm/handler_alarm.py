@@ -44,17 +44,17 @@ class AlarmCallbacks:
         if _model in ['FCL', 'FCLX']:
             _vid = vid[_model]
             # Get PPName and Lot on operate
-            s2f4 = self.equipment.send_and_waitfor_response(
+            s1f4 = self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(1, 3)(_vid))
-            decode_s2f4 = self.equipment.secs_decode(s2f4)
+            decode_s1f4 = self.equipment.secs_decode(s1f4)
 
-            ppname = decode_s2f4
+            pp_name = decode_s1f4[0].get()
             logger.info("Receive S5F1. %s", self.equipment.equipment_name)
 
             topic = f"equipments/status/alarm/{self.equipment.equipment_name}"
 
             message = {
-                "pp_name": ppname.get(),
+                "pp_name": pp_name,
                 "lot_id": self.equipment.lot_active,
                 "alid": alid,
                 "alcd": alcd,

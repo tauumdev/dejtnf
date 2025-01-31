@@ -7,6 +7,7 @@ import secsgem.hsms
 import secsgem.secs
 from secsgem.secs.dataitems import ACKC6, ACKC5
 from secsgem.hsms.packets import HsmsPacket
+from src.equipment_manager.equipment.handler.events.fclx.fclx import HandlerEventFCLX
 from src.equipment_manager.equipment.handler.events.fcl.fcl import HandlerEventFCL
 
 
@@ -25,6 +26,7 @@ class EventsCallbacks:
     def __init__(self, equipment: "Equipment"):
         self.equipment = equipment
         self.fcl_handler = HandlerEventFCL(equipment)  # Create instance
+        self.fclx_handler = HandlerEventFCLX(equipment)  # Create instance
 
     def _on_s06f11(self, handler, packet: HsmsPacket):
         """
@@ -38,6 +40,6 @@ class EventsCallbacks:
         if model == "FCL":
             self.fcl_handler.s06f11(handler, packet)
         elif model == "FCLX":
-            print(f"FCLX: {self.equipment.equipment_name, model}")
+            self.fclx_handler.s06f11(handler, packet)
         else:
             print(f"Other Model: {self.equipment.equipment_name, model}")

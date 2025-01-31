@@ -1,0 +1,326 @@
+{
+    "_id": {
+        "$oid": "6163ead610b1e4cbbe56a7d2"
+    },
+    "machine_no": "TNF-66",
+    "data": [
+        {
+            "pkgcode_8dg": "TQFA048M",
+            "character": "1101",
+            "used_optncode": true,
+            "used_onoptn": true,
+            "used_lothold": true,
+            "data_validate": [
+                {
+                    "package_code": "TQFA048MNP",
+                    "operation_code": "TNF",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "48L TQFP 7x7",
+                    "recipe": "48L TQFP 7x7",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "160390"
+                    ],
+                    "tool_b": [
+                        "160400"
+                    ],
+                    "tool_c": [
+                        "160410"
+                    ]
+                },
+                {
+                    "package_code": "TQFA048MEM",
+                    "operation_code": "TNF",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "48L ETQFP 7x7",
+                    "recipe": "48L ETQFP 7x7",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "160390"
+                    ],
+                    "tool_b": [
+                        "160494"
+                    ],
+                    "tool_c": [
+                        "160410"
+                    ]
+                }
+            ]
+        },
+        {
+            "pkgcode_8dg": "LQFA048M",
+            "character": "1101",
+            "used_optncode": true,
+            "used_onoptn": true,
+            "used_lothold": true,
+            "data_validate": [
+                {
+                    "package_code": "LQFA048MNM",
+                    "operation_code": "TNF",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "48L LQFP 7x7",
+                    "recipe": "48ld LQFP 7x7 1UP",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "151360"
+                    ],
+                    "tool_b": [
+                        "151370"
+                    ],
+                    "tool_c": [
+                        "151380"
+                    ]
+                },
+                {
+                    "package_code": "LQFA048MEM",
+                    "operation_code": "TNF",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "48L eLQFP 7x7",
+                    "recipe": "48ld ELQFP 7x7 1UP",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "151360"
+                    ],
+                    "tool_b": [
+                        "151370"
+                    ],
+                    "tool_c": [
+                        "151380"
+                    ]
+                }
+            ]
+        },
+        {
+            "pkgcode_8dg": "BQFB044M",
+            "character": "1000",
+            "used_optncode": true,
+            "used_onoptn": true,
+            "used_lothold": true,
+            "data_validate": [
+                {
+                    "package_code": "BQFB044M",
+                    "operation_code": "TNF",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "44L QFP 10x10",
+                    "recipe": "44L QFP 10x10",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "160420"
+                    ],
+                    "tool_b": [
+                        "160430"
+                    ],
+                    "tool_c": [
+                        "160440"
+                    ]
+                },
+                {
+                    "package_code": "BQFB044M",
+                    "operation_code": "TNF-90-DEGREES",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "44L QFP 10x10 -90 deg",
+                    "recipe": "44L QFP 10x10 -90 deg",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "160420"
+                    ],
+                    "tool_b": [
+                        "160430"
+                    ],
+                    "tool_c": [
+                        "160440"
+                    ]
+                }
+            ]
+        },
+        {
+            "pkgcode_8dg": "TQFB064M",
+            "character": "1101",
+            "used_optncode": true,
+            "used_onoptn": true,
+            "used_lothold": true,
+            "data_validate": [
+                {
+                    "package_code": "TQFB064MNP",
+                    "operation_code": "TNF",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "64L TQFP 10x10",
+                    "recipe": "64L TQFP 10x10",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "160450"
+                    ],
+                    "tool_b": [
+                        "160460"
+                    ],
+                    "tool_c": [
+                        "160470"
+                    ]
+                },
+                {
+                    "package_code": "TQFB064MEP",
+                    "operation_code": "TNF",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "64L ETQFP 10x10 PPF",
+                    "recipe": "64L ETQFP 10x10 PPF",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "160450"
+                    ],
+                    "tool_b": [
+                        "160460"
+                    ],
+                    "tool_c": [
+                        "160470"
+                    ]
+                },
+                {
+                    "package_code": "TQFB064MNP",
+                    "operation_code": "TNF-90-DEGREES",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "64L TQFP 10x10 -90 deg",
+                    "recipe": "64L TQFP 10x10 -90 deg",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "160450"
+                    ],
+                    "tool_b": [
+                        "160460"
+                    ],
+                    "tool_c": [
+                        "172150"
+                    ]
+                },
+                {
+                    "package_code": "TQFB064MEM",
+                    "operation_code": "TNF",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "64L ETQFP 10x10",
+                    "recipe": "64L ETQFP 10x10",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "160450"
+                    ],
+                    "tool_b": [
+                        "201830"
+                    ],
+                    "tool_c": [
+                        "160470"
+                    ]
+                }
+            ]
+        },
+        {
+            "pkgcode_8dg": "LQFB064M",
+            "character": "1101",
+            "used_optncode": true,
+            "used_onoptn": true,
+            "used_lothold": true,
+            "data_validate": [
+                {
+                    "package_code": "LQFB064MNM",
+                    "operation_code": "TNF",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "64L LQFP 10x10",
+                    "recipe": "64L LQFP 10x10",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "190670"
+                    ],
+                    "tool_b": [
+                        "190680"
+                    ],
+                    "tool_c": [
+                        "190690"
+                    ]
+                },
+                {
+                    "package_code": "LQFB064MNP",
+                    "operation_code": "TNF",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "64L LQFP 10x10",
+                    "recipe": "64L LQFP 10x10",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "190670"
+                    ],
+                    "tool_b": [
+                        "190680"
+                    ],
+                    "tool_c": [
+                        "190690"
+                    ]
+                },
+                {
+                    "package_code": "LQFB064MEM",
+                    "operation_code": "TNF",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "64L eLQFP 10x10",
+                    "recipe": "64L ELQFP 10x10",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "190670"
+                    ],
+                    "tool_b": [
+                        "190680"
+                    ],
+                    "tool_c": [
+                        "190690"
+                    ]
+                }
+            ]
+        },
+        {
+            "pkgcode_8dg": "AQFD100M",
+            "character": "1000",
+            "used_optncode": true,
+            "used_onoptn": true,
+            "used_lothold": true,
+            "data_validate": [
+                {
+                    "package_code": "AQFD100M",
+                    "operation_code": "TNF",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "100L QFP 18x18",
+                    "recipe": "100L QFP 18x18",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "160480"
+                    ],
+                    "tool_b": [
+                        "160490"
+                    ],
+                    "tool_c": [
+                        "160500"
+                    ]
+                }
+            ]
+        },
+        {
+            "pkgcode_8dg": "LQFE144M",
+            "character": "1000",
+            "used_optncode": true,
+            "used_onoptn": true,
+            "used_lothold": true,
+            "data_validate": [
+                {
+                    "package_code": "LQFE144M",
+                    "operation_code": "TNF",
+                    "cmp_type": "RECIPE",
+                    "leadtype": "144L LQFP 20x20",
+                    "recipe": "144L LQFP 20x20",
+                    "tool_used": 3,
+                    "tool_a": [
+                        "190700"
+                    ],
+                    "tool_b": [
+                        "190710"
+                    ],
+                    "tool_c": [
+                        "190720"
+                    ]
+                }
+            ]
+        }
+    ]
+}

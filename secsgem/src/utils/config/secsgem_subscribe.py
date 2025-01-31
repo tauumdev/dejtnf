@@ -4,6 +4,10 @@
 Description: Configuration file for FCL & FCLX equipment models  
 """
 
+VID_MODEL = {"FCL": 32, "FCLX": 0000}
+VID_PP_NAME = {"FCL": 33, "FCLX": 7}
+
+
 SUBSCRIBE_LOT_CONTROL_FCL = [
     {"ceid": 20, "dvs": [81, 33], "report_id": 1000},
     {"ceid": 21, "dvs": [82, 33], "report_id": 1001},

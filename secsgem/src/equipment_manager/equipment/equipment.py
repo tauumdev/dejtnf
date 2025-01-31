@@ -39,6 +39,7 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.MDLN = "dejtnf"
         self.SOFTREV = "1.0.1"
         self.is_enabled = is_enable
+        self.pp_name = None
         self.lot_active = None
 
         self.secsStreamsFunctions[2].update({49: SecsS02F49, 50: SecsS02F50})

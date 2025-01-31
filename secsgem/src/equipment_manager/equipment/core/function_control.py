@@ -63,6 +63,53 @@ class fcl:
                 "An error occurred while accepting lot %s", lot_id)
             return {"status": "error", "message": f"An error occurred while accepting lot {lot_id}: {str(e)}"}
 
+    def reject_lot(self, lot_id: str):
+        """
+        Sends a request to reject a lot (FCL LOT_REJECT command) and processes the response.
+        """
+        logger.info("Processing lot rejection request: %s", lot_id)
+
+        params = {
+            "RCMD": "LOT_REJECT",
+            "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}]
+        }
+
+        response_codes = {
+            0x0: "ok,complete",
+            0x1: "invalid command",
+            0x2: "cannot do now",
+            0x3: "parameter error",
+            0x4: "initiated for asynchronous completion",
+            0x5: "rejected, already in desired condition",
+            0x6: "invalid object"
+        }
+
+        try:
+            s2f42 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(2, 41)(params)
+            )
+
+            s2f42_decoded = self.equipment.secs_decode(s2f42)
+            hack = s2f42_decoded.HCACK.get()
+            response_message = response_codes.get(
+                hack, "Unknown response code")
+
+            if hack == 0:
+                logger.info("Lot successfully rejected: %s", lot_id)
+                return {"status": "success", "message": f"Lot {lot_id} was successfully rejected."}
+            else:
+                logger.error("Lot rejection failed for %s: %s",
+                             lot_id, response_message)
+                return {
+                    "status": "failed",
+                    "message": f"Lot rejection failed for {lot_id} on equipment {self.equipment.equipment_name}: {response_message}"
+                }
+
+        except Exception as e:
+            logger.exception(
+                "An error occurred while rejecting lot %s", lot_id)
+            return {"status": "error", "message": f"An error occurred while rejecting lot {lot_id}: {str(e)}"}
+
 
 class fclx:
     def __init__(self, equipment: "Equipment"):
