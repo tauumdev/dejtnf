@@ -85,23 +85,28 @@ class ValidationConfig:
     def _load_json(self) -> Dict[str, List[EquipmentData]]:
         """Load JSON file and validate structure"""
         try:
-            with open('files/dbvalidate.json', 'r') as file:
+            with open('files/dbvalidate.json', 'r', encoding='utf-8') as file:
                 data = json.load(file)
                 if not isinstance(data.get("data"), list):
-                    raise ValueError("Invalid structure in dbvalidate.json")
+                    logger.error("Invalid structure in dbvalidate.json")
+                    # raise ValueError("Invalid structure in dbvalidate.json")
                 return data
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            raise ValueError(f"Error loading dbvalidate.json: {e}")
+            logger.error("Error loading dbvalidate.json: %s", e)
+
+            # raise ValueError(f"Error loading dbvalidate.json: {e}") from e
 
     def _validate_package_code(self) -> None:
         """Check package code length"""
         if len(self.package_code) != 15:
-            raise ValueError("Package code must be 15 characters long")
+            logger.error("Package code must be 15 characters long")
+            # raise ValueError("Package code must be 15 characters long")
 
     def _generate_selection_code(self, selection_rules: str) -> str:
         """Create selection code based on selection rules"""
         if len(selection_rules) != 4 or not set(selection_rules).issubset({'0', '1'}):
-            raise ValueError("Selection rules must be 4 binary digits")
+            logger.error("Selection rules must be 4 binary digits")
+            # raise ValueError("Selection rules must be 4 binary digits")
 
         parts = [
             self.package_code[:8] if selection_rules[0] == '1' else "",
@@ -116,6 +121,8 @@ class ValidationConfig:
         for eq in self.all_data.get("data", []):
             if eq.get("equipment_name") == self.equipment_name:
                 return eq
+        logger.error(
+            "Equipment not found in configuration, equipment_name: %s", self.equipment_name)
         return None
 
     def _match_package(self, equipment: EquipmentData) -> Optional[PackageData]:
@@ -123,6 +130,8 @@ class ValidationConfig:
         for pkg in equipment.get("data", []):
             if pkg.get("package8digit") == self.package_code[:8]:
                 return pkg
+        logger.error(
+            "Package code not found in configuration, package_code: %s", self.package_code)
         return None
 
     def _extract_package_data(self, package: PackageData) -> None:
@@ -137,6 +146,7 @@ class ValidationConfig:
         except ValueError as e:
             self.data.success = {"status": False,
                                  "message": f"Invalid selection rules: {e}"}
+            logger.error("Invalid selection rules: %s", e)
             return
 
         matched_item = next(
@@ -156,17 +166,22 @@ class ValidationConfig:
         else:
             self.data.success = {
                 "status": False, "message": "No matching package selection code found. Expected code: " + expected_code}
+            logger.error(
+                "No matching package selection code found. Expected code: %s", expected_code)
 
 
 class LotInformation:
     def __init__(self, lot_number: str):
         self.lot_number = lot_number
+        self.success = False
         self.data = self._load_json()
 
     def _load_json(self) -> Dict:
         try:
             with open('files/lotdetail.json', 'r') as file:
                 data = json.load(file)
+                if data[0].get("Status", True):
+                    self.success = True
                 # Get first object's OutputLotInfo since data is wrapped in array
                 return data[0].get('OutputLotInfo', [])
         except FileNotFoundError:
@@ -193,6 +208,55 @@ class LotInformation:
         elif isinstance(descriptions, list):
             return [self._find_field('Description', desc) for desc in descriptions]
         return None
+
+
+class ValidateLot:
+    def __init__(self, equipment_name: str, pp_name: str, lot_id: str):
+        self.equipment_name = equipment_name
+        self.pp_name = pp_name
+        self.lot_id = lot_id
+        self.data_lot = LotInformation(lot_id)
+        self.data_config = ValidationConfig(equipment_name, lot_id)
+        self.result = self._validate_lot()
+
+    def _validate_lot(self):
+        if not self.data_lot.success:
+            return {"status": False, "message": "Error loading lot information"}
+
+        if not self.data_config.data.success:
+            return {"status": False, "message": self.data_config.data.success.get("message")}
+
+        # Dtat from lot information
+        # lot_package_code = self.data_lot.field_by_name("SASSYPACKAGE")
+        lot_operation_code = self.data_lot.field_by_name("OPERATION_CODE")
+        lot_on_operation = self.data_lot.field_by_name("ON_OPERATION")
+        lot_lot_hold = self.data_lot.field_by_name("LOT_STATUS")
+
+        # Data from configuration
+        cfg_operation_code = self.data_config.data.operation_code
+        cfg_on_operation = self.data_config.data.on_operation
+        cfg_type_validate = self.data_config.data.type_validate
+        cfg_recipe_name = self.data_config.data.recipe_name
+
+        # Optional configuration values
+        cfg_use_operation_code = self.data_config.data.use_operation_code
+        cfg_use_on_operation = self.data_config.data.use_on_operation
+        cfg_use_lot_hold = self.data_config.data.use_lot_hold
+
+        if cfg_type_validate == "RECIPE":
+            if cfg_recipe_name != self.pp_name:
+                return {"status": False, "message": "Invalid recipe name"}
+        if cfg_use_operation_code:
+            if cfg_operation_code != lot_operation_code:
+                return {"status": False, "message": "Invalid operation code"}
+        if cfg_use_on_operation:
+            if cfg_on_operation != lot_on_operation:
+                return {"status": False, "message": "Invalid on operation"}
+        if cfg_use_lot_hold:
+            if lot_lot_hold == "HOLD":
+                return {"status": False, "message": "Lot is on hold"}
+
+        return {"status": True, "message": "Lot validated successfully"}
 
 
 class MqttClient:
@@ -503,24 +567,43 @@ class Equipment(secsgem.gem.GemHostHandler):
 
                     try:
                         if rptid == 1000:
-                            self.validate_lot(pp_name, lot_id)
+                            request_recipe = lot_id.split(",")
+                            if len(request_recipe) > 1 and request_recipe[1] == "RECIPE":
+                                print("Equipment request Recipe")
+                                return
+
+                            validate_result = ValidateLot(
+                                self.equipment.equipment_name, pp_name, lot_id)
+                            if not validate_result.result.get("status"):
+                                self.reject_lot(
+                                    lot_id, validate_result.result.get("message"))
+                            else:
+                                self.accept_lot(lot_id)
                         elif rptid == 1001:
-                            pass
+                            self.lot_open(lot_id)
                         elif rptid == 1002:
-                            pass
+                            self.lot_close(lot_id)
                         else:
                             logger.error("Unknown RPTID: %s", rptid)
                             print(f"Unknown RPT ID: {rptid}")
                     except Exception as e:
                         logger.error("Error handling FCL event: %s", e)
 
-        def lot_open(self, pp_name: str, lot_id: str):
+        def lot_open(self, lot_id: str):
             """
             Open lot
             """
             logger.info("Open lot: %s", lot_id)
             self.equipment.mqtt_client.client.publish(
                 f"equipments/status/lot_active/{self.equipment.equipment_name}", lot_id)
+
+        def lot_close(self, lot_id: str):
+            """
+            Close lot
+            """
+            logger.info("Close lot: %s", lot_id)
+            self.equipment.mqtt_client.client.publish(
+                f"equipments/status/lot_active/{self.equipment.equipment_name}", "")
 
         def accept_lot(self, lot_id: str):
             """
@@ -539,6 +622,8 @@ class Equipment(secsgem.gem.GemHostHandler):
             """
             Reject lot based on equipment model
             """
+            logger.info("Reject lot: %s, Machine: %s, Reason: %s",
+                        lot_id, self.equipment.equipment_name, reason)
             if self.equipment.equipment_model == "FCL":
                 self.equipment.secs_control.lot_management.reject_lot_fcl(
                     lot_id)
@@ -548,67 +633,6 @@ class Equipment(secsgem.gem.GemHostHandler):
             else:
                 print(f"Unknown equipment model: {
                       self.equipment.equipment_model}")
-
-        def validate_lot(self, pp_name: str, lot_id: str):
-            """
-            Validate lot
-            """
-            data_lot = LotInformation(lot_id)
-            # print("Data lot: ", data_lot.__dict__)
-            equipment_name = self.equipment.equipment_name
-            lot_package_code = data_lot.field_by_name("SASSYPACKAGE")
-            lot_operation_code = data_lot.field_by_name("OPERATION_CODE")
-            lot_on_operation = data_lot.field_by_name("ON_OPERATION")
-            lot_lot_hold = data_lot.field_by_name("LOT_STATUS")
-
-            data_config = ValidationConfig(equipment_name, lot_package_code)
-
-            if not data_config.data.success.get("status"):
-                print("Error loading data config: ",
-                      data_config.data.success.get("message"))
-                self.reject_lot(
-                    lot_id, data_config.data.success.get("message"))
-                return
-
-            cfg_use_operation_code = data_config.data.use_operation_code
-            cfg_use_on_operation = data_config.data.use_on_operation
-            cfg_use_lot_hold = data_config.data.use_lot_hold
-            cfg_operation_code = data_config.data.operation_code
-            cfg_on_operation = data_config.data.on_operation
-            cfg_type_validate = data_config.data.type_validate
-            cfg_recipe_name = data_config.data.recipe_name
-            # cfg_product_name = data_config.data.product_name
-
-            if cfg_use_operation_code:
-                if cfg_operation_code != lot_operation_code:
-                    print("Operation code not match")
-                    print("Operation code: ", cfg_operation_code)
-                    print("Lot operation code: ", lot_operation_code)
-                    self.reject_lot(lot_id, "Operation code not match")
-                    return
-            if cfg_use_on_operation:
-                if cfg_on_operation != lot_on_operation:
-                    print("On operation not match")
-                    print("On operation: ", cfg_on_operation)
-                    print("Lot on operation: ", lot_on_operation)
-                    self.reject_lot(lot_id, "On operation not match")
-                    return
-            if cfg_use_lot_hold:
-                if lot_lot_hold == "HOLD":
-                    print("Lot is on hold")
-                    print("Lot status: ", lot_lot_hold)
-                    self.reject_lot(lot_id, "Lot is on hold")
-
-                    return
-            if cfg_type_validate == "RECIPE":
-                if cfg_recipe_name != pp_name:
-                    print("Recipe name not match")
-                    print("Recipe name: ", cfg_recipe_name)
-                    print("PP name: ", pp_name)
-                    self.reject_lot(lot_id, "Recipe name not match")
-                    return
-
-            self.accept_lot(lot_id)
 
     class HandlerAlarms:
         def __init__(self, equipment: "Equipment"):
