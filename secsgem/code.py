@@ -98,9 +98,10 @@ class ValidationConfig:
 
     def _validate_package_code(self) -> None:
         """Check package code length"""
-        if len(self.package_code) != 15:
+        if len(self.package_code.strip()) != 15:
             logger.error("Package code must be 15 characters long")
-            # raise ValueError("Package code must be 15 characters long")
+            print(self.package_code)
+            raise ValueError("Package code must be 15 characters long")
 
     def _generate_selection_code(self, selection_rules: str) -> str:
         """Create selection code based on selection rules"""
@@ -182,12 +183,17 @@ class LotInformation:
                 data = json.load(file)
                 if data[0].get("Status", True):
                     self.success = True
+                else:
+                    logger.error("Error loading lotdetail.json: %s",
+                                 data[0].get("Message", "Unknown error"))
                 # Get first object's OutputLotInfo since data is wrapped in array
                 return data[0].get('OutputLotInfo', [])
         except FileNotFoundError:
-            raise FileNotFoundError("lotdetail.json not found")
+            logger.error("lotdetail.json not found")
+            # raise FileNotFoundError("lotdetail.json not found")
         except json.JSONDecodeError:
-            raise ValueError("Invalid JSON format in lotdetail.json")
+            logger.error("Invalid JSON format in lotdetail.json")
+            # raise ValueError("Invalid JSON format in lotdetail.json")
 
     def _find_field(self, search_key: str, search_value: str) -> Union[str, None]:
         for field in self.data:
@@ -200,6 +206,7 @@ class LotInformation:
             return self._find_field('FieldName', field_names)
         elif isinstance(field_names, list):
             return [self._find_field('FieldName', name) for name in field_names]
+        logger.error("Invalid field_names type: %s", type(field_names))
         return None
 
     def field_by_desc(self, descriptions: Union[str, List[str]]) -> Union[str, List[str], None]:
@@ -207,6 +214,7 @@ class LotInformation:
             return self._find_field('Description', descriptions)
         elif isinstance(descriptions, list):
             return [self._find_field('Description', desc) for desc in descriptions]
+        logger.error("Invalid descriptions type: %s", type(descriptions))
         return None
 
 
@@ -216,14 +224,17 @@ class ValidateLot:
         self.pp_name = pp_name
         self.lot_id = lot_id
         self.data_lot = LotInformation(lot_id)
-        self.data_config = ValidationConfig(equipment_name, lot_id)
+        self.data_config = ValidationConfig(
+            equipment_name, self.data_lot.field_by_name("SASSYPACKAGE"))
         self.result = self._validate_lot()
 
     def _validate_lot(self):
         if not self.data_lot.success:
+            logger.error("Error loading lot information")
             return {"status": False, "message": "Error loading lot information"}
 
         if not self.data_config.data.success:
+            logger.error("Error loading configuration data")
             return {"status": False, "message": self.data_config.data.success.get("message")}
 
         # Dtat from lot information
@@ -245,15 +256,19 @@ class ValidateLot:
 
         if cfg_type_validate == "RECIPE":
             if cfg_recipe_name != self.pp_name:
+                logger.error("Invalid recipe name %s", self.pp_name)
                 return {"status": False, "message": "Invalid recipe name"}
         if cfg_use_operation_code:
             if cfg_operation_code != lot_operation_code:
+                logger.error("Invalid operation code %s", lot_operation_code)
                 return {"status": False, "message": "Invalid operation code"}
         if cfg_use_on_operation:
             if cfg_on_operation != lot_on_operation:
+                logger.error("Invalid on operation %s", lot_on_operation)
                 return {"status": False, "message": "Invalid on operation"}
         if cfg_use_lot_hold:
-            if lot_lot_hold == "HOLD":
+            if lot_lot_hold == "HELD" or lot_lot_hold == "HOLD":
+                logger.error("Lot is on hold, equipment_name")
                 return {"status": False, "message": "Lot is on hold"}
 
         return {"status": True, "message": "Lot validated successfully"}
@@ -277,29 +292,35 @@ class MqttClient:
         Callback function for when the client receives a CONNACK response from the server.
         """
         if rc == 0:
-            print("Connected to MQTT broker.")
+            logger.info("Connected to MQTT broker.")
+            # print("Connected to MQTT broker.")
             for topic in ["equipments/config/#", "equipments/control/#"]:
                 self.client.subscribe(topic)
-                print(f"Subscribed to topic: {topic}")
+                logger.info("Subscribed to topic: %s", topic)
+                # print(f"Subscribed to topic: {topic}")
         else:
-            print(f"Connection failed with result code {rc}")
+            logger.error("Connection failed with result code %s", rc)
+            # print(f"Connection failed with result code {rc}")
 
     def on_disconnect(self, client, userdata, rc):
         """
         Callback function for when the client disconnects from the server.
         """
         if rc != 0:
-            print("Unexpected disconnection. Reconnecting...")
+            # print("Unexpected disconnection. Reconnecting...")
+            logger.warning("Unexpected disconnection. Reconnecting...")
             self.client.reconnect()
         else:
-            print("Disconnected from MQTT broker")
+            logger.info("Disconnected from MQTT broker")
+            # print("Disconnected from MQTT broker")
 
     class _HandlerMessage:
         def __init__(self, mqtt_client_instant: "MqttClient"):
             self.mqtt_client = mqtt_client_instant
 
         def on_message(self, client, userdata, msg: mqtt.MQTTMessage):
-            print(f"Received message: {msg.payload}")
+            # print(f"Received message: {msg.payload}")
+            logger.info("Received message: %s", msg.payload)
 
 
 class Equipment(secsgem.gem.GemHostHandler):
@@ -334,15 +355,18 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.secs_control = self.SecsControl(self)
 
     def _on_state_communicating(self, _):
-        print("<<-- State Communicating")
+        # print("<<-- State Communicating")
+        logger.info("State Communicating")
         return super()._on_state_communicating(_)
 
     def _on_state_disconnect(self):
-        print("<<-- State Disconnect")
+        # print("<<-- State Disconnect")
+        logger.info("State Disconnect")
         return super()._on_state_disconnect()
 
     def on_connection_closed(self, connection):
-        print("<<-- Connection Closed")
+        # print("<<-- Connection Closed")
+        logger.info("Connection Closed")
         return super().on_connection_closed(connection)
 
     def _on_hsms_packet_received(self, packet):
@@ -518,7 +542,8 @@ class Equipment(secsgem.gem.GemHostHandler):
             """
             Handle S01F14
             """
-            print("<<-- S01F14")
+            logger.info("<<-- S01F14")
+            # print("<<-- S01F14")
 
         def s09f1(self, handle, packet):
             logger.warning("s09f1:Unrecognized Device ID (UDN): %s",
@@ -584,8 +609,8 @@ class Equipment(secsgem.gem.GemHostHandler):
                         elif rptid == 1002:
                             self.lot_close(lot_id)
                         else:
-                            logger.error("Unknown RPTID: %s", rptid)
-                            print(f"Unknown RPT ID: {rptid}")
+                            logger.warning("Unknown RPTID: %s", rptid)
+                            # print(f"Unknown RPT ID: {rptid}")
                     except Exception as e:
                         logger.error("Error handling FCL event: %s", e)
 
@@ -593,7 +618,8 @@ class Equipment(secsgem.gem.GemHostHandler):
             """
             Open lot
             """
-            logger.info("Open lot: %s", lot_id)
+            logger.info("Open lot: %s on %s", lot_id,
+                        self.equipment.equipment_name)
             self.equipment.mqtt_client.client.publish(
                 f"equipments/status/lot_active/{self.equipment.equipment_name}", lot_id)
 
@@ -601,7 +627,8 @@ class Equipment(secsgem.gem.GemHostHandler):
             """
             Close lot
             """
-            logger.info("Close lot: %s", lot_id)
+            logger.info("Close lot: %s on %s", lot_id,
+                        self.equipment.equipment_name)
             self.equipment.mqtt_client.client.publish(
                 f"equipments/status/lot_active/{self.equipment.equipment_name}", "")
 
@@ -615,8 +642,10 @@ class Equipment(secsgem.gem.GemHostHandler):
             elif self.equipment.equipment_model == "FCLX":
                 self.equipment.secs_control.lot_management.add_lot_fclx(lot_id)
             else:
-                print(f"Unknown equipment model: {
-                      self.equipment.equipment_model}")
+                logger.error("Unknown equipment model: %s",
+                             self.equipment.equipment_model)
+                # print(f"Unknown equipment model: {
+                #       self.equipment.equipment_model}")
 
         def reject_lot(self, lot_id: str, reason: str = "Reason"):
             """
@@ -631,8 +660,10 @@ class Equipment(secsgem.gem.GemHostHandler):
                 self.equipment.secs_control.lot_management.reject_lot_fclx(
                     lot_id, reason)
             else:
-                print(f"Unknown equipment model: {
-                      self.equipment.equipment_model}")
+                logger.error("Unknown equipment model: %s, equipment_name: %s",
+                             self.equipment.equipment_model, self.equipment.equipment_name)
+                # print(f"Unknown equipment model: {
+                #       self.equipment.equipment_model}")
 
     class HandlerAlarms:
         def __init__(self, equipment: "Equipment"):
@@ -687,7 +718,12 @@ class Equipment(secsgem.gem.GemHostHandler):
                 response_code = decode_s2f42.HCACK.get()
                 response_message = self.equipment.secs_control.response_message_rcmd(
                     response_code)
-                # print(f"Accept lot: {response_message}")
+                if response_code == 0:
+                    logger.info("Accept lot: %s on %s", lot_id,
+                                self.equipment.equipment_name)
+                else:
+                    logger.error("Accept lot: %s on %s, Error: %s", lot_id,
+                                 self.equipment.equipment_name, response_message)
                 return f"Accept lot: {response_message}"
 
             def reject_lot_fcl(self, lot_id: str):
@@ -702,7 +738,12 @@ class Equipment(secsgem.gem.GemHostHandler):
                 response_code = decode_s2f42.HCACK.get()
                 response_message = self.equipment.secs_control.response_message_rcmd(
                     response_code)
-                # print(f"Reject lot: {response_message}")
+                if response_code == 0:
+                    logger.info("Reject lot: %s on %s", lot_id,
+                                self.equipment.equipment_name)
+                else:
+                    logger.error("Reject lot: %s on %s, Error: %s", lot_id,
+                                 self.equipment.equipment_name, response_message)
                 return f"Reject lot: {response_message}"
 
             def add_lot_fclx(self, lot_id: str):
@@ -711,6 +752,15 @@ class Equipment(secsgem.gem.GemHostHandler):
                 """
                 s2f49 = self.equipment.send_and_waitfor_response(
                     self.equipment.stream_function(2, 49)({"DATAID": 123, "OBJSPEC": "OBJ", "RCMD": "ADD_LOT", "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}]}))
+                response_code = self.equipment.secs_decode(s2f49).HCACK.get()
+                response_message = self.equipment.secs_control.response_message_rcmd(
+                    response_code)
+                if response_code == 0:
+                    logger.info("Add lot: %s on %s", lot_id,
+                                self.equipment.equipment_name)
+                else:
+                    logger.error("Add lot: %s on %s, Error: %s", lot_id,
+                                 self.equipment.equipment_name, response_message)
                 return self.equipment.secs_decode(s2f49)
 
             def reject_lot_fclx(self, lot_id: str, reason: str):
@@ -719,6 +769,15 @@ class Equipment(secsgem.gem.GemHostHandler):
                 """
                 s2f49 = self.equipment.send_and_waitfor_response(
                     self.equipment.stream_function(2, 49)({"DATAID": 101, "OBJSPEC": "LOTCONTROL", "RCMD": "REJECT_LOT", "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}, {"CPNAME": "LotID", "CPVAL": reason}]}))
+                response_code = self.equipment.secs_decode(s2f49).HCACK.get()
+                response_message = self.equipment.secs_control.response_message_rcmd(
+                    response_code)
+                if response_code == 0:
+                    logger.info("Reject lot: %s on %s", lot_id,
+                                self.equipment.equipment_name)
+                else:
+                    logger.error("Reject lot: %s on %s, Error: %s", lot_id,
+                                 self.equipment.equipment_name, response_message)
                 return self.equipment.secs_decode(s2f49)
 
         class _RecipeManagement:
