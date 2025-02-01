@@ -11,7 +11,7 @@
 					"use_lot_hold": true,
 					"data_with_selection_code": [
 						{
-							"package_selection_code": "LQFA048M1",
+							"package_selection_code": "LQFA048M",
 							"operation_code": "TNF",
 							"on_operation": "TNF",
 							"type_validate": "recipe",
