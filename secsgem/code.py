@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 import cmd
 from dataclasses import dataclass
 import ipaddress
@@ -24,8 +25,6 @@ from secsgem.secs.dataitems import MDLN, SVID, SV, SVNAME, UNITS, COMMACK, OFLAC
 
 from src.utils.logger.gem_logger import CommunicationLogFileHandler
 from src.utils.logger.app_logger import AppLogger
-
-USE_MQTT = True
 
 
 class ValidationConfig:
@@ -304,17 +303,26 @@ class MqttClient:
     """
     Class for handling MQTT client
     """
+    # load environment variables
+    load_dotenv()
+
+    mqtt_enabled = os.getenv("MQTT_ENABLE")
+    mqtt_broker = os.getenv("MQTT_BROKER")
+    mqtt_port = int(os.getenv("MQTT_PORT"))
+    mqtt_username = os.getenv("MQTT_USERNAME")
+    mqtt_password = os.getenv("MQTT_PASSWORD")
 
     def __init__(self):
         self.client = mqtt.Client()
         # self.client.enable_logger(logger)
-        self.client.username_pw_set("Tum", "Tum1234565")
+        self.client.username_pw_set(
+            MqttClient.mqtt_username, MqttClient.mqtt_password)
         self.client.on_connect = self.on_connect
         self.client.on_message = self._HandlerMessage(self).on_message
         self.client.on_disconnect = self.on_disconnect
 
-        if USE_MQTT:
-            self.client.connect("localhost", 1883, 60)
+        if MqttClient.mqtt_enabled:
+            self.client.connect(MqttClient.mqtt_broker, 1883, 60)
             self.client.loop_start()
 
     def on_connect(self, client, userdata, flags, rc):
@@ -1849,7 +1857,9 @@ app_logger = AppLogger()
 logger = app_logger.get_logger()
 logger.setLevel(logging.INFO)
 
+
 if __name__ == "__main__":
+
     mqtt_client = MqttClient()
     cli = CommandCli(mqtt_client)
     cli.cmdloop()
