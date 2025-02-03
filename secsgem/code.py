@@ -1,7 +1,10 @@
 import cmd
 from dataclasses import dataclass
+import ipaddress
 import json
 import logging
+import os
+import threading
 from typing import Dict, List, Optional, TypedDict, Union
 import paho.mqtt.client as mqtt
 import secsgem.common
@@ -29,6 +32,7 @@ class ValidationConfig:
     """Class for validating package data based on equipment configuration"""
 
     class PackageData(TypedDict, total=False):
+        """Package data type"""
         package8digit: str
         use_operation_code: bool
         use_on_operation: bool
@@ -37,6 +41,7 @@ class ValidationConfig:
         data_with_selection_code: List[Dict[str, str]]
 
     class EquipmentData(TypedDict, total=False):
+        """Equipment data type"""
         equipment_name: str
         data: List["ValidationConfig.PackageData"]
 
@@ -172,6 +177,10 @@ class ValidationConfig:
 
 
 class LotInformation:
+    """
+    Class for loading lot information from JSON
+    """
+
     def __init__(self, lot_number: str):
         self.lot_number = lot_number
         self.success = False
@@ -179,7 +188,7 @@ class LotInformation:
 
     def _load_json(self) -> Dict:
         try:
-            with open('files/lotdetail.json', 'r') as file:
+            with open('files/lotdetail.json', 'r', encoding='utf-8') as file:
                 data = json.load(file)
                 if data[0].get("Status", True):
                     self.success = True
@@ -202,6 +211,12 @@ class LotInformation:
         return None
 
     def field_by_name(self, field_names: Union[str, List[str]]) -> Union[str, List[str], None]:
+        """
+        Get field value by field name
+        Usage:
+        field_by_name("FieldName")
+        field_by_name(["FieldName1", "FieldName2"])
+        """
         if isinstance(field_names, str):
             return self._find_field('FieldName', field_names)
         elif isinstance(field_names, list):
@@ -210,6 +225,12 @@ class LotInformation:
         return None
 
     def field_by_desc(self, descriptions: Union[str, List[str]]) -> Union[str, List[str], None]:
+        """
+        Get field value by description
+        Usage:
+        field_by_desc("Description")
+        field_by_desc(["Description1", "Description2"])
+        """
         if isinstance(descriptions, str):
             return self._find_field('Description', descriptions)
         elif isinstance(descriptions, list):
@@ -219,6 +240,10 @@ class LotInformation:
 
 
 class ValidateLot:
+    """
+    Class for validating lot information
+    """
+
     def __init__(self, equipment_name: str, pp_name: str, lot_id: str):
         self.equipment_name = equipment_name
         self.pp_name = pp_name
@@ -229,6 +254,7 @@ class ValidateLot:
         self.result = self._validate_lot()
 
     def _validate_lot(self):
+        logger.info("Validating lot information")
         if not self.data_lot.success:
             logger.error("Error loading lot information")
             return {"status": False, "message": "Error loading lot information"}
@@ -254,7 +280,7 @@ class ValidateLot:
         cfg_use_on_operation = self.data_config.data.use_on_operation
         cfg_use_lot_hold = self.data_config.data.use_lot_hold
 
-        if cfg_type_validate == "RECIPE":
+        if cfg_type_validate.upper() == "RECIPE":
             if cfg_recipe_name != self.pp_name:
                 logger.error("Invalid recipe name %s", self.pp_name)
                 return {"status": False, "message": "Invalid recipe name"}
@@ -275,6 +301,10 @@ class ValidateLot:
 
 
 class MqttClient:
+    """
+    Class for handling MQTT client
+    """
+
     def __init__(self):
         self.client = mqtt.Client()
         # self.client.enable_logger(logger)
@@ -315,15 +345,24 @@ class MqttClient:
             # print("Disconnected from MQTT broker")
 
     class _HandlerMessage:
+        """
+        Class for handling MQTT messages
+        """
+
         def __init__(self, mqtt_client_instant: "MqttClient"):
             self.mqtt_client = mqtt_client_instant
 
         def on_message(self, client, userdata, msg: mqtt.MQTTMessage):
-            # print(f"Received message: {msg.payload}")
+            """
+            Callback function for when a PUBLISH message is received from the server.
+            """
             logger.info("Received message: %s", msg.payload)
 
 
 class Equipment(secsgem.gem.GemHostHandler):
+    """
+    Class for handling equipment
+    """
 
     def __init__(self, equipment_name, equipment_model, address, port, session_id, active, enable, mqtt_client_instant: MqttClient, custom_connection_handler=None):
         super().__init__(address, port, active, session_id,
@@ -332,6 +371,10 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.equipment_name = equipment_name
         self.equipment_model = equipment_model
         self.is_enabled = enable
+
+        self.control_state = None
+        self.pp_name = None
+        self.lot_active = None
 
         self.custom_stream_function = self.CustomStreamFunction
         self.secsStreamsFunctions[2].update(
@@ -354,20 +397,48 @@ class Equipment(secsgem.gem.GemHostHandler):
 
         self.secs_control = self.SecsControl(self)
 
-    def _on_state_communicating(self, _):
-        # print("<<-- State Communicating")
-        logger.info("State Communicating")
-        return super()._on_state_communicating(_)
+    def delayed_task(self):
+        """
+        Delayed task for subscribe lot
+        """
+        wait_seconds = 0.05
+        logger.info("Task started, waiting for %s seconds...", wait_seconds)
+        threading.Event().wait(wait_seconds)  # Non-blocking wait
+        logger.info("%s seconds have passed!\n", wait_seconds)
 
-    def _on_state_disconnect(self):
-        # print("<<-- State Disconnect")
-        logger.info("State Disconnect")
-        return super()._on_state_disconnect()
+        # subscribe lot control
+        # self.fc_control.subscribe_lot_control()
+
+    def _on_state_communicating(self, _):
+
+        super()._on_state_communicating(_)
+        current_state = self.communicationState.current
+        logger.info("%s On communication state: %s",
+                    self.equipment_name, current_state)
+        self.mqtt_client.client.publish(
+            f"equipments/status/communication_state/{self.equipment_name}", current_state, qos=1, retain=True)
+
+        # Start the thread
+        thread = threading.Thread(target=self.delayed_task)
+        thread.start()
 
     def on_connection_closed(self, connection):
-        # print("<<-- Connection Closed")
-        logger.info("Connection Closed")
-        return super().on_connection_closed(connection)
+        super().on_connection_closed(connection)
+
+        current_state = self.communicationState.current
+        logger.info("%s On connection close: %s",
+                    self.equipment_name, current_state)
+        self.mqtt_client.client.publish(
+            f"equipments/status/communication_state/{self.equipment_name}", current_state, qos=1, retain=True)
+
+    def _on_state_disconnect(self):
+        super()._on_state_disconnect()
+
+        current_state = "NOT_COMMUNICATING"
+        logger.info("%s On state disconnect: %s",
+                    self.equipment_name, current_state)
+        self.mqtt_client.client.publish(
+            f"equipments/status/communication_state/{self.equipment_name}", current_state, qos=1, retain=True)
 
     def _on_hsms_packet_received(self, packet):
         decode = self.secs_decode(packet)
@@ -386,7 +457,9 @@ class Equipment(secsgem.gem.GemHostHandler):
         format='%(asctime)s %(name)s.%(funcName)s: %(message)s', level=logging.INFO)
 
     class CustomStreamFunction:
-
+        """
+        Class for custom stream functions
+        """
         class SecsS02F49(SecsStreamFunction):
             """
             host command - send.
@@ -535,10 +608,14 @@ class Equipment(secsgem.gem.GemHostHandler):
             _isMultiBlock = False
 
     class CommunicationCallbacks:
+        """
+        Class for handling communication callbacks
+        """
+
         def __init__(self, equipment: "Equipment"):
             self.equipment = equipment
 
-        def s01f14(self):
+        def s01f14(self, handle, packet):
             """
             Handle S01F14
             """
@@ -570,28 +647,34 @@ class Equipment(secsgem.gem.GemHostHandler):
                            self.equipment.equipment_name)
 
     class HandlerEvents:
+        """
+        Class for handling events
+        """
+
         def __init__(self, equipment: "Equipment"):
             self.equipment = equipment
 
         def events_receive(self, handler, packet: HsmsPacket):
+            """
+            Handle S06F11
+            """
             self.equipment.send_response(self.equipment.stream_function(6, 12)(
                 ACKC6.ACCEPTED), packet.header.system)
-            # print("<<-- S06F11")
             decode = self.equipment.secs_decode(packet)
-
             ceid = decode.CEID.get()
 
             for rpt in decode.RPT:
                 if rpt:
                     rptid = rpt.RPTID.get()
                     values = rpt.V.get()
-                    lot_id, pp_name = values
-
-                    lot_id = lot_id.strip().upper()
-                    pp_name = pp_name.strip()
-
                     try:
                         if rptid == 1000:
+                            lot_id, pp_name = values
+                            lot_id = lot_id.upper()
+                            if not lot_id:
+                                self.reject_lot(lot_id, "Lot ID is empty")
+                                return
+
                             request_recipe = lot_id.split(",")
                             if len(request_recipe) > 1 and request_recipe[1] == "RECIPE":
                                 print("Equipment request Recipe")
@@ -599,25 +682,45 @@ class Equipment(secsgem.gem.GemHostHandler):
 
                             validate_result = ValidateLot(
                                 self.equipment.equipment_name, pp_name, lot_id)
+
                             if not validate_result.result.get("status"):
-                                self.reject_lot(
-                                    lot_id, validate_result.result.get("message"))
-                            else:
-                                self.accept_lot(lot_id)
+                                message = validate_result.result.get("message")
+                                self.reject_lot(lot_id, message)
+                                return
+                            self.accept_lot(lot_id)
+
                         elif rptid == 1001:
+                            lot_id, pp_name = values
+                            lot_id = lot_id.upper()
                             self.lot_open(lot_id)
                         elif rptid == 1002:
+                            lot_id, pp_name = values
+                            lot_id = lot_id.upper()
                             self.lot_close(lot_id)
+                        elif rptid == 1003:
+                            self.recipe_init(values)
                         else:
                             logger.warning("Unknown RPTID: %s", rptid)
-                            # print(f"Unknown RPT ID: {rptid}")
                     except Exception as e:
-                        logger.error("Error handling FCL event: %s", e)
+                        logger.error("Error handling event: %s", e)
+
+        def recipe_init(self, pp_name: str):
+            """
+            Init recipe
+            """
+
+            # if type(pp_name) == list:
+            if isinstance(pp_name, list):
+                self.equipment.pp_name = pp_name[0]
+                pp_name = pp_name[0]
+                self.equipment.mqtt_client.client.publish(
+                    f"equipments/status/pp_name/{self.equipment.equipment_name}", pp_name)
 
         def lot_open(self, lot_id: str):
             """
             Open lot
             """
+            self.equipment.lot_active = lot_id
             logger.info("Open lot: %s on %s", lot_id,
                         self.equipment.equipment_name)
             self.equipment.mqtt_client.client.publish(
@@ -627,6 +730,7 @@ class Equipment(secsgem.gem.GemHostHandler):
             """
             Close lot
             """
+            self.equipment.lot_active = None
             logger.info("Close lot: %s on %s", lot_id,
                         self.equipment.equipment_name)
             self.equipment.mqtt_client.client.publish(
@@ -644,15 +748,11 @@ class Equipment(secsgem.gem.GemHostHandler):
             else:
                 logger.error("Unknown equipment model: %s",
                              self.equipment.equipment_model)
-                # print(f"Unknown equipment model: {
-                #       self.equipment.equipment_model}")
 
         def reject_lot(self, lot_id: str, reason: str = "Reason"):
             """
             Reject lot based on equipment model
             """
-            logger.info("Reject lot: %s, Machine: %s, Reason: %s",
-                        lot_id, self.equipment.equipment_name, reason)
             if self.equipment.equipment_model == "FCL":
                 self.equipment.secs_control.lot_management.reject_lot_fcl(
                     lot_id)
@@ -662,10 +762,12 @@ class Equipment(secsgem.gem.GemHostHandler):
             else:
                 logger.error("Unknown equipment model: %s, equipment_name: %s",
                              self.equipment.equipment_model, self.equipment.equipment_name)
-                # print(f"Unknown equipment model: {
-                #       self.equipment.equipment_model}")
 
     class HandlerAlarms:
+        """
+        Class for handling alarms
+        """
+
         def __init__(self, equipment: "Equipment"):
             self.equipment = equipment
 
@@ -676,39 +778,137 @@ class Equipment(secsgem.gem.GemHostHandler):
             self.equipment.send_response(self.equipment.stream_function(5, 2)(
                 ACKC5.ACCEPTED), packet.header.system)
 
-            print("<<-- S05F01")
+            decode = self.equipment.secs_decode(packet)
+            alarm_id = decode.ALID.get()
+            alarm_cd = decode.ALCD.get()
+            alarm_text = decode.ALTX.get()
+            message = f"alid: {alarm_id}, alcd: {
+                alarm_cd},Alarm Text: {alarm_text}"
+            self.equipment.mqtt_client.client.publish(
+                f"equipments/status/alarm/{self.equipment.equipment_name}", message)
 
     class SecsControl:
+        """
+        Class for handling SECS control
+        """
+
         def __init__(self, equipment: "Equipment"):
             self.equipment = equipment
             self.recipe_management = self._RecipeManagement(self.equipment)
             self.lot_management = self._LotManagement(self.equipment)
+            self.response_message = self.ResponseMessage()
 
-        def response_message_rcmd(self, code: int):
+        class ResponseMessage:
             """
-            Response message S2F42
+            Class for response messages
             """
-            # 0 - ok, completed
-            # 1 - invalid command
-            # 2 - cannot do now
-            # 3 - parameter error
-            # 4 - initiated for asynchronous completion
-            # 5 - rejected, already in desired condition
-            # 6 - invalid object
 
-            message = {0: "OK", 1: "Invalid command", 2: "Cannot do now",
-                       3: "Parameter error", 4: "Initiated for asynchronous completion",
-                       5: "Rejected, already in desired condition", 6: "Invalid object"}
-            return message.get(code, "Unknown code")
+            def response_message_rcmd(self, code: int):
+                """
+                Response message S2F42
+                0 - ok, completed
+                1 - invalid command
+                2 - cannot do now
+                3 - parameter error
+                4 - initiated for asynchronous completion
+                5 - rejected, already in desired condition
+                6 - invalid object
+                """
+
+                message = {0: "OK", 1: "Invalid command", 2: "Cannot do now",
+                           3: "Parameter error", 4: "Initiated for asynchronous completion",
+                           5: "Rejected, already in desired condition", 6: "Invalid object"}
+                return message.get(code, "Unknown code")
+
+            def response_message_onlack(self, code: int):
+                """
+                Response message Online S1F16
+                0 - ok
+                1 - refused
+                2 - already online
+                """
+
+                message = {0: "OK", 1: "Refused", 2: "Already online"}
+                return message.get(code, "Unknown code")
+
+            def response_message_oflack(self, code: int):
+                """
+                Response message Offline S1F18
+                0 - ok
+                """
+
+                message = {0: "OK"}
+                return message.get(code, "Unknown code")
+
+            def response_message_lrack(self, code: int):
+                """
+                Response message S2F36
+                0 - ok
+                1 - out of space
+                2 - invalid format
+                3 - 1 or more CEID links already defined
+                4 - 1 or more CEID invalid
+                5 - 1 or more RPTID invalid
+                """
+
+                message = {0: "OK", 1: "Out of space", 2: "Invalid format",
+                           3: "1 or more CEID links already defined", 4: "1 or more CEID invalid",
+                           5: "1 or more RPTID invalid"}
+                return message.get(code, "Unknown code")
+
+            def response_message_drack(self, code: int):
+                """
+                Response message S2F34
+                0 - ok
+                1 - out of space
+                2 - invalid format
+                3 - 1 or more RPTID already defined
+                4 - 1 or more invalid VID
+                """
+
+                message = {0: "OK", 1: "Out of space", 2: "Invalid format",
+                           3: "1 or more RPTID already defined", 4: "1 or more invalid VID"}
+                return message.get(code, "Unknown code")
+
+            def response_message_erack(self, code: int):
+                """
+                Response message S2F38
+                0 - ok
+                1 - denied
+                """
+
+                message = {0: "OK", 1: "Denied"}
+                return message.get(code, "Unknown code")
 
         class _LotManagement:
+
             def __init__(self, equipment: "Equipment"):
                 self.equipment = equipment
+
+            def equipment_ready(self):
+                """
+                equipment ready
+                """
+                if not self.equipment.is_enabled:  # Check if equipment is enabled
+                    return {"status": False, "message": "Equipment is disabled"}
+                if not self.equipment.communicationState.current == "COMMUNICATING":  # Check if equipment is communicating
+                    return {"status": False, "message": "Equipment is not communicating"}
+                return {"status": True, "message": "Equipment is ready"}
 
             def accept_lot_fcl(self, lot_id: str):
                 """
                 accept lot
                 """
+                eq_ready = self.equipment_ready()
+                if not eq_ready.get("status"):
+                    logger.error("Equipment not ready: %s",
+                                 eq_ready.get("message"))
+                    return {"status": False, "message": eq_ready.get("message")}
+
+                if not self.equipment.equipment_model == "FCL":
+                    logger.error("Invalid equipment model: %s",
+                                 self.equipment.equipment_model)
+                    return {"status": False, "message": "Invalid equipment model"}
 
                 secs_cmd = {"RCMD": "LOT_ACCEPT", "PARAMS": [
                     {"CPNAME": "LotID", "CPVAL": lot_id}]}
@@ -716,102 +916,331 @@ class Equipment(secsgem.gem.GemHostHandler):
                     self.equipment.stream_function(2, 41)(secs_cmd))
                 decode_s2f42 = self.equipment.secs_decode(s2f42)
                 response_code = decode_s2f42.HCACK.get()
-                response_message = self.equipment.secs_control.response_message_rcmd(
+
+                response_message = self.equipment.secs_control.response_message.response_message_rcmd(
                     response_code)
-                if response_code == 0:
-                    logger.info("Accept lot: %s on %s", lot_id,
-                                self.equipment.equipment_name)
-                else:
+                if not response_code == 0:
                     logger.error("Accept lot: %s on %s, Error: %s", lot_id,
                                  self.equipment.equipment_name, response_message)
-                return f"Accept lot: {response_message}"
+                    return {"status": False, "message": response_message}
+                logger.info("Accept lot: %s on %s", lot_id,
+                            self.equipment.equipment_name)
+                return {"status": True, "message": "Accept lot success"}
 
             def reject_lot_fcl(self, lot_id: str):
                 """
                 reject lot
                 """
+                eq_ready = self.equipment_ready()
+                if not eq_ready.get("status"):
+                    logger.error("Equipment not ready: %s",
+                                 eq_ready.get("message"))
+                    return {"status": False, "message": eq_ready.get("message")}
+
+                if not self.equipment.equipment_model == "FCL":
+                    logger.error("Invalid equipment model: %s",
+                                 self.equipment.equipment_model)
+                    return {"status": False, "message": "Invalid equipment model"}
+
                 secs_cmd = {"RCMD": "LOT_REJECT", "PARAMS": [
                     {"CPNAME": "LotID", "CPVAL": lot_id}]}
                 s2f42 = self.equipment.send_and_waitfor_response(
                     self.equipment.stream_function(2, 41)(secs_cmd))
                 decode_s2f42 = self.equipment.secs_decode(s2f42)
                 response_code = decode_s2f42.HCACK.get()
-                response_message = self.equipment.secs_control.response_message_rcmd(
+
+                response_message = self.equipment.secs_control.response_message.response_message_rcmd(
                     response_code)
-                if response_code == 0:
-                    logger.info("Reject lot: %s on %s", lot_id,
-                                self.equipment.equipment_name)
-                else:
+                if not response_code == 0:
                     logger.error("Reject lot: %s on %s, Error: %s", lot_id,
                                  self.equipment.equipment_name, response_message)
-                return f"Reject lot: {response_message}"
+                    return {"status": False, "message": response_message}
+                logger.info("Reject lot: %s on %s", lot_id,
+                            self.equipment.equipment_name)
+                return {"status": True, "message": "Reject lot success"}
 
             def add_lot_fclx(self, lot_id: str):
                 """
                 add lot fclx
                 """
+                eq_ready = self.equipment_ready()
+                if not eq_ready.get("status"):
+                    logger.error("Equipment not ready: %s",
+                                 eq_ready.get("message"))
+                    return {"status": False, "message": eq_ready.get("message")}
+
+                if not self.equipment.equipment_model == "FCL":
+                    logger.error("Invalid equipment model: %s",
+                                 self.equipment.equipment_model)
+                    return {"status": False, "message": "Invalid equipment model"}
+
                 s2f49 = self.equipment.send_and_waitfor_response(
                     self.equipment.stream_function(2, 49)({"DATAID": 123, "OBJSPEC": "OBJ", "RCMD": "ADD_LOT", "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}]}))
                 response_code = self.equipment.secs_decode(s2f49).HCACK.get()
-                response_message = self.equipment.secs_control.response_message_rcmd(
+
+                response_message = self.equipment.secs_control.response_message.response_message_rcmd(
                     response_code)
-                if response_code == 0:
-                    logger.info("Add lot: %s on %s", lot_id,
-                                self.equipment.equipment_name)
-                else:
+                if not response_code == 0:
                     logger.error("Add lot: %s on %s, Error: %s", lot_id,
                                  self.equipment.equipment_name, response_message)
-                return self.equipment.secs_decode(s2f49)
+                    return {"status": False, "message": response_message}
+                logger.info("Add lot: %s on %s", lot_id,
+                            self.equipment.equipment_name)
+                return {"status": True, "message": "Add lot success"}
 
             def reject_lot_fclx(self, lot_id: str, reason: str):
                 """
                 reject lot fclx
                 """
+                eq_ready = self.equipment_ready()
+                if not eq_ready.get("status"):
+                    logger.error("Equipment not ready: %s",
+                                 eq_ready.get("message"))
+                    return {"status": False, "message": eq_ready.get("message")}
+
+                if not self.equipment.equipment_model == "FCL":
+                    logger.error("Invalid equipment model: %s",
+                                 self.equipment.equipment_model)
+                    return {"status": False, "message": "Invalid equipment model"}
+
                 s2f49 = self.equipment.send_and_waitfor_response(
                     self.equipment.stream_function(2, 49)({"DATAID": 101, "OBJSPEC": "LOTCONTROL", "RCMD": "REJECT_LOT", "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}, {"CPNAME": "LotID", "CPVAL": reason}]}))
                 response_code = self.equipment.secs_decode(s2f49).HCACK.get()
-                response_message = self.equipment.secs_control.response_message_rcmd(
+
+                response_message = self.equipment.secs_control.response_message.response_message_rcmd(
                     response_code)
-                if response_code == 0:
-                    logger.info("Reject lot: %s on %s", lot_id,
-                                self.equipment.equipment_name)
-                else:
+                if not response_code == 0:
                     logger.error("Reject lot: %s on %s, Error: %s", lot_id,
                                  self.equipment.equipment_name, response_message)
-                return self.equipment.secs_decode(s2f49)
+                    return {"status": False, "message": response_message}
+                logger.info("Reject lot: %s on %s", lot_id,
+                            self.equipment.equipment_name)
+                return {"status": True, "message": "Reject lot success"}
 
         class _RecipeManagement:
             def __init__(self, equipment: "Equipment"):
                 self.equipment = equipment
 
+            # Check dir path for recipe file if not exist create
+            # receipe update = files/recipe/equipment_model/equipment_name/current/recipe_name
+            # recipe backup = files/recipe/equipment_model/equipment_name/backup/receipe_name
+            # recipe upload = files/recipe/equipment_model/equipment_name/upload/receipe_name
+
+            def create_dir(self, path: str):
+                """
+                create directory
+                """
+                try:
+                    if not os.path.exists(path):
+                        os.makedirs(path)
+                except Exception as e:
+                    logger.error("Error creating directory: %s", e)
+
+            def get_recipe_file(self, path: str):
+                """
+                get recipe file
+                return secs binary
+                """
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        if not f:
+                            return None
+                        return secsgem.secs.variables.SecsVarBinary(f.read())
+                except Exception as e:
+                    logger.error("Error reading recipe file: %s", e)
+                    return None
+
+            def equipment_ready(self):
+                """
+                equipment ready
+                """
+                if not self.equipment.is_enabled:  # Check if equipment is enabled
+                    return {"status": False, "message": "Equipment is disabled"}
+                if not self.equipment.communicationState.current == "COMMUNICATING":  # Check if equipment is communicating
+                    return {"status": False, "message": "Equipment is not communicating"}
+                return {"status": True, "message": "Equipment is ready"}
+
             def pp_dir(self):
                 """
                 s7f19
                 """
+                if not self.equipment_ready().get("status"):
+                    return self.equipment_ready()
+
                 return self.equipment.get_process_program_list()
 
-            def pp_request(self, pp_name: str):
+            def pp_request(self, ppid: str):
                 """
                 s7f5
                 """
-                return self.equipment.request_process_program(ppid=pp_name)
+                if not self.equipment_ready().get("status"):
+                    return self.equipment_ready()
 
-            def pp_send(self, pp_name: str, pp_body: str):
+                s7f6 = self.equipment.send_and_waitfor_response(
+                    self.equipment.stream_function(7, 5)(ppid))
+                decode_s7f6 = self.equipment.secs_decode(s7f6)
+                ppid = decode_s7f6.PPID.get()
+                ppbody = decode_s7f6.PPBODY.get()
+
+                if not ppid or not ppbody:
+                    logger.error("Request recipe: %s on %s, Error: %s",
+                                 ppid, self.equipment.equipment_name, "Recipe not found")
+                    return {"status": False, "message": "Recipe not found"}
+                try:
+
+                    # save to path recipe upload
+                    path = f"files/recipe/{self.equipment.equipment_model}/{
+                        self.equipment.equipment_name}/upload/{ppid}"
+                    self.create_dir(path)
+                    with open(f"{path}/recipe.json", "w", encoding="utf-8") as f:
+                        f.write(ppbody)
+                    return {"status": True, "message": "Request recipe success on upload"}
+                except Exception as e:
+                    logger.error("Request recipe: %s on %s, Error: %s",
+                                 ppid, self.equipment.equipment_name, e)
+                    return {"status": False, "message": str(e)}
+
+            def pp_send(self, ppid: str):
                 """
                 s7f3
                 """
-                return self.equipment.send_process_program(ppid=pp_name, ppbody=pp_body)
+                if not self.equipment_ready().get("status"):
+                    return self.equipment_ready()
 
-            def pp_delete(self, pp_name: str):
+                path = f"files/recipe/{self.equipment.equipment_model}/{
+                    self.equipment.equipment_name}/current/{ppid}"
+                pp_body = self.get_recipe_file(path)
+                if not pp_body:
+                    logger.error("Send recipe: %s on %s, Error: %s",
+                                 ppid, self.equipment.equipment_name, "Recipe not found")
+                    return {"status": False, "message": "Recipe not found"}
+                return self.equipment.send_process_program(ppid=ppid, ppbody=pp_body)
+
+            def pp_delete(self, ppid: str):
                 """
                 s7f17
                 """
-                return self.equipment.delete_process_programs(ppids=[pp_name])
+                if not self.equipment_ready().get("status"):
+                    return self.equipment_ready()
+                return self.equipment.delete_process_programs(ppids=[ppid])
+
+            def pp_select(self, ppid: str):
+                """
+                select process program on exist in equipment
+                ppid: process program id
+                """
+                secs_cmd = {"RCMD": "PP-SELECT", "PARAMS": [
+                    {"CPNAME": "PPName", "CPVAL": ppid}]}
+                s2f42 = self.equipment.send_and_waitfor_response(
+                    self.equipment.stream_function(2, 41)(secs_cmd))
+                response_code = self.equipment.secs_decode(s2f42).HCACK.get()
+                response_message = self.equipment.secs_control.response_message.response_message_rcmd(
+                    response_code)
+                if response_code == 0:
+                    logger.info("Select PP: %s on %s", ppid,
+                                self.equipment.equipment_name)
+                    return {"status": True, "message": f"Select recipe: {ppid}"}
+                else:
+                    logger.error("Select PP: %s on %s, Error: %s", ppid,
+                                 self.equipment.equipment_name, response_message)
+                    return {"status": False, "message": response_message}
+
+        def equipment_ready(self):
+            """
+            equipment ready
+            """
+            if not self.equipment.is_enabled:  # Check if equipment is enabled
+                return {"status": False, "message": "Equipment is disabled"}
+            if not self.equipment.communicationState.current == "COMMUNICATING":  # Check if equipment is communicating
+                return {"status": False, "message": "Equipment is not communicating"}
+            return {"status": True, "message": "Equipment is ready"}
+
+        def status(self):
+            """
+            equipment communication status
+            """
+            equipment_status = {
+                "address": self.equipment.address,
+                "port": self.equipment.port,
+                "session_id": self.equipment.sessionID,
+                "active": self.equipment.active,
+                "enabled": self.equipment.is_enabled,
+                "communicating": self.equipment.communicationState.current,
+                "pp_name": self.equipment.pp_name,
+                "lot_active": self.equipment.lot_active
+            }
+            return equipment_status
+
+        def enable(self):
+            """
+            Enable equipment
+            """
+            if self.equipment.is_enabled:
+                return {"status": True, "message": "Equipment is already enabled"}
+            self.equipment.is_enabled = True
+            return self.equipment.enable()
+
+        def disable(self):
+            """
+            Disable equipment
+            """
+            if not self.equipment.is_enabled:
+                return {"status": True, "message": "Equipment is already disabled"}
+            self.equipment.is_enabled = False
+            return self.equipment.disable()
+
+        def online(self):
+            """
+            Online equipment
+            """
+            eq_ready = self.equipment_ready().get("status")
+            if not eq_ready:
+                return self.equipment_ready()
+
+            response_code = self.equipment.go_online()
+            response_message = self.equipment.secs_control.response_message.response_message_onlack(
+                response_code)
+            if response_code == 0:
+                logger.info("Equipment online: %s",
+                            self.equipment.equipment_name)
+                return {"status": True, "message": "Equipment online"}
+            else:
+                logger.error("Equipment online: %s, Error: %s",
+                             self.equipment.equipment_name, response_message)
+                return {"status": False, "message": response_message}
+
+        def offline(self):
+            """
+            Offline equipment
+            """
+            eq_ready = self.equipment_ready().get("status")
+            if not eq_ready:
+                return self.equipment_ready()
+            try:
+
+                response_code = self.equipment.go_offline()
+                response_message = self.equipment.secs_control.response_message.response_message_oflack(
+                    response_code)
+                if response_code == 0:
+                    logger.info("Equipment offline: %s",
+                                self.equipment.equipment_name)
+                    return {"status": True, "message": "Equipment offline"}
+                else:
+                    logger.error("Equipment offline: %s, Error: %s",
+                                 self.equipment.equipment_name, response_message)
+                    return {"status": False, "message": response_message}
+            except Exception as e:
+                logger.error("Error offline equipment: %s", e)
+                return {"status": False, "message": "Error offline equipment"}
 
         def req_equipment_status(self, svids: list[int]):
             """
             s1f3
             """
+            eq_ready = self.equipment_ready().get("status")
+            if not eq_ready:
+                return self.equipment_ready()
+
             s1f4 = self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(1, 3)(svids))
             return self.equipment.secs_decode(s1f4)
@@ -820,14 +1249,36 @@ class Equipment(secsgem.gem.GemHostHandler):
             """
             s2f13
             """
+            eq_ready = self.equipment_ready().get("status")
+            if not eq_ready:
+                return self.equipment_ready()
+
             s2f14 = self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(2, 13)(ceids))
             return self.equipment.secs_decode(s2f14)
 
-        def req_constant_namelist(self, ecids: list[int] = None):
+        def req_status_variable_namelist(self, svids: list[int] = None):
+            """
+            s1f11
+            Comment: Host sends L:0 to request all SVIDs.
+            """
+            eq_ready = self.equipment_ready().get("status")
+            if not eq_ready:
+                return self.equipment_ready()
+
+            s1f12 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(1, 11)(svids))
+            return self.equipment.secs_decode(s1f12)
+
+        def req_equipment_constant_namelist(self, ecids: list[int] = None):
             """
             s2f29
+            Comment: Host sends L:0 for all ECIDs
             """
+            eq_ready = self.equipment_ready().get("status")
+            if not eq_ready:
+                return self.equipment_ready()
+
             s2f30 = self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(2, 29)(ecids))
             return self.equipment.secs_decode(s2f30)
@@ -835,7 +1286,12 @@ class Equipment(secsgem.gem.GemHostHandler):
         def enable_events(self, ceids: list[int] = None):
             """
             s2f37 CEED=True
+            Comment: n=0 means all CEIDs
             """
+            eq_ready = self.equipment_ready().get("status")
+            if not eq_ready:
+                return self.equipment_ready()
+
             s2f38 = self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(2, 37)({"CEED": True, "CEID": ceids}))
             return self.equipment.secs_decode(s2f38)
@@ -843,32 +1299,103 @@ class Equipment(secsgem.gem.GemHostHandler):
         def disable_events(self, ceids: list[int] = None):
             """
             s2f37 CEED=False
+            Comment: n=0 means all CEIDs
             """
+            eq_ready = self.equipment_ready().get("status")
+            if not eq_ready:
+                return self.equipment_ready()
+
             s2f38 = self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(2, 37)({"CEED": False, "CEID": ceids}))
             return self.equipment.secs_decode(s2f38)
 
-        def subscribe_events(self, ceid: int, dvs: list[int], report_id: int = None):
+        def subscribe_event(self, ceid: int, dvs: list[int], report_id: int = None):
+            """
+            Subscribe to a collection event.
+
+            :param ceid: ID of the collection event
+            :type ceid: integer
+            :param dvs: DV IDs to add for collection event
+            :type dvs: list of integers
+            :param report_id: optional - ID for report, autonumbering if None
+            :type report_id: integer
+            """
+            eq_ready = self.equipment_ready().get("status")
+            if not eq_ready:
+                return self.equipment_ready()
+
+            if report_id is None:
+                report_id = self.equipment.reportIDCounter
+                self.equipment.reportIDCounter += 1
+
+            # note subscribed reports
+            self.equipment.reportSubscriptions[report_id] = dvs
+
+            # create report
+            resp_create = self.equipment.send_and_waitfor_response(self.equipment.stream_function(2, 33)(
+                {"DATAID": 0, "DATA": [{"RPTID": report_id, "VID": dvs}]}))
+
+            resp_create_code = self.equipment.secs_decode(
+                resp_create).get()
+            resp_create_message = self.equipment.secs_control.response_message.response_message_drack(
+                resp_create_code)
+            if resp_create_code != 0:
+                return {"status": False, "message": resp_create_message}
+
+            # link event report to collection event
+            resp_link = self.equipment.send_and_waitfor_response(self.equipment.stream_function(2, 35)(
+                {"DATAID": 0, "DATA": [{"CEID": ceid, "RPTID": [report_id]}]}))
+            resp_link_code = self.equipment.secs_decode(
+                resp_link).get()
+
+            resp_link_message = self.equipment.secs_control.response_message.response_message_lrack(
+                resp_link_code)
+            if resp_link_code != 0:
+                return {"status": False, "message": resp_link_message}
+
+            # enable collection event
+            resp_enable = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(2, 37)({"CEED": True, "CEID": [ceid]}))
+            resp_enable_code = self.equipment.secs_decode(
+                resp_enable).get()
+            resp_enable_message = self.equipment.secs_control.response_message.response_message_erack(
+                resp_enable_code)
+
+            if resp_enable_code != 0:
+                return {"status": False, "message": resp_enable_message}
+            return {"status": True, "message": "Event subscribed"}
+
+        def unsubscribe_event(self, report_id: int = None):
             """
             s2f33
+            Comment: a=0 means delete all reports and event links, b=0 means delete the RPTID type and its event links
             """
-            return self.equipment.subscribe_collection_event(ceid=ceid, dvs=dvs, report_id=report_id)
+            eq_ready = self.equipment_ready().get("status")
+            if not eq_ready:
+                return self.equipment_ready()
 
-        def unsubscribe_events(self, report_id: list[int] = None):
-            """
-            s2f35
-            """
-            s2f36 = self.equipment.send_and_waitfor_response(
-                self.equipment.stream_function(2, 35)({"DATAID": 0, "DATA": report_id}))
-            return self.equipment.secs_decode(s2f36)
+            resp_unsubscribe = self.equipment.send_and_waitfor_response(self.equipment.stream_function(2, 33)(
+                {"DATAID": 0, "DATA": [{"RPTID": report_id, "VID": []}]}))
+
+            resp_ubsubscribe_code = self.equipment.secs_decode(
+                resp_unsubscribe).get()
+            resp_unscribe_message = self.equipment.secs_control.response_message.response_message_drack(
+                resp_ubsubscribe_code)
+            if resp_ubsubscribe_code != 0:
+                return {"status": False, "message": resp_unscribe_message}
+
+            return {"status": True, "message": "Event unsubscribed"}
 
 
 class EquipmentManager:
+    """
+    Equipment manager
+    """
+
     def __init__(self, mqtt_client_instant: MqttClient):
         self.mqtt_client = mqtt_client_instant
         self.equipments: list[Equipment] = []
         self.config = self.Config(self.equipments)
-        self.control = self.Control(self.equipments)
         self.load_equipments()
 
     def load_equipments(self):
@@ -917,9 +1444,15 @@ class EquipmentManager:
             print(f"Error initializing equipment: {e}")
 
     def emptyline(self):
+        """
+        Empty line
+        """
         pass
 
     def exit(self):
+        """
+        Exit program
+        """
         print("Exit program.")
         try:
             for equipment in self.equipments:
@@ -934,6 +1467,9 @@ class EquipmentManager:
             print(f"Error exiting program: {e}")
 
     def list_equipments(self):
+        """
+        List equipments
+        """
         return json.dumps([{
             "name": equipment.equipment_name,
             "model": equipment.equipment_model,
@@ -942,52 +1478,371 @@ class EquipmentManager:
         } for equipment in self.equipments])
 
     class Config:
+        """
+        Equipment configuration
+        """
+
         def __init__(self, equipments: list[Equipment]):
             self.equipments = equipments
 
-        def save(self):
-            pass
+        def save(self, path: str):
+            """
+            Save equipments to file
+            """
+            try:
+                with open(path, "w", encoding="utf-8") as f:
+                    json.dump([{
+                        "equipment_name": equipment.equipment_name,
+                        "equipment_model": equipment.equipment_model,
+                        "address": equipment.address,
+                        "port": equipment.port,
+                        "session_id": equipment.sessionID,
+                        "active": equipment.active,
+                        "enable": equipment.is_enabled
+                    } for equipment in self.equipments], f, indent=4)
+            except Exception as e:
+                return {"status": False, "message": f"Error saving equipments: {e}"}
+            return {"status": True, "message": "Equipments saved"}
 
         def add(self, equipment: Equipment):
-            pass
+            """
+            Add equipment
+            """
+            if equipment in self.equipments:
+                # print(f"Equipment {equipment.equipment_name} already exists")
+                return {"status": False, "message": "Equipment already exists"}
+            if any(e.equipment_name == equipment.equipment_name and e.address == equipment.address
+                   for e in self.equipments):
+                # print(f"Equipment {equipment.name} already exists")
+                return {"status": False, "message": "Equipment already exists"}
+
+            if equipment.is_enabled:
+                equipment.enable()
+            self.equipments.append(equipment)
+            return {"status": True, "message": "Equipment added"}
 
         def remove(self, equipment_name: str):
-            pass
-
-    class Control:
-        def __init__(self, equipments: list[Equipment]):
-            self.equipments = equipments
-
-        def enable(self, equipment_name: str):
-            return
-
-        def disable(self, equipment_name: str):
-            pass
-
-        def online(self, equipment_name: str):
-            pass
-
-        def offline(self, equipment_name: str):
-            pass
+            """
+            Remove equipment
+            """
+            equipment = next(
+                (eq for eq in self.equipments if eq.equipment_name == equipment_name), None)
+            if equipment:
+                if equipment.is_enabled:
+                    return {"status": False, "message": "Equipment is enabled and cannot be removed"}
+                self.equipments.remove(equipment)
+                return {"status": True, "message": "Equipment removed"}
+            else:
+                return {"status": False, "message": "Equipment not found"}
 
 
 class CommandCli(cmd.Cmd):
+    """
+    Command line interface
+    """
+
     def __init__(self, mqtt_client_instant: MqttClient):
         super().__init__()
-        self.prompt = ">> "
+        self.prompt = "dejtnf >> "
         self.equipments = EquipmentManager(mqtt_client_instant)
 
     def emptyline(self):
         pass
 
     def do_list(self, _):
+        """
+        List equipments
+        Usage: list
+        """
         equipment_list = self.equipments.list_equipments()
         for equipment in json.loads(equipment_list):
             print(equipment)
 
     def do_exit(self, _):
+        """
+        Exit program
+        Usage: exit
+        """
         self.equipments.exit()
         return True
+
+    def do_config(self, _):
+        """
+        Equipment configuration command line interface
+        Usage: config
+        Function: Add, remove, list equipments
+        """
+        self.EquipmentConfigCli(self.equipments).cmdloop()
+
+    def do_control(self, equipment_name: str):
+        """
+        Equipment control command line interface
+        Usage: control <equipment_name>
+        Function: enable, disable, online, offline, lot_accept, add_lot, subscribe_event, etc.
+        """
+        equipment = next(
+            (eq for eq in self.equipments.equipments if eq.equipment_name == equipment_name), None)
+        if equipment:
+            self.EquipmentControlCli(equipment_name, equipment).cmdloop()
+        else:
+            print(f"Equipment {equipment_name} not found")
+            print("List equipments to see available equipments")
+            print("control <equipment_name>")
+
+    class EquipmentConfigCli(cmd.Cmd):
+        """
+        Equipment configuration command line interface
+        """
+
+        def __init__(self,  equipments: EquipmentManager):
+            super().__init__()
+            self.prompt = "config >> "
+            self.equipments = equipments
+
+        def emptyline(self):
+            pass
+
+        def do_return(self, _):
+            """
+            Return to main menu
+            Usage: return
+            """
+            return True
+
+        def do_list(self, _):
+            """
+            List equipments
+            Usage: list
+            """
+            equipment_list = self.equipments.list_equipments()
+            for equipment in json.loads(equipment_list):
+                print(equipment)
+
+        def do_add(self, arg: str):
+            """
+            Add new equipment instance
+            Usage: add <equipment_name> <equipment_model> <address> <port> <session_id> <active> <enable>
+            Parameters:
+                equipment_name (str): Equipment name.
+                equipment_model (str): Equipment model.
+                address (str): Equipment IP address.
+                port (int): Equipment port number.
+                session_id (int): Equipment session ID.
+                active (bool): Equipment active status.
+                enable (bool): Equipment enable status.
+            """
+            args = arg.split()
+            if len(args) != 7:
+                print("Invalid arguments")
+                print(
+                    "Usage: add <equipment_name> <equipment_model> <address> <port> <session_id> <active> <enable>")
+                return
+
+            try:
+                equipment_name, equipment_model, address, port, session_id, active,  enable = args
+                try:
+                    ipaddress.ip_address(address)
+                except ValueError:
+                    logger.error("Invalid IP address")
+                    print("Invalid IP address")
+                    return
+                active = active.lower() in ['true', '1', 't', 'y', 'yes']
+                enable = enable.lower() in ['true', '1', 't', 'y', 'yes']
+
+                equipment = Equipment(equipment_name, equipment_model, address,
+                                      int(port), int(session_id), active, enable, self.equipments.mqtt_client)
+
+                resp = self.equipments.config.add(equipment)
+                if resp.get("status"):
+                    print(f"Equipment {equipment_name} added")
+                else:
+                    print(f"Error adding equipment: {resp.get('message')}")
+            except Exception as e:
+                # logger.error("Error adding equipment")
+                print("Error adding equipment")
+                # logger.exception(e)
+                print(e)
+
+        def do_remove(self, equipment_name: str):
+            """
+            Remove equipment instance
+            Usage: remove <equipment_name>
+            Parameters:
+                equipment_name (str): Equipment name.
+            """
+            print(self.equipments.config.remove(equipment_name))
+
+    class EquipmentControlCli(cmd.Cmd):
+        """
+        Equipment control command line interface
+        """
+
+        def __init__(self, equipment_name: str, equipment: Equipment):
+            super().__init__()
+            self.prompt = f"{equipment_name} >> "
+            self.equipment = equipment
+
+        def emptyline(self):
+            pass
+
+        def do_return(self, _):
+            """
+            Return to main menu
+            Usage: return
+            """
+            return True
+
+        def do_status(self, _):
+            """
+            Equipment status
+            Usage: status
+            """
+            status = self.equipment.secs_control.status()
+            print(status)
+
+        def do_enable(self, _):
+            """
+            Enable equipment
+            Usage: enable
+            """
+            print(self.equipment.secs_control.enable())
+
+        def do_disable(self, _):
+            """
+            Disable equipment
+            Usage: disable
+            """
+
+            print(self.equipment.secs_control.disable())
+
+        def do_online(self, _):
+            """
+            Go online
+            Usage: online
+            """
+
+            print(self.equipment.secs_control.online())
+
+        def do_offline(self, _):
+            """
+            Go offline
+            Usage: offline
+            """
+
+            print(self.equipment.secs_control.offline())
+
+        def do_lot_accept(self, lot_id: str):
+            """
+            Accept lot for FCL equipment
+            Usage: fcl_lot_accept <lot_id>
+            """
+            if not lot_id:
+                print("Invalid arguments")
+                print("Usage: fcl_lot_accept <lot_id>")
+                return
+            print(self.equipment.secs_control.lot_management.accept_lot_fcl(lot_id))
+
+        def do_add_lot(self, lot_id: str):
+            """
+            Add lot for FCLX equipment
+            Usage: fclx_add_lot <lot_id>
+            """
+            if not lot_id:
+                print("Invalid arguments")
+                print("Usage: fclx_add_lot <lot_id>")
+                return
+            print(self.equipment.secs_control.lot_management.add_lot_fclx(lot_id))
+
+        def do_subscribe_event(self, arg: str):
+            """
+            Subscribe events
+            Usage: subscribe_events <ceid> <dvs> [<report_id>]
+            Sample: subscribe_events 1000 1,2,3 1005
+            """
+
+            args = arg.split()
+            if len(args) < 2:
+                print("Invalid arguments")
+                print("Usage: subscribe_events <ceid> <dvs> [<report_id>]")
+                return
+
+            ceid = int(args[0])
+            dvs = [int(dv) for dv in args[1].split(",")]
+            report_id = int(args[2]) if len(args) > 2 else None
+
+            print(self.equipment.secs_control.subscribe_event(
+                ceid, dvs, report_id))
+
+        def do_unsubscribe_event(self, report_id: str):
+            """
+            Unsubscribe events
+            Usage: unsubscribe_events <report_id>
+            Sample: unsubscribe_events 1005
+            """
+            if not report_id:
+                print("Invalid arguments")
+                print("Usage: unsubscribe_events <report_id>")
+                return
+
+            try:
+                report_id = int(report_id)
+                print(self.equipment.secs_control.unsubscribe_event(report_id))
+            except ValueError:
+                print("Invalid report_id")
+                print("Usage: unsubscribe_events <report_id>")
+                return
+
+        # recipe management
+        def do_pp_dir(self, _):
+            """
+            Process program directory
+            Usage: pp_dir
+            """
+            print(self.equipment.secs_control.recipe_management.pp_dir())
+
+        def do_pp_select(self, ppid: str):
+            """
+            Select process program
+            Usage: pp_select <ppid>
+            """
+            if not ppid:
+                print("Invalid arguments")
+                print("Usage: pp_select <ppid>")
+                return
+            print(self.equipment.secs_control.recipe_management.pp_select(ppid))
+
+        def do_pp_request(self, ppid: str):
+            """
+            Request process program
+            Usage: pp_request <ppid>
+            """
+            if not ppid:
+                print("Invalid arguments")
+                print("Usage: pp_request <ppid>")
+                return
+            print(self.equipment.secs_control.recipe_management.pp_request(ppid))
+
+        def do_pp_send(self, ppid: str):
+            """
+            Send process program
+            Usage: pp_send <ppid>
+            """
+            if not ppid:
+                print("Invalid arguments")
+                print("Usage: pp_send <ppid>")
+                return
+            print(self.equipment.secs_control.recipe_management.pp_send(ppid))
+
+        def do_pp_delete(self, ppid: str):
+            """
+            Delete process program
+            Usage: pp_delete <ppid>
+            """
+            if not ppid:
+                print("Invalid arguments")
+                print("Usage: pp_delete <ppid>")
+                return
+            print(self.equipment.secs_control.recipe_management.pp_delete(ppid))
 
 
 app_logger = AppLogger()
