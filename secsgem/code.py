@@ -427,6 +427,8 @@ class Equipment(secsgem.gem.GemHostHandler):
 
         self.secs_control = self.SecsControl(self)
 
+        self.register_stream_function(7,3,self.secs_control.recipe_management.receive_recipe)
+        
     def delayed_task(self):
         """
         Delayed task for subscribe lot
@@ -816,8 +818,7 @@ class Equipment(secsgem.gem.GemHostHandler):
             alarm_id = decode.ALID.get()
             alarm_cd = decode.ALCD.get()
             alarm_text = decode.ALTX.get()
-            message = f"alid: {alarm_id}, alcd: {
-                alarm_cd},Alarm Text: {alarm_text}"
+            message = f"alid: {alarm_id}, alcd: {alarm_cd},Alarm Text: {alarm_text}"
             self.equipment.mqtt_client.client.publish(
                 f"equipments/status/alarm/{self.equipment.equipment_name}", message)
 
@@ -1123,17 +1124,52 @@ class Equipment(secsgem.gem.GemHostHandler):
                 try:
 
                     # save to path recipe upload
-                    path = f"files/recipe/{self.equipment.equipment_model}/{
-                        self.equipment.equipment_name}/upload/{ppid}"
+                    path = f"files/recipe/{self.equipment.equipment_model}/{self.equipment.equipment_name}/upload"
                     self.create_dir(path)
-                    with open(f"{path}/recipe.json", "w", encoding="utf-8") as f:
-                        f.write(ppbody)
+                    with open(f"{path}/{ppid}", "w", encoding="utf-8") as f:
+                        f.write(ppbody.decode('utf-8'))
                     return {"status": True, "message": "Request recipe success on upload"}
                 except Exception as e:
                     logger.error("Request recipe: %s on %s, Error: %s",
                                  ppid, self.equipment.equipment_name, e)
                     return {"status": False, "message": str(e)}
-
+            def receive_recipe(self, handler, packet: HsmsPacket):
+                """
+                receive recipe frome equipment save to upload path
+                """
+                self.equipment.send_response(self.equipment.stream_function(7, 4)(
+                    ACKC7.ACCEPTED), packet.header.system)
+                decode = self.equipment.secs_decode(packet)
+                ppid = decode.PPID.get()
+                ppbody = decode.PPBODY.get()
+                if not ppid or not ppbody:
+                    logger.error("Receive recipe: %s on %s, Error: %s",
+                                 ppid, self.equipment.equipment_name, "Recipe not found")
+                try:
+                    # save to path recipe update
+                    path = f"files/recipe/{self.equipment.equipment_model}/{self.equipment.equipment_name}/upload"
+                    self.create_dir(path)
+                    with open(f"{path}/{ppid}", "w", encoding="utf-8") as f:
+                        f.write(ppbody.decode('utf-8'))
+                    
+                    logger.info("Receive recipe: %s on %s", ppid,
+                                self.equipment.equipment_name)    
+                    # return {"status": True, "message": "Receive recipe success"}
+                except Exception as e:
+                    logger.error("Receive recipe: %s on %s, Error: %s",
+                                 ppid, self.equipment.equipment_name, e)
+                    return {"status": False, "message": str(e)}
+                # try:
+                #     # save to path recipe update
+                #     path = f"files/recipe/{self.equipment.equipment_model}/{self.equipment.equipment_name}/upload"  
+                #     self.create_dir(path)
+                #     with open(f"{path}/{ppid}", "w", encoding="utf-8") as f:
+                #         f.write(ppbody.decode('utf-8')) 
+                #     return {"status": True, "message": "Receive recipe success"}
+                # except Exception as e:
+                #     logger.error("Receive recipe: %s on %s, Error: %s",
+                #                  ppid, self.equipment.equipment_name, e)
+                #     return {"status": False, "message": str(e)}
             def pp_send(self, ppid: str):
                 """
                 s7f3
@@ -1141,8 +1177,7 @@ class Equipment(secsgem.gem.GemHostHandler):
                 if not self.equipment_ready().get("status"):
                     return self.equipment_ready()
 
-                path = f"files/recipe/{self.equipment.equipment_model}/{
-                    self.equipment.equipment_name}/current/{ppid}"
+                path = f"files/recipe/{self.equipment.equipment_model}/{self.equipment.equipment_name}/current/{ppid}"
                 pp_body = self.get_recipe_file(path)
                 if not pp_body:
                     logger.error("Send recipe: %s on %s, Error: %s",
@@ -1792,6 +1827,17 @@ class CommandCli(cmd.Cmd):
             Usage: req_constant_namelist <ecids>
             Sample: req_constant_namelist 100,101,102
             """
+            # if equipment_model == FCLX ceids is required
+            
+            if self.equipment.equipment_model == "FCLX":
+                if not ecids:
+                    print("Invalid arguments")
+                    print("Usage: req_constant_namelist <ecids>")
+                    return
+                ecids = [int(ecid) for ecid in ecids.split(",")] 
+                print(self.equipment.secs_control.req_equipment_constant_namelist(ecids))
+                return
+                
             ecids = [int(ecid) for ecid in ecids.split(",")] if ecids else []
             print(self.equipment.secs_control.req_equipment_constant_namelist(ecids))
 
@@ -1865,7 +1911,10 @@ class CommandCli(cmd.Cmd):
             Process program directory
             Usage: pp_dir
             """
-            print(self.equipment.secs_control.recipe_management.pp_dir())
+            ppid_list = self.equipment.secs_control.recipe_management.pp_dir()
+            for ppid in ppid_list:
+                print(ppid)
+            # print(self.equipment.secs_control.recipe_management.pp_dir())
 
         def do_pp_select(self, ppid: str):
             """
