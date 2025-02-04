@@ -1,0 +1,222 @@
+import cmd
+
+from src.gemhost.equipment import Equipment
+
+
+class EquipmentControlCli(cmd.Cmd):
+    """
+    Equipment control command line interface
+    """
+
+    def __init__(self, equipment_name: str, equipment: Equipment):
+        super().__init__()
+        self.prompt = f"{equipment_name} >> "
+        self.equipment = equipment
+
+    def emptyline(self):
+        pass
+
+    def do_return(self, _):
+        """
+        Return to main menu
+        Usage: return
+        """
+        return True
+
+    def do_status(self, _):
+        """
+        Equipment status
+        Usage: status
+        """
+        status = self.equipment.secs_control.status()
+        print(status)
+
+    # connection management
+    def do_enable(self, _):
+        """
+        Enable equipment
+        Usage: enable
+        """
+        print(self.equipment.secs_control.enable())
+
+    def do_disable(self, _):
+        """
+        Disable equipment
+        Usage: disable
+        """
+        print(self.equipment.secs_control.disable())
+
+    def do_online(self, _):
+        """
+        Go online
+        Usage: online
+        """
+        print(self.equipment.secs_control.online())
+
+    def do_offline(self, _):
+        """
+        Go offline
+        Usage: offline
+        """
+        print(self.equipment.secs_control.offline())
+
+    # equipment status
+    def do_req_status(self, svids: str):
+        """
+        Request equipment status
+        Usage: req_status [<svids>]
+        Sample: req_status 100,101,102
+        """
+        svids = [int(svid) for svid in svids.split(",")] if svids else []
+        print(self.equipment.secs_control.req_equipment_status(svids))
+
+    def do_req_constant(self, ceids: str):
+        """
+        Request equipment constant
+        Usage: req_constant <ceids>
+        Sample: req_constant 100,101,102
+        """
+        ceids = [int(ceid) for ceid in ceids.split(",")] if ceids else []
+        print(self.equipment.secs_control.req_equipment_constant(ceids))
+
+    def do_req_variable_namelist(self, svids: str):
+        """
+        Request status variable namelist
+        Usage: req_status_variable_namelist <svids>
+        Sample: req_status_variable_namelist 100,101,102
+        """
+        svids = [int(svid) for svid in svids.split(",")] if svids else []
+        print(self.equipment.secs_control.req_status_variable_namelist(svids))
+
+    def do_req_constant_namelist(self, ecids: str):
+        """
+        Request equipment constant namelist
+        Usage: req_constant_namelist <ecids>
+        Sample: req_constant_namelist 100,101,102
+        """
+        if self.equipment.equipment_model == "FCLX":
+            if not ecids:
+                print("Invalid arguments")
+                print("Usage: req_constant_namelist <ecids>")
+                return
+            ecids = [int(ecid) for ecid in ecids.split(",")]
+            print(self.equipment.secs_control.req_equipment_constant_namelist(ecids))
+            return
+
+        ecids = [int(ecid) for ecid in ecids.split(",")] if ecids else []
+        print(self.equipment.secs_control.req_equipment_constant_namelist(ecids))
+
+    # lot management
+    def do_lot_accept(self, lot_id: str):
+        """
+        Accept lot for FCL equipment
+        Usage: fcl_lot_accept <lot_id>
+        """
+        if not lot_id:
+            print("Invalid arguments")
+            print("Usage: fcl_lot_accept <lot_id>")
+            return
+        print(self.equipment.secs_control.lot_management.accept_lot_fcl(lot_id))
+
+    def do_add_lot(self, lot_id: str):
+        """
+        Add lot for FCLX equipment
+        Usage: fclx_add_lot <lot_id>
+        """
+        if not lot_id:
+            print("Invalid arguments")
+            print("Usage: fclx_add_lot <lot_id>")
+            return
+        print(self.equipment.secs_control.lot_management.add_lot_fclx(lot_id))
+
+    # event management
+    def do_subscribe_event(self, arg: str):
+        """
+        Subscribe events
+        Usage: subscribe_events <ceid> <dvs> [<report_id>]
+        Sample: subscribe_events 1000 1,2,3 1005
+        """
+
+        args = arg.split()
+        if len(args) < 2:
+            print("Invalid arguments")
+            print("Usage: subscribe_events <ceid> <dvs> [<report_id>]")
+            return
+        ceid = int(args[0])
+        dvs = [int(dv) for dv in args[1].split(",")]
+        report_id = int(args[2]) if len(args) > 2 else None
+
+        print(self.equipment.secs_control.subscribe_event(
+            ceid, dvs, report_id))
+
+    def do_unsubscribe_event(self, report_id: str):
+        """
+        Unsubscribe events
+        Usage: unsubscribe_events <report_id>
+        Sample: unsubscribe_events 1005
+        """
+        if not report_id:
+            print("Invalid arguments")
+            print("Usage: unsubscribe_events <report_id>")
+            return
+        try:
+            report_id = int(report_id)
+            print(self.equipment.secs_control.unsubscribe_event(report_id))
+        except ValueError:
+            print("Invalid report_id")
+            print("Usage: unsubscribe_events <report_id>")
+            return
+
+    # recipe management
+    def do_pp_dir(self, _):
+        """
+        Process program directory
+        Usage: pp_dir
+        """
+        ppid_list = self.equipment.secs_control.recipe_management.pp_dir()
+        for ppid in ppid_list:
+            print(ppid)
+
+    def do_pp_select(self, ppid: str):
+        """
+        Select process program
+        Usage: pp_select <ppid>
+        """
+        if not ppid:
+            print("Invalid arguments")
+            print("Usage: pp_select <ppid>")
+            return
+        print(self.equipment.secs_control.recipe_management.pp_select(ppid))
+
+    def do_pp_request(self, ppid: str):
+        """
+        Request process program
+        Usage: pp_request <ppid>
+        """
+        if not ppid:
+            print("Invalid arguments")
+            print("Usage: pp_request <ppid>")
+            return
+        print(self.equipment.secs_control.recipe_management.pp_request(ppid))
+
+    def do_pp_send(self, ppid: str):
+        """
+        Send process program
+        Usage: pp_send <ppid>
+        """
+        if not ppid:
+            print("Invalid arguments")
+            print("Usage: pp_send <ppid>")
+            return
+        print(self.equipment.secs_control.recipe_management.pp_send(ppid))
+
+    def do_pp_delete(self, ppid: str):
+        """
+        Delete process program
+        Usage: pp_delete <ppid>
+        """
+        if not ppid:
+            print("Invalid arguments")
+            print("Usage: pp_delete <ppid>")
+            return
+        print(self.equipment.secs_control.recipe_management.pp_delete(ppid))

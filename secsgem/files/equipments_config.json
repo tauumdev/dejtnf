@@ -7,7 +7,7 @@
             "port": 5000,
             "session_id": 61,
             "active": true,
-            "enable": false
+            "enable": true
         },
         {
             "equipment_name": "TNF-70",
@@ -16,7 +16,16 @@
             "port": 5000,
             "session_id": 70,
             "active": true,
-            "enable": true
+            "enable": false
+        },
+        {
+            "equipment_name": "TNF-62",
+            "equipment_model": "FCL",
+            "address": "192.168.226.162",
+            "port": 5000,
+            "session_id": 62,
+            "active": true,
+            "enable": false
         }
     ]
 }
