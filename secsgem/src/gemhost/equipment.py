@@ -943,11 +943,6 @@ class Equipment(secsgem.gem.GemHostHandler):
             if not eq_ready:
                 return self.equipment_ready()
 
-            # 1 = Off-Line/Equipment Off-Line
-            # 2 = Off-Line/Attempt On-Line
-            # 3 = Off-Line/Host Off-Line
-            # 4 = On-Line/Local
-            # 5 = On-Line/Remote
             vid = {"FCL": 28, "FCLX": 4}
             state_message = {
                 1: "Off-Line/Equipment Off-Line",
