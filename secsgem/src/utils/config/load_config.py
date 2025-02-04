@@ -5,14 +5,14 @@ import os
 logger = logging.getLogger("app_logger")
 
 
-def load_equipment_config(path: str):
+def load_equipments_config(path: str):
     """
-    Load the equipment configuration from the configuration file.
+    Load the equipments configuration from the configuration file.
     """
     try:
         with open(path, "r", encoding="utf-8") as file:
             equipments = json.load(file)
-            return equipments
+            return equipments.get("equipments", [])
     except FileNotFoundError:
         logger.error("File not found: %s", path)
         logger.info("Creating a new configuration file. at %s", path)
