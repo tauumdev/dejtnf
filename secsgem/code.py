@@ -1,3 +1,4 @@
+
 from dotenv import load_dotenv
 import cmd
 from dataclasses import dataclass
@@ -25,6 +26,10 @@ from secsgem.secs.dataitems import MDLN, SVID, SV, SVNAME, UNITS, COMMACK, OFLAC
 
 from src.utils.logger.gem_logger import CommunicationLogFileHandler
 from src.utils.logger.app_logger import AppLogger
+
+# config path
+from src.utils.config.load_config import load_equipments_config
+from src.utils.config.app_config import EQUIPMENTS_CONFIG_PATH, LOT_INFO_PATH, RECIPE_DIR, VALIDATE_EQUIPMENT_CONFIG_PATH, MQTT_SUBSCRIBE_TOPIC, MQTT_ENABLE
 
 
 class ValidationConfig:
@@ -89,7 +94,7 @@ class ValidationConfig:
     def _load_json(self) -> Dict[str, List[EquipmentData]]:
         """Load JSON file and validate structure"""
         try:
-            with open('files/dbvalidate.json', 'r', encoding='utf-8') as file:
+            with open(VALIDATE_EQUIPMENT_CONFIG_PATH, 'r', encoding='utf-8') as file:
                 data = json.load(file)
                 if not isinstance(data.get("data"), list):
                     logger.error("Invalid structure in dbvalidate.json")
@@ -187,17 +192,18 @@ class LotInformation:
 
     def _load_json(self) -> Dict:
         try:
-            with open('files/lotdetail.json', 'r', encoding='utf-8') as file:
+            with open(LOT_INFO_PATH, 'r', encoding='utf-8') as file:
                 data = json.load(file)
                 if data[0].get("Status", True):
                     self.success = True
                 else:
-                    logger.error("Error loading lotdetail.json: %s",
+                    logger.error("Error loading lotdetail: %s",
                                  data[0].get("Message", "Unknown error"))
                 # Get first object's OutputLotInfo since data is wrapped in array
                 return data[0].get('OutputLotInfo', [])
         except FileNotFoundError:
-            logger.error("lotdetail.json not found")
+            logger.error("%s not found", LOT_INFO_PATH)
+
             # raise FileNotFoundError("lotdetail.json not found")
         except json.JSONDecodeError:
             logger.error("Invalid JSON format in lotdetail.json")
@@ -247,23 +253,25 @@ class ValidateLot:
         self.equipment_name = equipment_name
         self.pp_name = pp_name
         self.lot_id = lot_id
-        self.data_lot = LotInformation(lot_id)
-        self.data_config = ValidationConfig(
-            equipment_name, self.data_lot.field_by_name("SASSYPACKAGE"))
+        self.data_lot: LotInformation = None
+        self.data_config: ValidationConfig = None
         self.result = self._validate_lot()
 
     def _validate_lot(self):
-        logger.info("Validating lot information")
+        self.data_lot = LotInformation(self.lot_id)
+
         if not self.data_lot.success:
             logger.error("Error loading lot information")
             return {"status": False, "message": "Error loading lot information"}
+
+        self.data_config = ValidationConfig(
+            self.equipment_name, self.data_lot.field_by_name("SASSYPACKAGE"))
 
         if not self.data_config.data.success:
             logger.error("Error loading configuration data")
             return {"status": False, "message": self.data_config.data.success.get("message")}
 
-        # Dtat from lot information
-        # lot_package_code = self.data_lot.field_by_name("SASSYPACKAGE")
+        # Data from lot information
         lot_operation_code = self.data_lot.field_by_name("OPERATION_CODE")
         lot_on_operation = self.data_lot.field_by_name("ON_OPERATION")
         lot_lot_hold = self.data_lot.field_by_name("LOT_STATUS")
@@ -274,7 +282,7 @@ class ValidateLot:
         cfg_type_validate = self.data_config.data.type_validate
         cfg_recipe_name = self.data_config.data.recipe_name
 
-        # Optional configuration values
+        # Optional validation
         cfg_use_operation_code = self.data_config.data.use_operation_code
         cfg_use_on_operation = self.data_config.data.use_on_operation
         cfg_use_lot_hold = self.data_config.data.use_lot_hold
@@ -293,7 +301,7 @@ class ValidateLot:
                 return {"status": False, "message": "Invalid on operation"}
         if cfg_use_lot_hold:
             if lot_lot_hold == "HELD" or lot_lot_hold == "HOLD":
-                logger.error("Lot is on hold, equipment_name")
+                logger.error("Lot is on hold %s", self.lot_id)
                 return {"status": False, "message": "Lot is on hold"}
 
         return {"status": True, "message": "Lot validated successfully"}
@@ -306,7 +314,6 @@ class MqttClient:
     # load environment variables
     load_dotenv()
 
-    mqtt_enabled = os.getenv("MQTT_ENABLE")
     mqtt_broker = os.getenv("MQTT_BROKER")
     mqtt_port = int(os.getenv("MQTT_PORT"))
     mqtt_username = os.getenv("MQTT_USERNAME")
@@ -314,16 +321,17 @@ class MqttClient:
 
     def __init__(self):
         self.client = mqtt.Client()
-        # self.client.enable_logger(logger)
+        self.client.enable_logger(logger)
         self.client.username_pw_set(
             MqttClient.mqtt_username, MqttClient.mqtt_password)
         self.client.on_connect = self.on_connect
         self.client.on_message = self._HandlerMessage(self).on_message
         self.client.on_disconnect = self.on_disconnect
 
-        if MqttClient.mqtt_enabled:
+        if MQTT_ENABLE:
             self.client.connect(MqttClient.mqtt_broker, 1883, 60)
             self.client.loop_start()
+            logger.info("MQTT client started")
 
     def on_connect(self, client, userdata, flags, rc):
         """
@@ -332,7 +340,7 @@ class MqttClient:
         if rc == 0:
             logger.info("Connected to MQTT broker.")
             # print("Connected to MQTT broker.")
-            for topic in ["equipments/config/#", "equipments/control/#"]:
+            for topic in MQTT_SUBSCRIBE_TOPIC:
                 self.client.subscribe(topic)
                 logger.info("Subscribed to topic: %s", topic)
                 # print(f"Subscribed to topic: {topic}")
@@ -365,6 +373,20 @@ class MqttClient:
             Callback function for when a PUBLISH message is received from the server.
             """
             logger.info("Received message: %s", msg.payload)
+
+            equipments = userdata.get("equipments", [])
+            if isinstance(equipments, list):
+                if len(equipments) == 0:
+                    logger.warning("Equipments not found in userdata")
+                for equipment in equipments:
+                    if isinstance(equipment, Equipment):
+                        print("Userdata is a list of Equipment: ",
+                              equipment.equipment_name)
+                        print("Handle message with equipment here")
+                    else:
+                        logger.warning("Userdata is not a list of Equipment")
+            else:
+                logger.warning("Userdata is not a list")
 
 
 class Equipment(secsgem.gem.GemHostHandler):
@@ -680,17 +702,21 @@ class Equipment(secsgem.gem.GemHostHandler):
                             lot_id, pp_name = values
                             lot_id = lot_id.upper()
                             if not lot_id:
-                                self.reject_lot(lot_id, "Lot ID is empty")
+                                logger.warning(
+                                    "Requsest validate lot but lot_id is empty")
                                 return
 
                             request_recipe = lot_id.split(",")
                             if len(request_recipe) > 1 and request_recipe[1] == "RECIPE":
-                                print("Equipment request Recipe")
+                                logger.info(
+                                    "Equipment request Recipe with lot_id: %s", lot_id)
                                 return
 
+                            logger.info("Validate lot: %s on %s", lot_id,
+                                        self.equipment.equipment_name)
                             validate_result = ValidateLot(
                                 self.equipment.equipment_name, pp_name, lot_id)
-
+                            print(validate_result.result)
                             if not validate_result.result.get("status"):
                                 message = validate_result.result.get("message")
                                 self.reject_lot(lot_id, message)
@@ -1186,6 +1212,7 @@ class Equipment(secsgem.gem.GemHostHandler):
             if self.equipment.is_enabled:
                 return {"status": True, "message": "Equipment is already enabled"}
             self.equipment.is_enabled = True
+
             return self.equipment.enable()
 
         def disable(self):
@@ -1404,52 +1431,28 @@ class EquipmentManager:
         self.mqtt_client = mqtt_client_instant
         self.equipments: list[Equipment] = []
         self.config = self.Config(self.equipments)
+        self.mqtt_client.client.user_data_set(
+            {"equipments": self.equipments})
         self.load_equipments()
 
     def load_equipments(self):
-        eq_conf = {
-            "equipments": [
-                {
-                    "equipment_name": "TNF-61",
-                    "equipment_model": "FCL",
-                    "address": "192.168.226.161",
-                    "port": 5000,
-                    "session_id": 61,
-                    "active": True,
-                    "enable": True
-                }, {
-                    "equipment_name": "TNF-62",
-                    "equipment_model": "FCL",
-                    "address": "192.168.226.162",
-                    "port": 5000,
-                    "session_id": 62,
-                    "active": True,
-                    "enable": False
-                }, {
-                    "equipment_name": "TNF-63",
-                    "equipment_model": "FCL",
-                    "address": "192.168.226.163",
-                    "port": 5000,
-                    "session_id": 63,
-                    "active": True,
-                    "enable": False
-                }
-            ]
-        }
+        equipments_json = load_equipments_config(EQUIPMENTS_CONFIG_PATH)
 
-        try:
-            for equipment in eq_conf.get("equipments", []):
-                equipment = Equipment(equipment["equipment_name"], equipment["equipment_model"], equipment["address"],
-                                      equipment["port"], equipment["session_id"], equipment["active"], equipment["enable"], self.mqtt_client)
+        for equipment in equipments_json:
+            if not isinstance(equipment, dict):
+                print("Equipment config file is empty")
+                print("Please add equipment configuration to equipments.json")
+                print("Type 'config' to add equipment configuration")
+                logger.warning("Equipment config file is empty")
+                continue
+            equipment = Equipment(equipment["equipment_name"], equipment["equipment_model"], equipment["address"],
+                                  equipment["port"], equipment["session_id"], equipment["active"], equipment["enable"], self.mqtt_client)
 
-                if equipment.is_enabled:
-                    equipment.enable()
+            if equipment.is_enabled:
+                equipment.enable()
 
-                self.equipments.append(equipment)
-                print(f"Equipment {equipment.equipment_name} initialized")
-
-        except (json.JSONDecodeError, KeyError, TypeError) as e:
-            print(f"Error initializing equipment: {e}")
+            self.equipments.append(equipment)
+            print(f"Equipment {equipment.equipment_name} initialized")
 
     def emptyline(self):
         """
@@ -1493,21 +1496,27 @@ class EquipmentManager:
         def __init__(self, equipments: list[Equipment]):
             self.equipments = equipments
 
-        def save(self, path: str):
+        def save(self):
             """
             Save equipments to file
             """
             try:
-                with open(path, "w", encoding="utf-8") as f:
-                    json.dump([{
-                        "equipment_name": equipment.equipment_name,
-                        "equipment_model": equipment.equipment_model,
-                        "address": equipment.address,
-                        "port": equipment.port,
-                        "session_id": equipment.sessionID,
-                        "active": equipment.active,
-                        "enable": equipment.is_enabled
-                    } for equipment in self.equipments], f, indent=4)
+                with open(EQUIPMENTS_CONFIG_PATH, "w", encoding="utf-8") as f:
+                    equipments = {
+                        "equipments": [
+                            {
+                                "equipment_name": equipment.equipment_name,
+                                "equipment_model": equipment.equipment_model,
+                                "address": equipment.address,
+                                "port": equipment.port,
+                                "session_id": equipment.sessionID,
+                                "active": equipment.active,
+                                "enable": equipment.is_enabled
+                            } for equipment in self.equipments
+                        ]
+                    }
+                    json.dump(equipments, f, indent=4)
+                    logger.info("Equipments saved")
             except Exception as e:
                 return {"status": False, "message": f"Error saving equipments: {e}"}
             return {"status": True, "message": "Equipments saved"}
@@ -1527,6 +1536,7 @@ class EquipmentManager:
             if equipment.is_enabled:
                 equipment.enable()
             self.equipments.append(equipment)
+            self.save()
             return {"status": True, "message": "Equipment added"}
 
         def remove(self, equipment_name: str):
@@ -1539,6 +1549,7 @@ class EquipmentManager:
                 if equipment.is_enabled:
                     return {"status": False, "message": "Equipment is enabled and cannot be removed"}
                 self.equipments.remove(equipment)
+                self.save()
                 return {"status": True, "message": "Equipment removed"}
             else:
                 return {"status": False, "message": "Equipment not found"}
@@ -1596,6 +1607,13 @@ class CommandCli(cmd.Cmd):
             print(f"Equipment {equipment_name} not found")
             print("List equipments to see available equipments")
             print("control <equipment_name>")
+
+    def do_save(self, _):
+        """
+        Save equipments to file
+        Usage: save
+        """
+        print(self.equipments.config.save())
 
     class EquipmentConfigCli(cmd.Cmd):
         """
@@ -1707,6 +1725,7 @@ class CommandCli(cmd.Cmd):
             """
             status = self.equipment.secs_control.status()
             print(status)
+        # connection management
 
         def do_enable(self, _):
             """
@@ -1739,6 +1758,44 @@ class CommandCli(cmd.Cmd):
 
             print(self.equipment.secs_control.offline())
 
+        # equipment status
+        def do_req_status(self, svids: str):
+            """
+            Request equipment status
+            Usage: req_status [<svids>]
+            Sample: req_status 100,101,102
+            """
+            svids = [int(svid) for svid in svids.split(",")] if svids else []
+            print(self.equipment.secs_control.req_equipment_status(svids))
+
+        def do_req_constant(self, ceids: str):
+            """
+            Request equipment constant
+            Usage: req_constant <ceids>
+            Sample: req_constant 100,101,102
+            """
+            ceids = [int(ceid) for ceid in ceids.split(",")] if ceids else []
+            print(self.equipment.secs_control.req_equipment_constant(ceids))
+
+        def do_req_variable_namelist(self, svids: str):
+            """
+            Request status variable namelist
+            Usage: req_status_variable_namelist <svids>
+            Sample: req_status_variable_namelist 100,101,102
+            """
+            svids = [int(svid) for svid in svids.split(",")] if svids else []
+            print(self.equipment.secs_control.req_status_variable_namelist(svids))
+
+        def do_req_constant_namelist(self, ecids: str):
+            """
+            Request equipment constant namelist
+            Usage: req_constant_namelist <ecids>
+            Sample: req_constant_namelist 100,101,102
+            """
+            ecids = [int(ecid) for ecid in ecids.split(",")] if ecids else []
+            print(self.equipment.secs_control.req_equipment_constant_namelist(ecids))
+
+        # lot management
         def do_lot_accept(self, lot_id: str):
             """
             Accept lot for FCL equipment
@@ -1761,6 +1818,7 @@ class CommandCli(cmd.Cmd):
                 return
             print(self.equipment.secs_control.lot_management.add_lot_fclx(lot_id))
 
+        # event management
         def do_subscribe_event(self, arg: str):
             """
             Subscribe events
@@ -1801,6 +1859,7 @@ class CommandCli(cmd.Cmd):
                 return
 
         # recipe management
+
         def do_pp_dir(self, _):
             """
             Process program directory
@@ -1859,6 +1918,7 @@ logger.setLevel(logging.INFO)
 
 
 if __name__ == "__main__":
+    logger.info("Starting DEJTNF")
 
     mqtt_client = MqttClient()
     cli = CommandCli(mqtt_client)
