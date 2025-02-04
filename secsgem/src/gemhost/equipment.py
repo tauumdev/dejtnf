@@ -74,6 +74,7 @@ class Equipment(secsgem.gem.GemHostHandler):
         threading.Event().wait(wait_seconds)  # Non-blocking wait
         logger.info("%s seconds have passed!\n", wait_seconds)
 
+        self.secs_control.get_control_state()
         # subscribe lot control
         # self.fc_control.subscribe_lot_control()
 
@@ -933,6 +934,43 @@ class Equipment(secsgem.gem.GemHostHandler):
             except Exception as e:
                 logger.error("Error offline equipment: %s", e)
                 return {"status": False, "message": "Error offline equipment"}
+
+        def get_control_state(self):
+            """
+            get control state
+            """
+            eq_ready = self.equipment_ready().get("status")
+            if not eq_ready:
+                return self.equipment_ready()
+
+            # 1 = Off-Line/Equipment Off-Line
+            # 2 = Off-Line/Attempt On-Line
+            # 3 = Off-Line/Host Off-Line
+            # 4 = On-Line/Local
+            # 5 = On-Line/Remote
+            vid = {"FCL": 28, "FCLX": 4}
+            state_message = {
+                1: "Off-Line/Equipment Off-Line",
+                2: "Off-Line/Attempt On-Line",
+                3: "Off-Line/Host Off-Line",
+                4: "On-Line/Local",
+                5: "On-Line/Remote"
+            }
+            model_vid = vid.get(self.equipment.equipment_model)
+
+            if self.equipment.equipment_model in ["FCL", "FCLX"]:
+                try:
+                    s1f3 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
+                        self.equipment.stream_function(1, 3)([model_vid]))).get()
+                    if isinstance(s1f3, list):
+                        self.equipment.mqtt_client.client.publish(
+                            f"equipments/status/control_state/{self.equipment.equipment_name}", state_message.get(s1f3[0]))
+                        return {"status": True, "message": state_message.get(s1f3[0])}
+                except Exception as e:
+                    logger.error("Error get control state: %s", e)
+                    return {"status": False, "message": str(e)}
+            else:
+                return {"status": False, "message": "Invalid equipment model"}
 
         def req_equipment_status(self, svids: list[int]):
             """
