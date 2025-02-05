@@ -102,7 +102,6 @@ class Equipment(secsgem.gem.GemHostHandler):
         logger.info("%s seconds have passed!\n", wait_seconds)
 
         self.secs_control.get_control_state()
-        print(self.control_state)
 
         self.mqtt_client.client.publish(
             f"equipments/status/control_state/{self.equipment_name}", self.control_state, qos=1, retain=True
