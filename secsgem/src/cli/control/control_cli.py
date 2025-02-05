@@ -60,14 +60,21 @@ class EquipmentControlCli(cmd.Cmd):
         """
         print(self.equipment.secs_control.offline())
 
-    def do_control_state(self, _):
+    def do_get_control_state(self, _):
         """
         Control state
         Usage: control_state
         """
         print(self.equipment.secs_control.get_control_state())
 
+    def do_get_model(self, _):
+        """
+        Get equipment model
+        Usage: get_model
+        """
+        print(self.equipment.secs_control.get_mdln())
     # equipment status
+
     def do_req_status(self, svids: str):
         """
         Request equipment status

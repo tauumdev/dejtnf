@@ -148,7 +148,6 @@ class ValidateLot:
             """Check package code length"""
             if len(self.package_code.strip()) != 15:
                 logger.error("Package code must be 15 characters long")
-                print(self.package_code)
                 raise ValueError("Package code must be 15 characters long")
 
         def _generate_selection_code(self, selection_rules: str) -> str:
