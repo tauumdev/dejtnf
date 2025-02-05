@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from src.gemhost.equipment import Equipment
 
 from src.utils.config.app_config import RECIPE_DIR
+from src.utils.config.secsgem_subscribe import SUBSCRIBE_LOT_CONTROL_FCL, SUBSCRIBE_LOT_CONTROL_FCLX, VID_MODEL, VID_CONTROL_STATE, VID_PP_NAME
 
 logger = logging.getLogger("app_logger")
 
@@ -120,7 +121,7 @@ class SecsControl:
             accept lot
             """
 
-            if self.equipment.is_online:
+            if not self.equipment.is_online:
                 logger.error("Equipment is not online: %s",
                              self.equipment.equipment_name)
                 return {"status": False, "message": "Equipment is not online"}
@@ -150,7 +151,7 @@ class SecsControl:
             """
             reject lot
             """
-            if self.equipment.is_online:
+            if not self.equipment.is_online:
                 logger.error("Equipment is not online: %s",
                              self.equipment.equipment_name)
                 return {"status": False, "message": "Equipment is not online"}
@@ -181,7 +182,7 @@ class SecsControl:
             """
             add lot fclx
             """
-            if self.equipment.is_online:
+            if not self.equipment.is_online:
                 logger.error("Equipment is not online: %s",
                              self.equipment.equipment_name)
                 return {"status": False, "message": "Equipment is not online"}
@@ -209,7 +210,7 @@ class SecsControl:
             """
             reject lot fclx
             """
-            if self.equipment.is_online:
+            if not self.equipment.is_online:
                 logger.error("Equipment is not online: %s",
                              self.equipment.equipment_name)
                 return {"status": False, "message": "Equipment is not online"}
@@ -409,7 +410,8 @@ class SecsControl:
             "active": self.equipment.active,
             "enabled": self.equipment.is_enabled,
             "communicating": self.equipment.communicationState.current,
-            "pp_name": self.equipment.ppid,
+            "control_state": self.equipment.control_state,
+            "ppid": self.equipment.ppid,
             "lot_active": self.equipment.lot_active
         }
         return equipment_status
@@ -437,43 +439,47 @@ class SecsControl:
         """
         Online equipment
         """
-        if self.equipment.is_online:
-            logger.error("Equipment is not online: %s",
-                         self.equipment.equipment_name)
-            return {"status": False, "message": "Equipment is not online"}
-
-        response_code = self.equipment.go_online()
-        response_message = self.equipment.secs_control.response_message.response_message_onlack(
-            response_code)
-        if response_code == 0:
-            logger.info("Equipment online: %s",
-                        self.equipment.equipment_name)
-            return {"status": True, "message": "Equipment online"}
-        else:
-            logger.error("Equipment online: %s, Error: %s",
-                         self.equipment.equipment_name, response_message)
-            return {"status": False, "message": response_message}
+        try:
+            response_code = self.equipment.go_online()
+            response_message = self.equipment.secs_control.response_message.response_message_onlack(
+                response_code)
+            if response_code == 0:
+                logger.info("Equipment online: %s",
+                            self.equipment.equipment_name)
+                self.equipment.control_state = "On-Line"
+                self.equipment.mqtt_client.client.publish(
+                    f"equipments/status/control_state/{self.equipment.equipment_name}", "On-Line", 0, retain=True)
+                return {"status": True, "message": "Equipment online"}
+            else:
+                logger.warning("Equipment online: %s, WARNING: %s",
+                               self.equipment.equipment_name, response_message)
+                return {"status": False, "message": response_message}
+        except Exception as e:
+            logger.error("Error online equipment: %s", e)
+            return {"status": False, "message": "Error online equipment"}
 
     def offline(self):
         """
         Offline equipment
         """
-        if self.equipment.is_online:
+        if not self.equipment.is_online:
             logger.error("Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
         try:
-
             response_code = self.equipment.go_offline()
             response_message = self.equipment.secs_control.response_message.response_message_oflack(
                 response_code)
             if response_code == 0:
                 logger.info("Equipment offline: %s",
                             self.equipment.equipment_name)
+                self.equipment.control_state = "Off-Line"
+                self.equipment.mqtt_client.client.publish(
+                    f"equipments/status/control_state/{self.equipment.equipment_name}", "Off-Line", 0, retain=True)
                 return {"status": True, "message": "Equipment offline"}
             else:
-                logger.error("Equipment offline: %s, Error: %s",
-                             self.equipment.equipment_name, response_message)
+                logger.warning("Equipment offline: %s, WARNING: %s",
+                               self.equipment.equipment_name, response_message)
                 return {"status": False, "message": response_message}
         except Exception as e:
             logger.error("Error offline equipment: %s", e)
@@ -483,12 +489,6 @@ class SecsControl:
         """
         get control state
         """
-        if self.equipment.is_online:
-            logger.error("Equipment is not online: %s",
-                         self.equipment.equipment_name)
-            return {"status": False, "message": "Equipment is not online"}
-
-        vid = {"FCL": 28, "FCLX": 4}
         define_state_message = {
             1: "Off-Line/Equipment Off-Line",
             2: "Off-Line/Attempt On-Line",
@@ -497,87 +497,76 @@ class SecsControl:
             5: "On-Line/Remote"
         }
 
-        model_vid = vid.get(self.equipment.equipment_model)
+        model_vid = VID_CONTROL_STATE
 
-        if self.equipment.equipment_model in ["FCL", "FCLX"]:
-            try:
-                s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
-                    self.equipment.stream_function(1, 3)([model_vid]))).get()
-                if isinstance(s1f4, list):
-                    state_message = define_state_message.get(s1f4[0])
-                    self.equipment.control_state = state_message
-                    self.equipment.mqtt_client.client.publish(
-                        f"equipments/status/control_state/{self.equipment.equipment_name}", state_message)
-                    return {"status": True, "message": state_message}
-            except Exception as e:
-                logger.error("Error get control state: %s", e)
-                return {"status": False, "message": str(e)}
-        else:
-            return {"status": False, "message": "Invalid equipment model"}
+        vid = model_vid.get(self.equipment.equipment_model)
+        if not vid:
+            logger.warning("Invalid equipment model: %s",
+                           self.equipment.equipment_model)
+            return "Off-line"
+        try:
+            s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(1, 3)([vid]))).get()
+            if isinstance(s1f4, list):
+                state = define_state_message.get(s1f4[0])
+                self.equipment.control_state = state
 
-    def get_mdln(self):
-        """
-        get equipment model
-        """
-        if self.equipment.is_online:
-            logger.error("Equipment is not online: %s",
-                         self.equipment.equipment_name)
-            return {"status": False, "message": "Equipment is not online"}
-
-        vid = {"FCL": 32, "FCLX": 24}
-        model_vid = vid.get(self.equipment.equipment_model)
-
-        if self.equipment.equipment_model in ["FCL", "FCLX"]:
-            try:
-                s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
-                    self.equipment.stream_function(1, 3)([model_vid]))).get()
-                if isinstance(s1f4, list):
-                    model = s1f4[0]
-                    return {"status": True, "message": model}
-            except Exception as e:
-                logger.error("Error get equipment model: %s", e)
-                return {"status": False, "message": str(e)}
-        else:
-            return {"status": False, "message": "Invalid equipment model"}
+                return state
+            return "Off-line"
+        except Exception as e:
+            logger.error("Error get control state: %s", e)
+            return "Off-line"
 
     def get_ppid(self):
         """
         get active recipe
         """
-        if self.equipment.is_online:
-            logger.error("Equipment is not online: %s",
-                         self.equipment.equipment_name)
-            return {"status": False, "message": "Equipment is not online"}
+        model_vid = VID_PP_NAME
 
-        vid = {"FCL": 33, "FCLX": 7}
-        recipe_vid = vid.get(self.equipment.equipment_model)
+        vid = model_vid.get(self.equipment.equipment_model)
+        if not vid:
+            logger.warning("Invalid equipment model: %s",
+                           self.equipment.equipment_model)
+            return "Can not get recipe"
 
-        if self.equipment.equipment_model in ["FCL", "FCLX"]:
-            try:
-                s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
-                    self.equipment.stream_function(1, 3)([recipe_vid]))).get()
+        try:
+            s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(1, 3)([vid]))).get()
+            if isinstance(s1f4, list):
+                recipe_name = s1f4[0]
+                return recipe_name
+            return "Can not get recipe"
+        except Exception as e:
+            logger.error("Error get recipe: %s", e)
+            return "Can not get recipe"
 
-                if isinstance(s1f4, list):
-                    recipe_name = s1f4[0]
-                    self.equipment.ppid = recipe_name
-                    self.equipment.mqtt_client.client.publish(
-                        f"equipments/status/ppid/{
-                            self.equipment.equipment_name}",
-                        recipe_name, 0, retain=True
-                    )
-                    return {"status": True, "message": recipe_name}
-            except Exception as e:
-                logger.error("Error get recipe: %s", e)
-                return {"status": False, "message": str(e)}
-        else:
-            return {"status": False, "message": "Invalid equipment model"}
+    def get_mdln(self):
+        """
+        get equipment model
+        """
+        model_vid = VID_MODEL
+        vid = model_vid.get(self.equipment.equipment_model)
+        if not vid:
+            logger.warning("Invalid equipment model: %s",
+                           self.equipment.equipment_model)
+            return "Can not get model"
+        try:
+            s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(1, 3)([vid]))).get()
+            if isinstance(s1f4, list):
+                recipe_name = s1f4[0]
+                return recipe_name
+            return "Can not get model"
+        except Exception as e:
+            logger.error("Error get model: %s", e)
+            return "Can not get model"
 
     # equipment status
     def req_equipment_status(self, svids: list[int]):
         """
         s1f3
         """
-        if self.equipment.is_online:
+        if not self.equipment.is_online:
             logger.error("Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
@@ -590,7 +579,7 @@ class SecsControl:
         """
         s2f13
         """
-        if self.equipment.is_online:
+        if not self.equipment.is_online:
             logger.error("Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
@@ -604,7 +593,7 @@ class SecsControl:
         s1f11
         Comment: Host sends L:0 to request all SVIDs.
         """
-        if self.equipment.is_online:
+        if not self.equipment.is_online:
             logger.error("Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
@@ -617,7 +606,7 @@ class SecsControl:
         s2f29
         Comment: Host sends L:0 for all ECIDs
         """
-        if self.equipment.is_online:
+        if not self.equipment.is_online:
             logger.error("Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
@@ -631,7 +620,7 @@ class SecsControl:
         s2f37 CEED=True
         Comment: n=0 means all CEIDs
         """
-        if self.equipment.is_online:
+        if not self.equipment.is_online:
             logger.error("Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
@@ -644,7 +633,7 @@ class SecsControl:
         s2f37 CEED=False
         Comment: n=0 means all CEIDs
         """
-        if self.equipment.is_online:
+        if not self.equipment.is_online:
             logger.error("Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
@@ -664,7 +653,7 @@ class SecsControl:
         :param report_id: optional - ID for report, autonumbering if None
         :type report_id: integer
         """
-        if self.equipment.is_online:
+        if not self.equipment.is_online:
             logger.error("Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
@@ -714,7 +703,7 @@ class SecsControl:
         s2f33
         Comment: a=0 means delete all reports and event links, b=0 means delete the RPTID type and its event links
         """
-        if self.equipment.is_online:
+        if not self.equipment.is_online:
             logger.error("Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
@@ -730,3 +719,46 @@ class SecsControl:
             return {"status": False, "message": resp_unscribe_message}
 
         return {"status": True, "message": "Event unsubscribed"}
+
+    def unsubscribe_all_events(self):
+        """
+        Unsubscribe all events
+        """
+        if not self.equipment.is_online:
+            logger.error("Equipment is not online: %s",
+                         self.equipment.equipment_name)
+            return {"status": False, "message": "Equipment is not online"}
+
+        resp_unsubscribe = self.equipment.send_and_waitfor_response(self.equipment.stream_function(2, 33)(
+            {"DATAID": 0, "DATA": []}))
+
+        resp_ubsubscribe_code = self.equipment.secs_decode(
+            resp_unsubscribe).get()
+        resp_unscribe_message = self.equipment.secs_control.response_message.response_message_drack(
+            resp_ubsubscribe_code)
+        if resp_ubsubscribe_code != 0:
+            return {"status": False, "message": resp_unscribe_message}
+
+        return {"status": True, "message": "Unsubscribed all link event"}
+
+    def subscribe_lot_control(self):
+        """
+        Subscribe lot control event
+        """
+        if not self.equipment.is_online:
+            logger.error("Equipment is not online: %s",
+                         self.equipment.equipment_name)
+            return {"status": False, "message": "Equipment is not online"}
+
+        model_subscribe = {"FCL": SUBSCRIBE_LOT_CONTROL_FCL,
+                           "FCLX": SUBSCRIBE_LOT_CONTROL_FCLX}
+        subscribe = model_subscribe.get(self.equipment.equipment_model)
+        if not subscribe:
+            return {"status": False, "message": "Invalid equipment model"}
+
+        for sub in subscribe:
+            ceid = sub.get("ceid")
+            dvs = sub.get("dvs")
+            report_id = sub.get("report_id")
+            self.subscribe_event(ceid, dvs, report_id)
+        return {"status": True, "message": "Event subscribed"}

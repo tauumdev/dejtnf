@@ -71,22 +71,22 @@ class HandlerEventsReceive:
                         lot_id, pp_name = values
                         lot_id = lot_id.upper()
                         self.lot_close(lot_id)
-                    elif rptid == 1003:
-                        self.recipe_init(values)
+                    # elif rptid == 1003:
+                    #     self.recipe_init(values)
                     else:
                         logger.warning("Unknown RPTID: %s", rptid)
                 except Exception as e:
                     logger.error("Error handling event: %s", e)
 
-    def recipe_init(self, pp_name: str):
-        """
-        Init recipe
-        """
-        if isinstance(pp_name, list):
-            self.equipment.ppid = pp_name[0]
-            pp_name = pp_name[0]
-            self.equipment.mqtt_client.client.publish(
-                f"equipments/status/ppid/{self.equipment.equipment_name}", pp_name, 0, retain=True)
+    # def recipe_init(self, pp_name: list):
+    #     """
+    #     Init recipe
+    #     """
+    #     if isinstance(pp_name, list):
+    #         self.equipment.ppid = pp_name[0]
+    #         pp_name = pp_name[0]
+    #         self.equipment.mqtt_client.client.publish(
+    #             f"equipments/status/ppid/{self.equipment.equipment_name}", pp_name, 0, retain=True)
 
     def lot_open(self, lot_id: str):
         """
@@ -116,6 +116,7 @@ class HandlerEventsReceive:
             self.equipment.secs_control.lot_management.accept_lot_fcl(
                 lot_id)
         elif self.equipment.equipment_model == "FCLX":
+            # !first check if lot is already added or lot active
             self.equipment.secs_control.lot_management.add_lot_fclx(lot_id)
         else:
             logger.error("Unknown equipment model: %s",

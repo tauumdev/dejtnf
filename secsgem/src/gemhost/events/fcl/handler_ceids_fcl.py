@@ -23,12 +23,12 @@ class HandlerCeidFcl:
         Handle CEID
         """
         if self.ceid == 1:
-            self.equipment.secs_control.get_ppid()
+            self.equipment.mqtt_client.client.publish(
+                f"equipments/status/ppid/{self.equipment.equipment_name}", self.equipment.ppid, 0, retain=True)
 
         if self.ceid in [8, 9, 10]:
-            self.equipment.control_state = self.ceid_list[self.ceid]
+            self.equipment.control_state = self.ceid_list.get(self.ceid)
             self.equipment.mqtt_client.client.publish(
                 f"equipments/status/control_state/{
                     self.equipment.equipment_name}",
-                self.equipment.control_state, 0, retain=True
-            )
+                self.equipment.control_state, 0, retain=True)

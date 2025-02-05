@@ -51,14 +51,14 @@ class EquipmentControlCli(cmd.Cmd):
         Go online
         Usage: online
         """
-        print(self.equipment.secs_control.online())
+        print(self.equipment.secs_control.online().get("message"))
 
     def do_offline(self, _):
         """
         Go offline
         Usage: offline
         """
-        print(self.equipment.secs_control.offline())
+        print(self.equipment.secs_control.offline().get("message"))
 
     def do_get_control_state(self, _):
         """
@@ -67,13 +67,19 @@ class EquipmentControlCli(cmd.Cmd):
         """
         print(self.equipment.secs_control.get_control_state())
 
-    def do_get_model(self, _):
+    def do_get_mdln(self, _):
         """
         Get equipment model
         Usage: get_model
         """
-        print(self.equipment.secs_control.get_mdln())
-    # equipment status
+        print(self.equipment.mdln)
+
+    def do_get_ppid(self, _):
+        """
+        Get process program ID
+        Usage: get_ppid
+        """
+        print(self.equipment.ppid)
 
     def do_req_status(self, svids: str):
         """
@@ -180,6 +186,13 @@ class EquipmentControlCli(cmd.Cmd):
             print("Invalid report_id")
             print("Usage: unsubscribe_events <report_id>")
             return
+
+    def do_unsubscribe_all_events(self, _):
+        """
+        Unsubscribe all events
+        Usage: unsubscribe_all
+        """
+        print(self.equipment.secs_control.unsubscribe_all_events())
 
     # recipe management
     def do_pp_dir(self, _):
