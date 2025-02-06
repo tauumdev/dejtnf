@@ -194,7 +194,18 @@ class EquipmentControlCli(cmd.Cmd):
         """
         print(self.equipment.secs_control.unsubscribe_all_events())
 
-    # recipe management
+    def do_req_event_report(self, ceid: str):
+        """
+        Request event report
+        Usage: req_event_report <ceid>
+        Sample: req_event_report 1000
+        """
+        if not ceid:
+            print("Invalid arguments")
+            print("Usage: pp_select <ceid>")
+            return
+        print(self.equipment.secs_control.req_event_report(ceid))
+
     def do_pp_dir(self, _):
         """
         Process program directory
@@ -213,7 +224,8 @@ class EquipmentControlCli(cmd.Cmd):
             print("Invalid arguments")
             print("Usage: pp_select <ppid>")
             return
-        print(self.equipment.secs_control.recipe_management.pp_select(ppid))
+        print(self.equipment.secs_control.recipe_management.pp_select(
+            ppid).get("message"))
 
     def do_pp_request(self, ppid: str):
         """
@@ -235,7 +247,8 @@ class EquipmentControlCli(cmd.Cmd):
             print("Invalid arguments")
             print("Usage: pp_send <ppid>")
             return
-        print(self.equipment.secs_control.recipe_management.pp_send(ppid))
+        print(self.equipment.secs_control.recipe_management.pp_send(
+            ppid).get("message"))
 
     def do_pp_delete(self, ppid: str):
         """
@@ -246,4 +259,5 @@ class EquipmentControlCli(cmd.Cmd):
             print("Invalid arguments")
             print("Usage: pp_delete <ppid>")
             return
-        print(self.equipment.secs_control.recipe_management.pp_delete(ppid))
+        print(self.equipment.secs_control.recipe_management.pp_delete(
+            ppid).get("message"))

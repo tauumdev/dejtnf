@@ -39,6 +39,8 @@ class EquipmentManager:
                                   equipment["port"], equipment["session_id"], equipment["active"], equipment["enable"], self.mqtt_client)
 
             if equipment.is_enabled:
+                print(f"Initializing equipment {equipment.equipment_name}")
+                print(equipment.is_enabled)
                 equipment.enable()
 
             self.equipments.append(equipment)

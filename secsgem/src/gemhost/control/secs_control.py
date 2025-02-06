@@ -398,23 +398,82 @@ class SecsControl:
                 return {"status": False, "message": response_message}
 
     # communication
-
-    def status(self):
+    def get_control_state(self):
         """
-        equipment communication status
+        get control state
         """
-        equipment_status = {
-            "address": self.equipment.address,
-            "port": self.equipment.port,
-            "session_id": self.equipment.sessionID,
-            "active": self.equipment.active,
-            "enabled": self.equipment.is_enabled,
-            "communicating": self.equipment.communicationState.current,
-            "control_state": self.equipment.control_state,
-            "ppid": self.equipment.ppid,
-            "lot_active": self.equipment.lot_active
+        define_state_message = {
+            1: "Off-Line/Equipment Off-Line",
+            2: "Off-Line/Attempt On-Line",
+            3: "Off-Line/Host Off-Line",
+            4: "On-Line/Local",
+            5: "On-Line/Remote"
         }
-        return equipment_status
+
+        model_vid = VID_CONTROL_STATE
+
+        vid = model_vid.get(self.equipment.equipment_model)
+        if not vid:
+            logger.warning("Invalid equipment model: %s",
+                           self.equipment.equipment_model)
+            return "Off-line"
+        if not self.equipment.is_enabled:
+            return "Off-line"
+        try:
+            s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(1, 3)([vid]))).get()
+            if isinstance(s1f4, list):
+                state = define_state_message.get(s1f4[0])
+                self.equipment.control_state = state
+                return state
+            return "Off-line"
+        except Exception as e:
+            logger.error("Error get control state: %s", e)
+            return "Off-line"
+
+    def get_ppid(self):
+        """
+        get active recipe
+        """
+        model_vid = VID_PP_NAME
+
+        vid = model_vid.get(self.equipment.equipment_model)
+        if not vid:
+            logger.warning("Invalid equipment model: %s",
+                           self.equipment.equipment_model)
+            return "Can not get recipe"
+
+        try:
+            s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(1, 3)([vid]))).get()
+            if isinstance(s1f4, list):
+                recipe_name = s1f4[0]
+                return recipe_name
+            return "Can not get recipe"
+        except Exception as e:
+            logger.error("Error get recipe: %s", e)
+            return "Can not get recipe"
+
+    def get_mdln(self):
+        """
+        get equipment model
+        """
+        model_vid = VID_MODEL
+        vid = model_vid.get(self.equipment.equipment_model)
+        if not vid:
+            logger.warning("Invalid equipment model: %s",
+                           self.equipment.equipment_model)
+            return "Can not get model"
+        try:
+            s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(1, 3)([vid]))).get()
+            if isinstance(s1f4, list):
+                recipe_name = s1f4[0]
+                return recipe_name
+            return "Can not get model"
+        except Exception as e:
+            logger.error("Error get model: %s", e)
+            return "Can not get model"
 
     def enable(self):
         """
@@ -485,83 +544,25 @@ class SecsControl:
             logger.error("Error offline equipment: %s", e)
             return {"status": False, "message": "Error offline equipment"}
 
-    def get_control_state(self):
+    def status(self):
         """
-        get control state
+        equipment communication status
         """
-        define_state_message = {
-            1: "Off-Line/Equipment Off-Line",
-            2: "Off-Line/Attempt On-Line",
-            3: "Off-Line/Host Off-Line",
-            4: "On-Line/Local",
-            5: "On-Line/Remote"
+        equipment_status = {
+            "address": self.equipment.address,
+            "port": self.equipment.port,
+            "session_id": self.equipment.sessionID,
+            "active": self.equipment.active,
+            "enabled": self.equipment.is_enabled,
+            "communicating": self.equipment.communicationState.current,
+            "control_state": self.equipment.control_state,
+            "ppid": self.equipment.ppid,
+            "lot_active": self.equipment.lot_active
         }
+        return equipment_status
 
-        model_vid = VID_CONTROL_STATE
+    # request equipment status
 
-        vid = model_vid.get(self.equipment.equipment_model)
-        if not vid:
-            logger.warning("Invalid equipment model: %s",
-                           self.equipment.equipment_model)
-            return "Off-line"
-        try:
-            s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
-                self.equipment.stream_function(1, 3)([vid]))).get()
-            if isinstance(s1f4, list):
-                state = define_state_message.get(s1f4[0])
-                self.equipment.control_state = state
-
-                return state
-            return "Off-line"
-        except Exception as e:
-            logger.error("Error get control state: %s", e)
-            return "Off-line"
-
-    def get_ppid(self):
-        """
-        get active recipe
-        """
-        model_vid = VID_PP_NAME
-
-        vid = model_vid.get(self.equipment.equipment_model)
-        if not vid:
-            logger.warning("Invalid equipment model: %s",
-                           self.equipment.equipment_model)
-            return "Can not get recipe"
-
-        try:
-            s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
-                self.equipment.stream_function(1, 3)([vid]))).get()
-            if isinstance(s1f4, list):
-                recipe_name = s1f4[0]
-                return recipe_name
-            return "Can not get recipe"
-        except Exception as e:
-            logger.error("Error get recipe: %s", e)
-            return "Can not get recipe"
-
-    def get_mdln(self):
-        """
-        get equipment model
-        """
-        model_vid = VID_MODEL
-        vid = model_vid.get(self.equipment.equipment_model)
-        if not vid:
-            logger.warning("Invalid equipment model: %s",
-                           self.equipment.equipment_model)
-            return "Can not get model"
-        try:
-            s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
-                self.equipment.stream_function(1, 3)([vid]))).get()
-            if isinstance(s1f4, list):
-                recipe_name = s1f4[0]
-                return recipe_name
-            return "Can not get model"
-        except Exception as e:
-            logger.error("Error get model: %s", e)
-            return "Can not get model"
-
-    # equipment status
     def req_equipment_status(self, svids: list[int]):
         """
         s1f3
@@ -614,7 +615,19 @@ class SecsControl:
             self.equipment.stream_function(2, 29)(ecids))
         return self.equipment.secs_decode(s2f30)
 
-    # equipment events
+    def req_event_report(self, ceid: int):
+        """
+        s6f15 event report request
+        """
+        if not self.equipment.is_online:
+            logger.error("Equipment is not online: %s",
+                         self.equipment.equipment_name)
+            return {"status": False, "message": "Equipment is not online"}
+        s6f16 = self.equipment.send_and_waitfor_response(
+            self.equipment.stream_function(6, 15)(ceid))
+        return self.equipment.secs_decode(s6f16)
+    # define equipment events
+
     def enable_events(self, ceids: list[int] = None):
         """
         s2f37 CEED=True
