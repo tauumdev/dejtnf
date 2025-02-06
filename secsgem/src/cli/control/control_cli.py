@@ -126,6 +126,15 @@ class EquipmentControlCli(cmd.Cmd):
         ecids = [int(ecid) for ecid in ecids.split(",")] if ecids else []
         print(self.equipment.secs_control.req_equipment_constant_namelist(ecids))
 
+    def do_req_s1f21(self, vids: str):
+        """
+        Request equipment status
+        Usage: req_s1f21 <vids>
+        Sample: req_s1f21 100,101,102
+        """
+        vids = [int(vid) for vid in vids.split(",")] if vids else []
+        print(self.equipment.secs_control.req_s1f21(vids))
+
     # lot management
     def do_lot_accept(self, lot_id: str):
         """
@@ -206,6 +215,7 @@ class EquipmentControlCli(cmd.Cmd):
             return
         print(self.equipment.secs_control.req_event_report(ceid))
 
+    # recipe management
     def do_pp_dir(self, _):
         """
         Process program directory
@@ -213,7 +223,7 @@ class EquipmentControlCli(cmd.Cmd):
         """
         ppid_list = self.equipment.secs_control.recipe_management.pp_dir()
         for ppid in ppid_list:
-            print(ppid)
+            print(f"  - {ppid}")
 
     def do_pp_select(self, ppid: str):
         """
@@ -229,8 +239,16 @@ class EquipmentControlCli(cmd.Cmd):
 
     def do_pp_request(self, ppid: str):
         """
-        Request process program
-        Usage: pp_request <ppid>
+        Requests the process program using the provided Process Program ID (ppid).
+
+        Parameters:
+            ppid (str): Process Program Identifier.
+
+        Usage:
+            pp_request <ppid>
+
+        Prints:
+            The response from the process program request.
         """
         if not ppid:
             print("Invalid arguments")
@@ -240,8 +258,16 @@ class EquipmentControlCli(cmd.Cmd):
 
     def do_pp_send(self, ppid: str):
         """
-        Send process program
-        Usage: pp_send <ppid>
+        Sends the process program using the provided Process Program ID (ppid).
+
+        Parameters:
+            ppid (str): Process Program Identifier.
+
+        Usage:
+            pp_send <ppid>
+
+        Prints:
+            The response message from the process program send operation.
         """
         if not ppid:
             print("Invalid arguments")
@@ -252,12 +278,54 @@ class EquipmentControlCli(cmd.Cmd):
 
     def do_pp_delete(self, ppid: str):
         """
-        Delete process program
-        Usage: pp_delete <ppid>
+        Deletes the process program using the provided Process Program ID (ppid).
+
+        Parameters:
+            ppid (str): Process Program Identifier.
+
+        Usage:
+            pp_delete <ppid>
+
+        Prints:
+            The response from the deletion operation.
         """
         if not ppid:
             print("Invalid arguments")
             print("Usage: pp_delete <ppid>")
             return
-        print(self.equipment.secs_control.recipe_management.pp_delete(
-            ppid).get("message"))
+        print(self.equipment.secs_control.recipe_management.pp_delete(ppid))
+
+    # STI equipment
+    def do_sti_pp_select(self, ppid: str):
+        """
+        Select process program for STI equipment
+        Usage: sti_pp_select <ppid>
+        """
+        if not ppid:
+            print("Invalid arguments")
+            print("Usage: sti_pp_select <ppid>")
+            return
+        print(self.equipment.secs_control.sti_pp_select(ppid))
+
+    def do_sti_lot_start(self, arg: str):
+        """
+        Start lot for STI equipment
+        Usage: sti_lot_start <lot_id> <qty> <en> <shift>
+        """
+        args = arg.split()
+        if len(args) < 4:
+            print("Invalid arguments")
+            print("Usage: sti_lot_start <lot_id> <qty> <en> <shift>")
+            return
+        lot_id = args[0]
+        qty = args[1]
+        en = args[2]
+        shift = args[3]
+        print(self.equipment.secs_control.sti_lot_start(lot_id, qty, en, shift))
+
+    def do_sti_lot_end(self, _):
+        """
+        End lot for STI equipment
+        Usage: sti_lot_end
+        """
+        print(self.equipment.secs_control.sti_lot_end())

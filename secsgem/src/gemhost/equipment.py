@@ -6,7 +6,7 @@ import secsgem.hsms
 import secsgem.secs
 from secsgem.secs.functionbase import SecsStreamFunction
 
-from secsgem.secs.dataitems import DATAID, RCMD, CPNAME, CPVAL, HCACK, CPACK, OBJSPEC
+from secsgem.secs.dataitems import DATAID, RCMD, CPNAME, CPVAL, HCACK, CPACK, OBJSPEC, ACKC7
 
 
 from src.gemhost.events.events_receive import HandlerEventsReceive
@@ -166,6 +166,13 @@ class Equipment(secsgem.gem.GemHostHandler):
             return False
         return True
 
+    def on_s07f1(self, handle, packet):
+        """
+        Handle S7F17
+        """
+        logger.info("<<-- S7F17")
+        self.send_response(self.stream_function(7, 2)(
+            ACKC7.ACCEPTED), packet.header.system)
     commLogFileHandler = CommunicationLogFileHandler("logs/gem")
     commLogFileHandler.setFormatter(
         logging.Formatter('%(asctime)s: %(message)s'))

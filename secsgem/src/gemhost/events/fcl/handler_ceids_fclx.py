@@ -26,8 +26,7 @@ class HandlerCeidFclx:
 
         if self.ceid in [1, 2, 3]:
             self.equipment.control_state = self.ceid_list[self.ceid]
+
+            topic = f"equipments/status/control_state/{self.equipment.equipment_name}"
             self.equipment.mqtt_client.client.publish(
-                f"equipments/status/control_state/{
-                    self.equipment.equipment_name}",
-                self.equipment.control_state, 0, retain=True
-            )
+                topic, self.equipment.control_state, 0, retain=True)

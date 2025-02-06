@@ -29,7 +29,8 @@ class HandlerAlarmsReceive:
         alarm_id = decode.ALID.get()
         alarm_cd = decode.ALCD.get()
         alarm_text = decode.ALTX.get()
-        message = f"alid: {alarm_id}, alcd: {
-            alarm_cd},Alarm Text: {alarm_text}"
-        self.equipment.mqtt_client.client.publish(
-            f"equipments/status/alarm/{self.equipment.equipment_name}", message)
+
+        topic = f"equipments/status/alarm/{self.equipment.equipment_name}"
+        message = f"alid: {alarm_id}, alcd: {alarm_cd},Alarm Text: {alarm_text}"
+
+        self.equipment.mqtt_client.client.publish(topic, message)

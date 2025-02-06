@@ -7,7 +7,7 @@
             "port": 5000,
             "session_id": 61,
             "active": true,
-            "enable": true
+            "enable": false
         },
         {
             "equipment_name": "TNF-70",
@@ -17,6 +17,15 @@
             "session_id": 70,
             "active": true,
             "enable": false
+        },
+        {
+            "equipment_name": "STI-09",
+            "equipment_model": "STI",
+            "address": "169.254.48.9",
+            "port": 5000,
+            "session_id": 0,
+            "active": true,
+            "enable": true
         }
     ]
 }
