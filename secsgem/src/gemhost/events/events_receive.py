@@ -81,15 +81,18 @@ class HandlerEventsReceive:
 
         ceid = decode.CEID.get()
         if ceid:
-            control_state = CEIDS_CONTROL_STATE.get(
-                self.equipment.equipment_model, {}).get(ceid)
-            if control_state:
-                self.equipment.control_state = control_state
-                logger.info("Control state: %s on %s",
-                            control_state, self.equipment.equipment_name)
-                self.equipment.mqtt_client.client.publish(
-                    f"equipments/status/control_state/{self.equipment.equipment_name}", control_state, 0, retain=True)
 
+            try:
+                control_state = CEIDS_CONTROL_STATE.get(
+                    self.equipment.equipment_model, {}).get(ceid)
+                if control_state:
+                    self.equipment.control_state = control_state
+                    logger.info("Control state: %s on %s",
+                                control_state, self.equipment.equipment_name)
+                    self.equipment.mqtt_client.client.publish(
+                        f"equipments/status/control_state/{self.equipment.equipment_name}", control_state, 0, retain=True)
+            except Exception as e:
+                logger.error("Error handling event: %s", e)
     # def recipe_init(self, pp_name: list):
     #     """
     #     Init recipe
