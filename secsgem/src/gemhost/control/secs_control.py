@@ -10,6 +10,8 @@ from secsgem.secs.dataitems import ACKC7
 
 from typing import TYPE_CHECKING
 
+import secsgem.secs.dataitems
+
 if TYPE_CHECKING:
     from src.gemhost.equipment import Equipment
 
@@ -32,7 +34,7 @@ class SecsControl:
 
     class ResponseMessage:
         """
-        Class for response messages
+        Class for get messages from response code
         """
 
         def response_message_rcmd(self, code: int):
@@ -239,34 +241,63 @@ class SecsControl:
         def __init__(self, equipment: "Equipment"):
             self.equipment = equipment
 
-        # Check dir path for recipe file if not exist create
-        # receipe update = files/recipe/equipment_model/equipment_name/current/recipe_name
-        # recipe backup = files/recipe/equipment_model/equipment_name/backup/receipe_name
-        # recipe upload = files/recipe/equipment_model/equipment_name/upload/receipe_name
+        def save_recipe(self, file_name: str, content: bytes):
+            """
+            Save recipe to a file with error handling.
+            Returns True if successful, False otherwise.
+            """
+            # Define base directory
+            base_path = os.path.join(
+                RECIPE_DIR, self.equipment.equipment_model, self.equipment.equipment_name, "upload")
 
-        def create_dir(self, path: str):
-            """
-            create directory
-            """
             try:
-                if not os.path.exists(path):
-                    os.makedirs(path)
+                # Create directory if it doesn't exist
+                os.makedirs(base_path, exist_ok=True)
+
+                # Sanitize filename to prevent path traversal
+                safe_file_name = os.path.basename(file_name)
+                full_path = os.path.join(base_path, safe_file_name)
+
+                # Write content to file
+                with open(full_path, 'wb') as file:
+                    file.write(content)
+
+                logger.info("File saved successfully: %s", full_path)
+                return True
+
+            except IOError as e:
+                logger.error("File save error: %s | %s", full_path, str(e))
+                return False
             except Exception as e:
-                logger.error("Error creating directory: %s", e)
+                logger.error(
+                    "Unexpected error saving file: %s | %s", full_path, str(e))
+                return False
 
-        def get_recipe_file(self, path: str):
+        def get_recipe_file(self, file_name: str):
             """
-            get recipe file
-            return secs binary
+            Get recipe file as content.
             """
+            # Define base directory
+            base_path = os.path.join(
+                RECIPE_DIR, self.equipment.equipment_model, self.equipment.equipment_name, "current", file_name)
+
             try:
-                with open(path, "r", encoding="utf-8") as f:
-                    if not f:
-                        return None
-                    return secsgem.secs.variables.SecsVarBinary(f.read())
+                with open(base_path, "rb") as file:
+                    return file.read()
             except Exception as e:
                 logger.error("Error reading recipe file: %s", e)
                 return None
+
+        def receive_load_query(self, handle, packet: HsmsPacket):
+            """
+            Handle S7F2 Process Program Load Inquire
+            """
+            logger.info("<<-- S7F2")
+            self.equipment.send_response(self.equipment.stream_function(7, 2)(
+                ACKC7.ACCEPTED), packet.header.system)
+            decode = self.equipment.secs_decode(packet)
+
+            print(decode)
 
         def pp_dir(self):
             """
@@ -279,42 +310,9 @@ class SecsControl:
 
             return self.equipment.get_process_program_list()
 
-        # def pp_request(self, ppid: str):
-        #     """
-        #     s7f5
-        #     """
-        #     if self.equipment.is_online:
-        #         logger.error("Equipment is not online: %s",
-        #                      self.equipment.equipment_name)
-        #         return {"status": False, "message": "Equipment is not online"}
-
-        #     s7f6 = self.equipment.send_and_waitfor_response(
-        #         self.equipment.stream_function(7, 5)(ppid))
-        #     decode_s7f6 = self.equipment.secs_decode(s7f6)
-        #     ppid = decode_s7f6.PPID.get()
-        #     ppbody = decode_s7f6.PPBODY.get()
-
-        #     if not ppid or not ppbody:
-        #         logger.error("Request recipe: %s on %s, Error: %s",
-        #                      ppid, self.equipment.equipment_name, "Recipe not found")
-        #         return {"status": False, "message": "Recipe not found"}
-        #     try:
-        #         path = os.path.join(
-        #             RECIPE_DIR, self.equipment.equipment_model,
-        #             self.equipment.equipment_name, "upload"
-        #         )
-        #         self.create_dir(path)
-        #         with open(f"{path}/{ppid}", "w", encoding="utf-8") as f:
-        #             f.write(ppbody.decode('utf-8'))
-        #         return {"status": True, "message": "Request recipe success on upload"}
-        #     except Exception as e:
-        #         logger.error("Request recipe: %s on %s, Error: %s",
-        #                      ppid, self.equipment.equipment_name, e)
-        #         return {"status": False, "message": str(e)}
-
         def pp_request(self, ppid: str):
             """
-            s7f5 - Request a recipe (PPID) and save it as a ZIP file.
+            s7f5
             """
             if not self.equipment.is_online:
                 logger.error("Equipment is not online: %s",
@@ -322,67 +320,23 @@ class SecsControl:
                 return {"status": False, "message": "Equipment is not online"}
 
             s7f6 = self.equipment.send_and_waitfor_response(
-                self.equipment.stream_function(7, 5)(ppid)
-            )
+                self.equipment.stream_function(7, 5)(ppid))
             decode_s7f6 = self.equipment.secs_decode(s7f6)
             ppid = decode_s7f6.PPID.get()
             ppbody = decode_s7f6.PPBODY.get()
 
             if not ppid or not ppbody:
-                logger.error("Request recipe: %s on %s, Error: Recipe not found",
-                             ppid, self.equipment.equipment_name)
+                logger.error("Request recipe: %s on %s, Error: %s",
+                             ppid, self.equipment.equipment_name, "Recipe not found")
                 return {"status": False, "message": "Recipe not found"}
 
-            try:
-                path = os.path.join(
-                    RECIPE_DIR, self.equipment.equipment_model,
-                    self.equipment.equipment_name, "upload"
-                )
-                self.create_dir(path)
+            save_recipe = self.equipment.secs_control.recipe_management.save_recipe(
+                ppid, ppbody)
+            if not save_recipe:
+                return {"status": False, "message": "Error saving recipe "}
+            return {"status": True, "message": "Request recipe success on upload"}
 
-                zip_path = os.path.join(path, f"{ppid}.zip")
-
-                # Create ZIP and store recipe as a binary file
-                with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
-                    # Save as binary file
-                    zip_file.writestr(f"{ppid}.bin", ppbody)
-
-                return {"status": True, "message": f"Request recipe success, saved as {zip_path}"}
-            except Exception as e:
-                logger.error("Request recipe: %s on %s, Error: %s",
-                             ppid, self.equipment.equipment_name, e)
-                return {"status": False, "message": str(e)}
-
-        # def receive_recipe(self, handler, packet: HsmsPacket):
-        #     """
-        #     receive recipe frome equipment save to upload path
-        #     """
-        #     self.equipment.send_response(self.equipment.stream_function(7, 4)(
-        #         ACKC7.ACCEPTED), packet.header.system)
-        #     decode = self.equipment.secs_decode(packet)
-        #     ppid = decode.PPID.get()
-        #     ppbody = decode.PPBODY.get()
-        #     if not ppid or not ppbody:
-        #         logger.error("Receive recipe: %s on %s, Error: %s",
-        #                      ppid, self.equipment.equipment_name, "Recipe not found")
-        #     try:
-        #         path = os.path.join(
-        #             RECIPE_DIR, self.equipment.equipment_model,
-        #             self.equipment.equipment_name, "upload"
-        #         )
-        #         self.create_dir(path)
-        #         with open(f"{path}/{ppid}", "w", encoding="utf-8") as f:
-        #             f.write(ppbody.decode('utf-8'))
-
-        #         logger.info("Receive recipe: %s on %s", ppid,
-        #                     self.equipment.equipment_name)
-        #         # return {"status": True, "message": "Receive recipe success"}
-        #     except Exception as e:
-        #         logger.error("Receive recipe: %s on %s, Error: %s",
-        #                      ppid, self.equipment.equipment_name, e)
-        #         return {"status": False, "message": str(e)}
-
-        def receive_recipe(self, handler, packet: HsmsPacket):
+        def recipe_upload(self, handler, packet: HsmsPacket):
             """
             Receive a recipe from equipment and save it as a ZIP file.
             """
@@ -398,99 +352,26 @@ class SecsControl:
             if not ppid or not ppbody:
                 logger.error("Receive recipe: %s on %s, Error: Recipe not found",
                              ppid, self.equipment.equipment_name)
-                return {"status": False, "message": "Recipe not found"}
 
-            if not self.equipment.is_online:
-                logger.error("Equipment is not online: %s",
-                             self.equipment.equipment_name)
-                return {"status": False, "message": "Equipment is not online"}
-
-            try:
-                # Define the save path
-                path = os.path.join(
-                    RECIPE_DIR, self.equipment.equipment_model,
-                    self.equipment.equipment_name, "upload"
-                )
-                self.create_dir(path)
-
-                zip_path = os.path.join(path, f"{ppid}.zip")
-
-                # Save the recipe inside a ZIP file
-                with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
-                    # Save as binary file
-                    zip_file.writestr(f"{ppid}.bin", ppbody)
-
-                logger.info("Receive recipe: %s on %s, saved as ZIP", ppid,
-                            self.equipment.equipment_name)
-                return {"status": True, "message": f"Recipe received and saved as {zip_path}"}
-            except Exception as e:
-                logger.error("Receive recipe: %s on %s, Error: %s",
-                             ppid, self.equipment.equipment_name, e)
-                return {"status": False, "message": str(e)}
-
-        # def pp_send(self, ppid: str):
-        #     """
-        #     s7f3
-        #     """
-        #     if self.equipment.is_online:
-        #         logger.error("Equipment is not online: %s",
-        #                      self.equipment.equipment_name)
-        #         return {"status": False, "message": "Equipment is not online"}
-
-        #     path = os.path.join(
-        #         RECIPE_DIR, self.equipment.equipment_model,
-        #         self.equipment.equipment_name, "current", ppid
-        #     )
-        #     pp_body = self.get_recipe_file(path)
-        #     if not pp_body:
-        #         logger.error("Send recipe: %s on %s, Error: %s",
-        #                      ppid, self.equipment.equipment_name, "Recipe not found")
-        #         return {"status": False, "message": "Recipe not found"}
-        #     return self.equipment.send_process_program(ppid=ppid, ppbody=pp_body)
+            self.equipment.secs_control.recipe_management.save_recipe(
+                ppid, ppbody)
 
         def pp_send(self, ppid: str):
             """
-            s7f3 - Retrieve a recipe (PPID) from a ZIP file and send it back.
+            s7f3 - Send a recipe (PPID) to the equipment.
             """
             if not self.equipment.is_online:
                 logger.error("Equipment is not online: %s",
                              self.equipment.equipment_name)
                 return {"status": False, "message": "Equipment is not online"}
 
-            zip_path = os.path.join(
-                RECIPE_DIR, self.equipment.equipment_model,
-                self.equipment.equipment_name, "current", f"{ppid}.zip"
-            )
-
-            if not os.path.exists(zip_path):
-                logger.error("Send recipe: %s on %s, Error: Recipe ZIP not found",
-                             ppid, self.equipment.equipment_name)
-                return {"status": False, "message": "Recipe ZIP not found"}
-
-            if not self.equipment.is_online:
-                logger.error("Equipment is not online: %s",
-                             self.equipment.equipment_name)
-                return {"status": False, "message": "Equipment is not online"}
-
-            try:
-                # Extract the recipe from the ZIP file
-                with zipfile.ZipFile(zip_path, "r") as zip_file:
-                    recipe_files = zip_file.namelist()
-                    if not recipe_files:
-                        logger.error("Send recipe: %s on %s, Error: ZIP is empty",
-                                     ppid, self.equipment.equipment_name)
-                        return {"status": False, "message": "Recipe ZIP is empty"}
-
-                    # Read the first file in the ZIP (assuming it's the recipe)
-                    recipe_filename = recipe_files[0]
-                    with zip_file.open(recipe_filename) as recipe_file:
-                        pp_body = recipe_file.read()  # Read as binary
-
-                return self.equipment.send_process_program(ppid=ppid, ppbody=pp_body)
-            except Exception as e:
+            pp_body = self.get_recipe_file(ppid)
+            if not pp_body:
                 logger.error("Send recipe: %s on %s, Error: %s",
-                             ppid, self.equipment.equipment_name, e)
-                return {"status": False, "message": str(e)}
+                             ppid, self.equipment.equipment_name, "Recipe not found")
+                return {"status": False, "message": "Recipe not found"}
+            pp_body_bytes = secsgem.secs.dataitems.SecsVarBinary(pp_body)
+            return self.equipment.send_process_program(ppid=ppid, ppbody=pp_body_bytes)
 
         def pp_delete(self, ppid: str):
             """
@@ -575,18 +456,19 @@ class SecsControl:
         if not vid:
             logger.warning("Invalid equipment model: %s",
                            self.equipment.equipment_model)
-            return "Can not get recipe"
-
+            return None
+        if not self.equipment.is_enabled:
+            return None
         try:
             s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(1, 3)([vid]))).get()
             if isinstance(s1f4, list):
                 recipe_name = s1f4[0]
                 return recipe_name
-            return "Can not get recipe"
+            return None
         except Exception as e:
             logger.error("Error get recipe: %s", e)
-            return "Can not get recipe"
+            return None
 
     def get_mdln(self):
         """
@@ -597,17 +479,19 @@ class SecsControl:
         if not vid:
             logger.warning("Invalid equipment model: %s",
                            self.equipment.equipment_model)
-            return "Can not get model"
+            return None
+        if not self.equipment.is_enabled:
+            return None
         try:
             s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(1, 3)([vid]))).get()
             if isinstance(s1f4, list):
                 recipe_name = s1f4[0]
                 return recipe_name
-            return "Can not get model"
+            return None
         except Exception as e:
             logger.error("Error get model: %s", e)
-            return "Can not get model"
+            return None
 
     def enable(self):
         """
@@ -632,6 +516,10 @@ class SecsControl:
         """
         Online equipment
         """
+        if not self.equipment.is_enabled:
+            logger.error("Equipment is not enabled: %s",
+                         self.equipment.equipment_name)
+            return {"status": False, "message": "Equipment is not enabled"}
         try:
             response_code = self.equipment.go_online()
             response_message = self.equipment.secs_control.response_message.response_message_onlack(
@@ -923,7 +811,7 @@ class SecsControl:
         return {"status": True, "message": "Event subscribed"}
 
     # sti commands
-    def sti_pp_select(self, ppid: str, part_id: str):
+    def sti_pp_select(self, ppid: str):
         """
         STI PP-SELECT
         """
@@ -933,42 +821,18 @@ class SecsControl:
             return {"status": False, "message": "Equipment is not online"}
 
         cmd = {"RCMD": "PPSELECT", "PARAMS": [
-            {"CPNAME": "RecipeName", "CPVAL": ppid},
-            {"CPNAME": "PartID", "CPVAL": part_id}
-        ]
-        }
+            {"CPNAME": "RecipeName", "CPVAL": ppid}
+        ]}
 
-        s2f42 = self.equipment.send_and_waitfor_response(
-            self.equipment.stream_function(2, 41)(cmd))
-        response_code = self.equipment.secs_decode(s2f42).HCACK.get()
-        response_message = self.equipment.secs_control.response_message.response_message_rcmd(
-            response_code)
-        print(response_message)
-
-    def sti_lot_start(self, lot_id: str, qnty: str, enumber: str, shift: str):
-        """
-        STI LOT-START
-        """
-        if not self.equipment.is_online:
-            logger.error("Equipment is not online: %s",
-                         self.equipment.equipment_name)
-            return {"status": False, "message": "Equipment is not online"}
-
-        cmd = {
-            "RCMD": "LOTSTART", "PARAMS": [
-                {"CPNAME": "LotNumber", "CPVAL": lot_id},
-                {"CPNAME": "LotQuantity", "CPVAL": qnty},
-                {"CPNAME": "OperatorNumber", "CPVAL": enumber},
-                {"CPNAME": "Shift", "CPVAL": shift}
-            ]
-        }
-
-        s2f42 = self.equipment.send_and_waitfor_response(
-            self.equipment.stream_function(2, 41)(cmd))
-        response_code = self.equipment.secs_decode(s2f42).HCACK.get()
-        response_message = self.equipment.secs_control.response_message.response_message_rcmd(
-            response_code)
-        print(response_message)
+        try:
+            s2f42 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(2, 41)(cmd))
+            response_code = self.equipment.secs_decode(s2f42).HCACK.get()
+            response_message = self.equipment.secs_control.response_message.response_message_rcmd(
+                response_code)
+            print(response_message)
+        except Exception as e:
+            print(e)
 
     def sti_lot_end(self):
         """
@@ -983,10 +847,34 @@ class SecsControl:
             "RCMD": "LOTEND", "PARAMS": [
             ]
         }
+        try:
+            s2f42 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(2, 41)(cmd))
+            response_code = self.equipment.secs_decode(s2f42).HCACK.get()
+            response_message = self.equipment.secs_control.response_message.response_message_rcmd(
+                response_code)
+            print(response_message)
+        except Exception as e:
+            print(e)
 
-        s2f42 = self.equipment.send_and_waitfor_response(
-            self.equipment.stream_function(2, 41)(cmd))
-        response_code = self.equipment.secs_decode(s2f42).HCACK.get()
-        response_message = self.equipment.secs_control.response_message.response_message_rcmd(
-            response_code)
-        print(response_message)
+    def sti_go_local(self):
+        """
+        STI GO-LOCAL
+        """
+        if not self.equipment.is_online:
+            logger.error("Equipment is not online: %s",
+                         self.equipment.equipment_name)
+            return {"status": False, "message": "Equipment is not online"}
+        cmd = {
+            "RCMD": "GOLOCAL", "PARAMS": [
+            ]
+        }
+        try:
+            s2f42 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(2, 41)(cmd))
+            response_code = self.equipment.secs_decode(s2f42).HCACK.get()
+            response_message = self.equipment.secs_control.response_message.response_message_rcmd(
+                response_code)
+            print(response_message)
+        except Exception as e:
+            print(e)

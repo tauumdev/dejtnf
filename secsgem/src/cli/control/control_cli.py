@@ -256,6 +256,15 @@ class EquipmentControlCli(cmd.Cmd):
             return
         print(self.equipment.secs_control.recipe_management.pp_request(ppid))
 
+    # def do_req_load_query(self, ppids: str):
+    #     """
+    #     Request load query
+    #     Usage: req_load_query <ppids>
+    #     Sample: req_load_query 100,101,102
+    #     """
+    #     ppids = [ppid for ppid in ppids.split(",")] if ppids else []
+    #     print(self.equipment.secs_control.recipe_management.req_load_query(ppids))
+
     def do_pp_send(self, ppid: str):
         """
         Sends the process program using the provided Process Program ID (ppid).
@@ -274,7 +283,7 @@ class EquipmentControlCli(cmd.Cmd):
             print("Usage: pp_send <ppid>")
             return
         print(self.equipment.secs_control.recipe_management.pp_send(
-            ppid).get("message"))
+            ppid))
 
     def do_pp_delete(self, ppid: str):
         """
@@ -296,6 +305,7 @@ class EquipmentControlCli(cmd.Cmd):
         print(self.equipment.secs_control.recipe_management.pp_delete(ppid))
 
     # STI equipment
+
     def do_sti_pp_select(self, ppid: str):
         """
         Select process program for STI equipment
@@ -305,27 +315,18 @@ class EquipmentControlCli(cmd.Cmd):
             print("Invalid arguments")
             print("Usage: sti_pp_select <ppid>")
             return
-        print(self.equipment.secs_control.sti_pp_select(ppid))
-
-    def do_sti_lot_start(self, arg: str):
-        """
-        Start lot for STI equipment
-        Usage: sti_lot_start <lot_id> <qty> <en> <shift>
-        """
-        args = arg.split()
-        if len(args) < 4:
-            print("Invalid arguments")
-            print("Usage: sti_lot_start <lot_id> <qty> <en> <shift>")
-            return
-        lot_id = args[0]
-        qty = args[1]
-        en = args[2]
-        shift = args[3]
-        print(self.equipment.secs_control.sti_lot_start(lot_id, qty, en, shift))
+        self.equipment.secs_control.sti_pp_select(ppid)
 
     def do_sti_lot_end(self, _):
         """
         End lot for STI equipment
         Usage: sti_lot_end
         """
-        print(self.equipment.secs_control.sti_lot_end())
+        self.equipment.secs_control.sti_lot_end()
+
+    def do_sti_go_local(self, _):
+        """
+        Go local for STI equipment
+        Usage: sti_go_local
+        """
+        self.equipment.secs_control.sti_go_local()

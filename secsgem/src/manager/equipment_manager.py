@@ -58,6 +58,7 @@ class EquipmentManager:
         """
         print("Exit program.")
         try:
+            self.config.save()
             for equipment in self.equipments:
                 try:
                     if equipment.is_enabled:

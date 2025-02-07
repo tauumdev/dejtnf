@@ -5,7 +5,7 @@ import secsgem.gem
 import secsgem.hsms
 import secsgem.secs
 from secsgem.secs.functionbase import SecsStreamFunction
-
+from secsgem.hsms.packets import HsmsPacket
 from secsgem.secs.dataitems import DATAID, RCMD, CPNAME, CPVAL, HCACK, CPACK, OBJSPEC, ACKC7
 
 
@@ -58,7 +58,9 @@ class Equipment(secsgem.gem.GemHostHandler):
         self._control_state = self.secs_control.get_control_state()
 
         self.register_stream_function(
-            7, 3, self.secs_control.recipe_management.receive_recipe)
+            7, 1, self.secs_control.recipe_management.receive_load_query)
+        self.register_stream_function(
+            7, 3, self.secs_control.recipe_management.recipe_upload)
 
     @property
     def mdln(self):
@@ -166,13 +168,6 @@ class Equipment(secsgem.gem.GemHostHandler):
             return False
         return True
 
-    def on_s07f1(self, handle, packet):
-        """
-        Handle S7F17
-        """
-        logger.info("<<-- S7F17")
-        self.send_response(self.stream_function(7, 2)(
-            ACKC7.ACCEPTED), packet.header.system)
     commLogFileHandler = CommunicationLogFileHandler("logs/gem")
     commLogFileHandler.setFormatter(
         logging.Formatter('%(asctime)s: %(message)s'))

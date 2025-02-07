@@ -4,15 +4,16 @@
 Description: Configuration file for FCL & FCLX equipment models  
 """
 
-VID_CONTROL_STATE = {"FCL": 28, "FCLX": 4, "STI": 28}
+VID_CONTROL_STATE = {"FCL": 28, "FCLX": 21, "STI": 28}
 VID_MODEL = {"FCL": 32, "FCLX": 24, "STI": 32}
 VID_PP_NAME = {"FCL": 33, "FCLX": 7, "STI": 33}
 
 CEIDS_CONTROL_STATE = {
     "FCL": {8: "Off-Line", 9: "On-Line/Local", 10: "On-Line/Remote"},
-    "FCLX": {1: "Off-Line", 2: "On-Line/Local", 3: "On-Line/Remote"},
+    "FCLX": {9: "Off-Line", 7: "On-Line/Local", 8: "On-Line/Remote"},
     "STI": {3: "Off-Line", 4: "On-Line/Local", 5: "On-Line/Remote"}
 }
+
 SUBSCRIBE_LOT_CONTROL = {
     "FCL": [
         # subscribe request validate lot

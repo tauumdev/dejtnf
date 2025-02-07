@@ -1,8 +1,9 @@
 import logging
 from secsgem.hsms.packets import HsmsPacket
 from secsgem.secs.dataitems import ACKC6
-from src.gemhost.events.fcl.handler_ceids_fclx import HandlerCeidFclx
-from src.gemhost.events.fcl.handler_ceids_fcl import HandlerCeidFcl
+from src.utils.config.secsgem_subscribe import CEIDS_CONTROL_STATE
+# from src.gemhost.events.model.handler_ceids_fclx import HandlerCeidFclx
+# from src.gemhost.events.model.handler_ceids_fcl import HandlerCeidFcl
 from src.validate.validate_lot import ValidateLot
 from typing import TYPE_CHECKING
 
@@ -27,12 +28,6 @@ class HandlerEventsReceive:
         self.equipment.send_response(self.equipment.stream_function(6, 12)(
             ACKC6.ACCEPTED), packet.header.system)
         decode = self.equipment.secs_decode(packet)
-        ceid = decode.CEID.get()
-
-        if self.equipment.equipment_model == "FCL":
-            HandlerCeidFcl(ceid, self.equipment).handle_ceid()
-        elif self.equipment.equipment_model == "FCLX":
-            HandlerCeidFclx(ceid, self.equipment).handle_ceid()
 
         for rpt in decode.RPT:
             if rpt:
@@ -77,6 +72,23 @@ class HandlerEventsReceive:
                         logger.warning("Unknown RPTID: %s", rptid)
                 except Exception as e:
                     logger.error("Error handling event: %s", e)
+
+        # CEIDS_CONTROL_STATE = {
+        #     "FCL": {8: "Off-Line", 9: "On-Line/Local", 10: "On-Line/Remote"},
+        #     "FCLX": {9: "Off-Line", 7: "On-Line/Local", 8: "On-Line/Remote"},
+        #     "STI": {3: "Off-Line", 4: "On-Line/Local", 5: "On-Line/Remote"}
+        # }
+
+        ceid = decode.CEID.get()
+        if ceid:
+            control_state = CEIDS_CONTROL_STATE.get(
+                self.equipment.equipment_model, {}).get(ceid)
+            if control_state:
+                self.equipment.control_state = control_state
+                logger.info("Control state: %s on %s",
+                            control_state, self.equipment.equipment_name)
+                self.equipment.mqtt_client.client.publish(
+                    f"equipments/status/control_state/{self.equipment.equipment_name}", control_state, 0, retain=True)
 
     # def recipe_init(self, pp_name: list):
     #     """

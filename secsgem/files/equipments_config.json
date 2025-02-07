@@ -7,7 +7,7 @@
             "port": 5000,
             "session_id": 61,
             "active": true,
-            "enable": false
+            "enable": true
         },
         {
             "equipment_name": "TNF-70",
@@ -25,7 +25,7 @@
             "port": 5000,
             "session_id": 0,
             "active": true,
-            "enable": true
+            "enable": false
         }
     ]
 }

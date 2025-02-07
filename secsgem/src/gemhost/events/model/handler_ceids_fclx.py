@@ -13,8 +13,8 @@ class HandlerCeidFclx:
         self.ceid = ceid
         self.ceid_list = {
             1: "Off-Line",
-            2: "On-Line/Local",
-            3: "On-Line/Remote",
+            7: "On-Line/Local",
+            8: "On-Line/Remote",
         }
 
     def handle_ceid(self):
@@ -24,7 +24,7 @@ class HandlerCeidFclx:
         if self.ceid == 10:
             self.equipment.secs_control.get_ppid()
 
-        if self.ceid in [1, 2, 3]:
+        if self.ceid in [1, 7, 8]:
             self.equipment.control_state = self.ceid_list[self.ceid]
 
             topic = f"equipments/status/control_state/{self.equipment.equipment_name}"
