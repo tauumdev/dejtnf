@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from src.gemhost.equipment import Equipment
 
 from src.utils.config.app_config import RECIPE_DIR
-from src.utils.config.secsgem_subscribe import SUBSCRIBE_LOT_CONTROL_FCL, SUBSCRIBE_LOT_CONTROL_FCLX, VID_MODEL, VID_CONTROL_STATE, VID_PP_NAME
+from src.utils.config.secsgem_subscribe import PROCESS_STATE_CHANG_EVENT, SUBSCRIBE_LOT_CONTROL, VID_MODEL, VID_CONTROL_STATE, VID_PP_NAME
 
 logger = logging.getLogger("app_logger")
 
@@ -190,7 +190,7 @@ class SecsControl:
                              self.equipment.equipment_name)
                 return {"status": False, "message": "Equipment is not online"}
 
-            if not self.equipment.equipment_model == "FCL":
+            if not self.equipment.equipment_model == "FCLX":
                 logger.error("Invalid equipment model: %s",
                              self.equipment.equipment_model)
                 return {"status": False, "message": "Invalid equipment model"}
@@ -218,13 +218,18 @@ class SecsControl:
                              self.equipment.equipment_name)
                 return {"status": False, "message": "Equipment is not online"}
 
-            if not self.equipment.equipment_model == "FCL":
+            if not self.equipment.equipment_model == "FCLX":
                 logger.error("Invalid equipment model: %s",
                              self.equipment.equipment_model)
                 return {"status": False, "message": "Invalid equipment model"}
 
             s2f49 = self.equipment.send_and_waitfor_response(
-                self.equipment.stream_function(2, 49)({"DATAID": 101, "OBJSPEC": "LOTCONTROL", "RCMD": "REJECT_LOT", "PARAMS": [{"CPNAME": "LotID", "CPVAL": lot_id}, {"CPNAME": "LotID", "CPVAL": reason}]}))
+                self.equipment.stream_function(2, 49)(
+                    {"DATAID": 101, "OBJSPEC": "LOTCONTROL", "RCMD": "REJECT_LOT",
+                     "PARAMS": [
+                         {"CPNAME": "LotID", "CPVAL": lot_id},
+                         {"CPNAME": "Reason", "CPVAL": reason}
+                     ]}))
             response_code = self.equipment.secs_decode(s2f49).HCACK.get()
 
             response_message = self.equipment.secs_control.response_message.response_message_rcmd(
@@ -287,6 +292,27 @@ class SecsControl:
             except Exception as e:
                 logger.error("Error reading recipe file: %s", e)
                 return None
+
+        def req_load_query(self, ppid: str):
+            """
+            s7f1
+            """
+            if not self.equipment.is_online:
+                logger.error("Equipment is not online: %s",
+                             self.equipment.equipment_name)
+                return {"status": False, "message": "Equipment is not online"}
+
+            try:
+                s7f2 = self.equipment.send_and_waitfor_response(
+                    self.equipment.stream_function(7, 1)({"PPID": ppid, "LENGTH": 0}))
+                decode_s7f2 = self.equipment.secs_decode(s7f2)
+                logger.info("<<-- S7F2")
+                logger.info(decode_s7f2)
+                return {"status": True, "message": "Request recipe success"}
+
+            except Exception as e:
+                logger.error("Error request recipe: %s", e)
+                return {"status": False, "message": "Error request recipe"}
 
         def receive_load_query(self, handle, packet: HsmsPacket):
             """
@@ -446,6 +472,41 @@ class SecsControl:
             logger.error("Error get control state: %s", e)
             return "Off-line"
 
+    def get_process_state(self):
+        """
+        get process state
+        """
+        model_process_state = PROCESS_STATE_CHANG_EVENT.get(
+            self.equipment.equipment_model)
+
+        if not model_process_state:
+            logger.warning("Get process state: Invalid equipment model: %s",
+                           self.equipment.equipment_model)
+            return {"status": False, "message": "Get Process State: Invalid equipment model"}
+        if not self.equipment.is_online:
+            logger.error("Get process state: Equipment is not online: %s",
+                         self.equipment.equipment_name)
+            return {"status": False, "message": "Get Process State: Equipment is not online"}
+
+        if model_process_state:
+            vid = model_process_state.get("VID")
+            state = model_process_state.get("STATE")
+            status = self.equipment.secs_control.req_equipment_status([
+                                                                      vid]).get()
+
+            state_code = status[0]
+            state_name = next(
+                (state_dict[state_code]
+                 for state_dict in state if state_code in state_dict),
+                # Default if code not found
+                f"Unknown State ({state_code})"
+            )
+            self.equipment.process_state = state_name
+            self.equipment.mqtt_client.client.publish(
+                f"equipments/status/process_state/{self.equipment.equipment_name}", state_name, 0, retain=True)
+
+            return {"status": True, "message": state_name}
+
     def get_ppid(self):
         """
         get active recipe
@@ -464,6 +525,7 @@ class SecsControl:
                 self.equipment.stream_function(1, 3)([vid]))).get()
             if isinstance(s1f4, list):
                 recipe_name = s1f4[0]
+                self.equipment.process_program = recipe_name
                 return recipe_name
             return None
         except Exception as e:
@@ -578,7 +640,8 @@ class SecsControl:
             "enabled": self.equipment.is_enabled,
             "communicating": self.equipment.communicationState.current,
             "control_state": self.equipment.control_state,
-            "ppid": self.equipment.ppid,
+            "process_state": self.equipment.process_state,
+            "process_program": self.equipment.process_program,
             "lot_active": self.equipment.lot_active
         }
         return equipment_status
@@ -788,6 +851,28 @@ class SecsControl:
 
         return {"status": True, "message": "Unsubscribed all link event"}
 
+    # def subscribe_lot_control(self):
+    #     """
+    #     Subscribe lot control event
+    #     """
+    #     if not self.equipment.is_online:
+    #         logger.error("Equipment is not online: %s",
+    #                      self.equipment.equipment_name)
+    #         return {"status": False, "message": "Equipment is not online"}
+
+    #     model_subscribe = {"FCL": SUBSCRIBE_LOT_CONTROL_FCL,
+    #                        "FCLX": SUBSCRIBE_LOT_CONTROL_FCLX}
+    #     subscribe = model_subscribe.get(self.equipment.equipment_model)
+    #     if not subscribe:
+    #         return {"status": False, "message": "Invalid equipment model"}
+
+    #     for sub in subscribe:
+    #         ceid = sub.get("ceid")
+    #         dvs = sub.get("dvs")
+    #         report_id = sub.get("report_id")
+    #         self.subscribe_event(ceid, dvs, report_id)
+    #     return {"status": True, "message": "Event subscribed"}
+
     def subscribe_lot_control(self):
         """
         Subscribe lot control event
@@ -797,20 +882,61 @@ class SecsControl:
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
 
-        model_subscribe = {"FCL": SUBSCRIBE_LOT_CONTROL_FCL,
-                           "FCLX": SUBSCRIBE_LOT_CONTROL_FCLX}
-        subscribe = model_subscribe.get(self.equipment.equipment_model)
+        # SUBSCRIBE_LOT_CONTROL = {
+        #     "FCL": [
+        #         # subscribe request validate lot
+        #         {"ceid": 20, "dvs": [81, 33], "report_id": 1000},
+        #         # subscribe lot open
+        #         {"ceid": 21, "dvs": [82, 33], "report_id": 1001},
+        #         # subscribe lot close
+        #         {"ceid": 22, "dvs": [83, 33], "report_id": 1002},
+        #         # subscribe recipe init
+        #         # {"ceid": 1, "dvs": [33], "report_id": 1003}
+        #     ],
+        #     "FCLX": [
+        #         # subscribe request validate lot
+        #         {"ceid": 58, "dvs": [3081, 7], "report_id": 1000},
+        #         # subscribe lot open
+        #         {"ceid": 40, "dvs": [3026, 7], "report_id": 1001},
+        #         # subscribe lot close
+        #         {"ceid": 41, "dvs": [3027, 7], "report_id": 1002},
+        #         # subscribe recipe init
+        #         # {"ceid": 10, "dvs": [7], "report_id": 1003}
+        #     ],
+        #     # "STI": [
+        #     #     # subscribe request validate lot
+        #     #     {"ceid": 101, "dvs": [81, 33], "report_id": 1000},
+        #     #     # subscribe lot open
+        #     #     {"ceid": 218, "dvs": [82, 33], "report_id": 1001},
+        #     #     # subscribe lot close
+        #     #     {"ceid": 220, "dvs": [83, 33], "report_id": 1002},
+        #     #     # subscribe recipe init
+        #     #     # {"ceid": 1, "dvs": [33], "report_id": 1003}
+        #     # ]
+        # }
+
+        subscribe = SUBSCRIBE_LOT_CONTROL.get(self.equipment.equipment_model)
         if not subscribe:
+            logger.error("Subscribe lot control: Invalid equipment model: %s",
+                         self.equipment.equipment_model)
             return {"status": False, "message": "Invalid equipment model"}
 
         for sub in subscribe:
             ceid = sub.get("ceid")
             dvs = sub.get("dvs")
             report_id = sub.get("report_id")
-            self.subscribe_event(ceid, dvs, report_id)
+            response = self.subscribe_event(ceid, dvs, report_id)
+
+            if not response.get("status"):
+                logger.error("Subscribe lot control: %s on %s, Error: %s",
+                             ceid, self.equipment.equipment_name, response.get("message"))
+                return response
+            logger.info("Subscribe lot control: %s on %s",
+                        ceid, self.equipment.equipment_name)
         return {"status": True, "message": "Event subscribed"}
 
     # sti commands
+
     def sti_pp_select(self, ppid: str):
         """
         STI PP-SELECT

@@ -35,6 +35,8 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.equipment_model = equipment_model
         self.is_enabled = enable
         self.lot_active = None
+        self.process_state = None
+        self.process_program = None
         self.custom_stream_function = self.CustomStreamFunction
         self.secsStreamsFunctions[2].update(
             {49: self.custom_stream_function.SecsS02F49, 50: self.custom_stream_function.SecsS02F50})
@@ -104,13 +106,18 @@ class Equipment(secsgem.gem.GemHostHandler):
         logger.info("%s seconds have passed!\n", wait_seconds)
 
         self.secs_control.get_control_state()
+        self.secs_control.get_process_state()
 
         self.mqtt_client.client.publish(
             f"equipments/status/control_state/{self.equipment_name}", self.control_state, qos=1, retain=True
         )
+
         self.mqtt_client.client.publish(
-            f"equipments/status/ppid/{self.equipment_name}", self.ppid, qos=1, retain=True
+            f"equipments/status/process_program/{self.equipment_name}", self.ppid, qos=1, retain=True
         )
+
+        self.mqtt_client.client.publish(
+            f"equipments/status/process_state/{self.equipment_name}", self.process_state, qos=1, retain=True)
 
         self.secs_control.unsubscribe_all_events()
         self.secs_control.subscribe_lot_control()

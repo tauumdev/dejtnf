@@ -1,9 +1,7 @@
 import logging
 from secsgem.hsms.packets import HsmsPacket
 from secsgem.secs.dataitems import ACKC6
-from src.utils.config.secsgem_subscribe import CEIDS_CONTROL_STATE
-# from src.gemhost.events.model.handler_ceids_fclx import HandlerCeidFclx
-# from src.gemhost.events.model.handler_ceids_fcl import HandlerCeidFcl
+from src.utils.config.secsgem_subscribe import CONTROL_STATE, PP_CHANGE_EVENT, PROCESS_STATE_CHANG_EVENT
 from src.validate.validate_lot import ValidateLot
 from typing import TYPE_CHECKING
 
@@ -29,6 +27,7 @@ class HandlerEventsReceive:
             ACKC6.ACCEPTED), packet.header.system)
         decode = self.equipment.secs_decode(packet)
 
+        # check subscription for lot control
         for rpt in decode.RPT:
             if rpt:
                 rptid = rpt.RPTID.get()
@@ -36,7 +35,7 @@ class HandlerEventsReceive:
                 try:
                     if rptid == 1000:
                         lot_id, pp_name = values
-                        lot_id = lot_id.upper()
+                        lot_id = str(lot_id).upper()
                         if not lot_id:
                             logger.warning(
                                 "Requsest validate lot but lot_id is empty")
@@ -50,13 +49,18 @@ class HandlerEventsReceive:
 
                         logger.info("Validate lot: %s on %s", lot_id,
                                     self.equipment.equipment_name)
-                        validate_result = ValidateLot(
-                            self.equipment.equipment_name, pp_name, lot_id)
-                        if not validate_result.result.get("status"):
-                            message = validate_result.result.get("message")
-                            self.reject_lot(lot_id, message)
-                            return
+
+                        # validate lot
+                        # validate_result = ValidateLot(
+                        #     self.equipment.equipment_name, pp_name, lot_id)
+                        # if not validate_result.result.get("status"):
+                        #     message = validate_result.result.get("message")
+                        #     self.reject_lot(lot_id, message)
+                        #     return
+
+                        # accept lot
                         self.accept_lot(lot_id)
+                        # self.reject_lot(lot_id, "Not implemented")
 
                     elif rptid == 1001:
                         lot_id, pp_name = values
@@ -73,17 +77,12 @@ class HandlerEventsReceive:
                 except Exception as e:
                     logger.error("Error handling event: %s", e)
 
-        # CEIDS_CONTROL_STATE = {
-        #     "FCL": {8: "Off-Line", 9: "On-Line/Local", 10: "On-Line/Remote"},
-        #     "FCLX": {9: "Off-Line", 7: "On-Line/Local", 8: "On-Line/Remote"},
-        #     "STI": {3: "Off-Line", 4: "On-Line/Local", 5: "On-Line/Remote"}
-        # }
-
+        # handle CEID
         ceid = decode.CEID.get()
         if ceid:
-
             try:
-                control_state = CEIDS_CONTROL_STATE.get(
+                # control state
+                control_state = CONTROL_STATE.get(
                     self.equipment.equipment_model, {}).get(ceid)
                 if control_state:
                     self.equipment.control_state = control_state
@@ -91,17 +90,51 @@ class HandlerEventsReceive:
                                 control_state, self.equipment.equipment_name)
                     self.equipment.mqtt_client.client.publish(
                         f"equipments/status/control_state/{self.equipment.equipment_name}", control_state, 0, retain=True)
+
+                # process state
+                model_process_state = PROCESS_STATE_CHANG_EVENT.get(
+                    self.equipment.equipment_model, {})
+                model_process_state_ceid = model_process_state.get("CEID")
+                model_process_state_vid = model_process_state.get("VID")
+                model_process_state_state = model_process_state.get("STATE")
+
+                if model_process_state:
+                    if ceid == model_process_state_ceid:
+                        # print("ceid == model_process_state_ceid")
+                        s1f4 = self.equipment.secs_control.req_equipment_status(
+                            [model_process_state_vid]).get()
+                        state_code = s1f4[0]
+                        state_name = next(
+                            (state_dict[state_code]
+                             for state_dict in model_process_state_state if state_code in state_dict),
+                            # Default if code not found
+                            f"Unknown State ({state_code})"
+                        )
+                        # print(f"Current State: {state_name}")
+                        self.equipment.process_state = state_name
+                        logger.info("Process state: %s on %s",
+                                    state_name, self.equipment.equipment_name)
+                        self.equipment.mqtt_client.client.publish(
+                            f"equipments/status/process_state/{self.equipment.equipment_name}", state_name, 0, retain=True)
+
+                # process program change
+                model_pp_change = PP_CHANGE_EVENT.get(
+                    self.equipment.equipment_model, {})
+                # model_pp_change_ceid = model_pp_change.get("CEID")
+                # model_pp_change_vid = model_pp_change.get("VID")
+                if model_pp_change:
+                    if ceid == model_pp_change.get("CEID"):
+                        # print("ceid == model_pp_change.get('CEID')")
+                        s1f4 = self.equipment.secs_control.req_equipment_status(
+                            [model_pp_change.get("VID")]).get()
+                        ppid = s1f4[0]
+                        print(f"Process Program Change: {ppid}")
+                        self.equipment.process_program = ppid
+                        self.equipment.mqtt_client.client.publish(
+                            f"equipments/status/process_program/{self.equipment.equipment_name}", ppid, 0, retain=True)
+
             except Exception as e:
                 logger.error("Error handling event: %s", e)
-    # def recipe_init(self, pp_name: list):
-    #     """
-    #     Init recipe
-    #     """
-    #     if isinstance(pp_name, list):
-    #         self.equipment.ppid = pp_name[0]
-    #         pp_name = pp_name[0]
-    #         self.equipment.mqtt_client.client.publish(
-    #             f"equipments/status/ppid/{self.equipment.equipment_name}", pp_name, 0, retain=True)
 
     def lot_open(self, lot_id: str):
         """

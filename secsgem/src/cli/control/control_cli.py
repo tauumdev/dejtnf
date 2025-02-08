@@ -1,4 +1,5 @@
 import cmd
+import json
 
 from src.gemhost.equipment import Equipment
 
@@ -256,14 +257,16 @@ class EquipmentControlCli(cmd.Cmd):
             return
         print(self.equipment.secs_control.recipe_management.pp_request(ppid))
 
-    # def do_req_load_query(self, ppids: str):
-    #     """
-    #     Request load query
-    #     Usage: req_load_query <ppids>
-    #     Sample: req_load_query 100,101,102
-    #     """
-    #     ppids = [ppid for ppid in ppids.split(",")] if ppids else []
-    #     print(self.equipment.secs_control.recipe_management.req_load_query(ppids))
+    def do_req_load_query(self, ppids: str):
+        """
+        Request load query
+        Usage: req_load_query <ppid>
+        """
+        if not ppids:
+            print("Invalid arguments")
+            print("Usage: req_load_query <ppid>")
+            return
+        self.equipment.secs_control.recipe_management.req_load_query(ppids)
 
     def do_pp_send(self, ppid: str):
         """
