@@ -1,6 +1,5 @@
 import logging
 import os
-import zipfile
 import secsgem.common
 import secsgem.gem
 import secsgem.hsms
@@ -16,7 +15,7 @@ if TYPE_CHECKING:
     from src.gemhost.equipment import Equipment
 
 from src.utils.config.app_config import RECIPE_DIR
-from src.utils.config.secsgem_subscribe import PROCESS_STATE_CHANG_EVENT, SUBSCRIBE_LOT_CONTROL, VID_MODEL, VID_CONTROL_STATE, VID_PP_NAME
+from src.utils.config.status_variable_define import PROCESS_STATE_CHANG_EVENT, SUBSCRIBE_LOT_CONTROL, VID_MODEL, VID_CONTROL_STATE, VID_PP_NAME
 
 logger = logging.getLogger("app_logger")
 
@@ -292,27 +291,6 @@ class SecsControl:
             except Exception as e:
                 logger.error("Error reading recipe file: %s", e)
                 return None
-
-        def req_load_query(self, ppid: str):
-            """
-            s7f1
-            """
-            if not self.equipment.is_online:
-                logger.error("Equipment is not online: %s",
-                             self.equipment.equipment_name)
-                return {"status": False, "message": "Equipment is not online"}
-
-            try:
-                s7f2 = self.equipment.send_and_waitfor_response(
-                    self.equipment.stream_function(7, 1)({"PPID": ppid, "LENGTH": 0}))
-                decode_s7f2 = self.equipment.secs_decode(s7f2)
-                logger.info("<<-- S7F2")
-                logger.info(decode_s7f2)
-                return {"status": True, "message": "Request recipe success"}
-
-            except Exception as e:
-                logger.error("Error request recipe: %s", e)
-                return {"status": False, "message": "Error request recipe"}
 
         def receive_load_query(self, handle, packet: HsmsPacket):
             """
@@ -851,28 +829,6 @@ class SecsControl:
 
         return {"status": True, "message": "Unsubscribed all link event"}
 
-    # def subscribe_lot_control(self):
-    #     """
-    #     Subscribe lot control event
-    #     """
-    #     if not self.equipment.is_online:
-    #         logger.error("Equipment is not online: %s",
-    #                      self.equipment.equipment_name)
-    #         return {"status": False, "message": "Equipment is not online"}
-
-    #     model_subscribe = {"FCL": SUBSCRIBE_LOT_CONTROL_FCL,
-    #                        "FCLX": SUBSCRIBE_LOT_CONTROL_FCLX}
-    #     subscribe = model_subscribe.get(self.equipment.equipment_model)
-    #     if not subscribe:
-    #         return {"status": False, "message": "Invalid equipment model"}
-
-    #     for sub in subscribe:
-    #         ceid = sub.get("ceid")
-    #         dvs = sub.get("dvs")
-    #         report_id = sub.get("report_id")
-    #         self.subscribe_event(ceid, dvs, report_id)
-    #     return {"status": True, "message": "Event subscribed"}
-
     def subscribe_lot_control(self):
         """
         Subscribe lot control event
@@ -881,39 +837,6 @@ class SecsControl:
             logger.error("Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
-
-        # SUBSCRIBE_LOT_CONTROL = {
-        #     "FCL": [
-        #         # subscribe request validate lot
-        #         {"ceid": 20, "dvs": [81, 33], "report_id": 1000},
-        #         # subscribe lot open
-        #         {"ceid": 21, "dvs": [82, 33], "report_id": 1001},
-        #         # subscribe lot close
-        #         {"ceid": 22, "dvs": [83, 33], "report_id": 1002},
-        #         # subscribe recipe init
-        #         # {"ceid": 1, "dvs": [33], "report_id": 1003}
-        #     ],
-        #     "FCLX": [
-        #         # subscribe request validate lot
-        #         {"ceid": 58, "dvs": [3081, 7], "report_id": 1000},
-        #         # subscribe lot open
-        #         {"ceid": 40, "dvs": [3026, 7], "report_id": 1001},
-        #         # subscribe lot close
-        #         {"ceid": 41, "dvs": [3027, 7], "report_id": 1002},
-        #         # subscribe recipe init
-        #         # {"ceid": 10, "dvs": [7], "report_id": 1003}
-        #     ],
-        #     # "STI": [
-        #     #     # subscribe request validate lot
-        #     #     {"ceid": 101, "dvs": [81, 33], "report_id": 1000},
-        #     #     # subscribe lot open
-        #     #     {"ceid": 218, "dvs": [82, 33], "report_id": 1001},
-        #     #     # subscribe lot close
-        #     #     {"ceid": 220, "dvs": [83, 33], "report_id": 1002},
-        #     #     # subscribe recipe init
-        #     #     # {"ceid": 1, "dvs": [33], "report_id": 1003}
-        #     # ]
-        # }
 
         subscribe = SUBSCRIBE_LOT_CONTROL.get(self.equipment.equipment_model)
         if not subscribe:

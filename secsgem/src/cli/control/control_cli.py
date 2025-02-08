@@ -257,17 +257,6 @@ class EquipmentControlCli(cmd.Cmd):
             return
         print(self.equipment.secs_control.recipe_management.pp_request(ppid))
 
-    def do_req_load_query(self, ppids: str):
-        """
-        Request load query
-        Usage: req_load_query <ppid>
-        """
-        if not ppids:
-            print("Invalid arguments")
-            print("Usage: req_load_query <ppid>")
-            return
-        self.equipment.secs_control.recipe_management.req_load_query(ppids)
-
     def do_pp_send(self, ppid: str):
         """
         Sends the process program using the provided Process Program ID (ppid).

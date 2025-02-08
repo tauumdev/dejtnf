@@ -1,7 +1,7 @@
 import logging
 from secsgem.hsms.packets import HsmsPacket
 from secsgem.secs.dataitems import ACKC6
-from src.utils.config.secsgem_subscribe import CONTROL_STATE, PP_CHANGE_EVENT, PROCESS_STATE_CHANG_EVENT
+from src.utils.config.status_variable_define import CONTROL_STATE, PP_CHANGE_EVENT, PROCESS_STATE_CHANG_EVENT
 from src.validate.validate_lot import ValidateLot
 from typing import TYPE_CHECKING
 

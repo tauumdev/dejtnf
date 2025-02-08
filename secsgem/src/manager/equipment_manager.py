@@ -40,7 +40,6 @@ class EquipmentManager:
 
             if equipment.is_enabled:
                 print(f"Initializing equipment {equipment.equipment_name}")
-                print(equipment.is_enabled)
                 equipment.enable()
 
             self.equipments.append(equipment)
