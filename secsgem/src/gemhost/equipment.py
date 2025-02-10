@@ -5,8 +5,9 @@ import secsgem.gem
 import secsgem.hsms
 import secsgem.secs
 from secsgem.secs.functionbase import SecsStreamFunction
-from secsgem.hsms.packets import HsmsPacket
-from secsgem.secs.dataitems import DATAID, RCMD, CPNAME, CPVAL, HCACK, CPACK, OBJSPEC, ACKC7
+# from secsgem.hsms.packets import HsmsPacket
+from secsgem.secs.dataitems import DATAID, RCMD, CPNAME, CPVAL, HCACK, CPACK, OBJSPEC,  VID
+# from secsgem.secs.data_items import DSPER, REPGSZ, SVID, TOTSMP, TRID
 
 
 from src.gemhost.events.events_receive import HandlerEventsReceive
@@ -38,6 +39,8 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.process_state = None
         self.process_program = None
         self.custom_stream_function = self.CustomStreamFunction
+        self.secsStreamsFunctions[1].update(
+            {21: self.custom_stream_function.SecsS01F21})
         self.secsStreamsFunctions[2].update(
             {49: self.custom_stream_function.SecsS02F49, 50: self.custom_stream_function.SecsS02F50})
 
@@ -189,6 +192,46 @@ class Equipment(secsgem.gem.GemHostHandler):
         """
         Class for custom stream functions
         """
+        class SecsS01F21(SecsStreamFunction):
+            """Data variable namelist request.
+
+            Args:
+                value: parameters for this function (see example)
+
+            Examples:
+                >>> import secsgem.secs
+                >>> secsgem.secs.functions.SecsS01F21
+                [
+                    VID: U1/U2/U4/U8/I1/I2/I4/I8/A
+                    ...
+                ]
+
+                >>> import secsgem.secs
+                >>> secsgem.secs.functions.SecsS01F21([1, "VARIABLEID"])
+                S1F21 W
+                <L [2]
+                    <U1 1 >
+                    <A "VARIABLEID">
+                > .
+
+            Data Items:
+                - :class:`VID <secsgem.secs.data_items.VID>`
+
+            """
+
+            _stream = 1
+            _function = 21
+
+            _data_format = [VID]
+
+            _to_host = False
+            _to_equipment = True
+
+            _has_reply = True
+            _is_reply_required = True
+
+            _is_multi_block = False
+
         class SecsS02F49(SecsStreamFunction):
             """
             host command - send.

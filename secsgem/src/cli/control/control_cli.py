@@ -38,14 +38,20 @@ class EquipmentControlCli(cmd.Cmd):
         Enable equipment
         Usage: enable
         """
-        print(self.equipment.secs_control.enable())
+        response = self.equipment.secs_control.enable()
+        if isinstance(response, dict):
+            print(response.get("message"))
+            return
 
     def do_disable(self, _):
         """
         Disable equipment
         Usage: disable
         """
-        print(self.equipment.secs_control.disable())
+        response = self.equipment.secs_control.disable()
+        if isinstance(response, dict):
+            print(response.get("message"))
+            return
 
     def do_online(self, _):
         """
@@ -61,80 +67,143 @@ class EquipmentControlCli(cmd.Cmd):
         """
         print(self.equipment.secs_control.offline().get("message"))
 
-    def do_get_control_state(self, _):
+    def do_control_state(self, _):
         """
         Control state
         Usage: control_state
         """
         print(self.equipment.secs_control.get_control_state())
 
-    def do_get_mdln(self, _):
+    def do_process_state(self, _):
+        """
+        Process state
+        Usage: process_state
+        """
+        response = self.equipment.secs_control.get_process_state()
+        if isinstance(response, dict):
+            print(response.get("message"))
+            return
+        print(response)
+        # print(self.equipment.secs_control.get_process_state())
+
+    def do_mdln(self, _):
         """
         Get equipment model
         Usage: get_model
         """
         print(self.equipment.mdln)
 
-    def do_get_ppid(self, _):
+    def do_ppid(self, _):
         """
         Get process program ID
         Usage: get_ppid
         """
         print(self.equipment.ppid)
 
-    def do_req_status(self, svids: str):
+    # request equipment status
+    def do_select_equipment_status(self, svids: str):
         """
-        Request equipment status
-        Usage: req_status [<svids>]
-        Sample: req_status 100,101,102
+        Select equipment status
+        Usage: select_equipment_status [<svids>]
+        Sample: select_equipment_status 100,101,102
         """
+
         svids = [int(svid) for svid in svids.split(",")] if svids else []
-        print(self.equipment.secs_control.req_equipment_status(svids))
+        response = self.equipment.secs_control.select_equipment_status_request(
+            svids)
 
-    def do_req_constant(self, ceids: str):
-        """
-        Request equipment constant
-        Usage: req_constant <ceids>
-        Sample: req_constant 100,101,102
-        """
-        ceids = [int(ceid) for ceid in ceids.split(",")] if ceids else []
-        print(self.equipment.secs_control.req_equipment_constant(ceids))
-
-    def do_req_variable_namelist(self, svids: str):
-        """
-        Request status variable namelist
-        Usage: req_status_variable_namelist <svids>
-        Sample: req_status_variable_namelist 100,101,102
-        """
-        svids = [int(svid) for svid in svids.split(",")] if svids else []
-        print(self.equipment.secs_control.req_status_variable_namelist(svids))
-
-    def do_req_constant_namelist(self, ecids: str):
-        """
-        Request equipment constant namelist
-        Usage: req_constant_namelist <ecids>
-        Sample: req_constant_namelist 100,101,102
-        """
-        if self.equipment.equipment_model == "FCLX":
-            if not ecids:
-                print("Invalid arguments")
-                print("Usage: req_constant_namelist <ecids>")
-                return
-            ecids = [int(ecid) for ecid in ecids.split(",")]
-            print(self.equipment.secs_control.req_equipment_constant_namelist(ecids))
+        if isinstance(response, dict):
+            print(response.get("message"))
             return
+        print(response)
 
-        ecids = [int(ecid) for ecid in ecids.split(",")] if ecids else []
-        print(self.equipment.secs_control.req_equipment_constant_namelist(ecids))
-
-    def do_req_s1f21(self, vids: str):
+    def do_status_variable_namelist(self, svids: str):
         """
-        Request equipment status
-        Usage: req_s1f21 <vids>
-        Sample: req_s1f21 100,101,102
+        Status variable namelist request
+        Usage: status_variable_namelist [<svids>]
+        Sample: status_variable_namelist 100,101,102
+        """
+        svids = [int(svid) for svid in svids.split(",")] if svids else []
+        response = self.equipment.secs_control.status_variable_namelist_request(
+            svids)
+        if isinstance(response, dict):
+            print(response.get("message"))
+            return
+        print(response)
+
+    def do_data_variable_namelist(self, vids: str):
+        """
+        Data variable namelist request
+        Usage: data_variable_namelist [<vids>]
+        Sample: data_variable_namelist 100,101,102
         """
         vids = [int(vid) for vid in vids.split(",")] if vids else []
-        print(self.equipment.secs_control.req_s1f21(vids))
+        response = self.equipment.secs_control.data_variable_namelist_request(
+            vids)
+        if isinstance(response, dict):
+            print(response.get("message"))
+            return
+        print(response)
+
+    # def do_collection_event_namelist(self, ceids: str):
+    #     """
+    #     Collection event namelist request
+    #     Usage: collection_event_namelist [<ceids>]
+    #     Sample: collection_event_namelist 100,101,102
+    #     """
+    #     ceids = [int(ceid) for ceid in ceids.split(",")] if ceids else []
+    #     response = self.equipment.secs_control.collection_event_namelist_request(
+    #         ceids)
+    #     if isinstance(response, dict):
+    #         print(response.get("message"))
+    #         return
+    #     print(response)
+
+    def do_equipment_constant(self, ecids: str):
+        """
+        Equipment constant request
+        Usage: equipment_constant [<ecids>]
+        Sample: equipment_constant 100,101,102
+        """
+        ecids = [int(ecid) for ecid in ecids.split(",")] if ecids else []
+        response = self.equipment.secs_control.equipment_constant_request(
+            ecids)
+        if isinstance(response, dict):
+            print(response.get("message"))
+            return
+        print(response)
+
+    def do_equipment_constant_namelist(self, ecids: str):
+        """
+        Equipment constant namelist request
+        Usage: equipment_constant_namelist [<ecids>]
+        Sample: equipment_constant_namelist 100,101,102
+        """
+        ecids = [int(ecid) for ecid in ecids.split(",")] if ecids else []
+        response = self.equipment.secs_control.equipment_constant_namelist_request(
+            ecids)
+        if isinstance(response, dict):
+            print(response.get("message"))
+            return
+        print(response)
+
+    def do_select_event_report(self, ceids: str):
+        """
+        Select event report
+        Usage: select_event_report <ceids>
+        Sample: select_event_report 100,101,102
+        """
+        if not ceids:
+            print("Invalid arguments")
+            print("Usage: select_event_report <ceids>")
+            return
+        ceids = [int(ceid) for ceid in ceids.split(",")]
+        response = self.equipment.secs_control.event_report_request(
+            ceids)
+        if isinstance(response, dict):
+            print(response.get("message"))
+            return
+        print(response)
 
     # lot management
     def do_lot_accept(self, lot_id: str):
@@ -297,7 +366,6 @@ class EquipmentControlCli(cmd.Cmd):
         print(self.equipment.secs_control.recipe_management.pp_delete(ppid))
 
     # STI equipment
-
     def do_sti_pp_select(self, ppid: str):
         """
         Select process program for STI equipment

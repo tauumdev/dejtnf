@@ -469,8 +469,8 @@ class SecsControl:
         if model_process_state:
             vid = model_process_state.get("VID")
             state = model_process_state.get("STATE")
-            status = self.equipment.secs_control.req_equipment_status([
-                                                                      vid]).get()
+            status = self.equipment.secs_control.select_equipment_status_request([
+                vid]).get()
 
             state_code = status[0]
             state_name = next(
@@ -483,7 +483,8 @@ class SecsControl:
             self.equipment.mqtt_client.client.publish(
                 f"equipments/status/process_state/{self.equipment.equipment_name}", state_name, 0, retain=True)
 
-            return {"status": True, "message": state_name}
+            # return {"status": True, "message": state_name}
+            return state_name
 
     def get_ppid(self):
         """
@@ -624,83 +625,207 @@ class SecsControl:
         }
         return equipment_status
 
-    # request equipment status
+    # s1f3 equipment status request
+    # s2f13 equipment constant request
+    # s1f11 status variable namelist request
+    # s2f29 equipment constant namelist request
+    # s1f21 data variable namelist request
+    # s6f15 event report request
 
-    def req_equipment_status(self, svids: list[int]):
+    def select_equipment_status_request(self, svids: list[int] = None):
         """
-        s1f3
+        s1f3 select equipment status request
         """
         if not self.equipment.is_online:
-            logger.error("Equipment is not online: %s",
+            logger.error("Select equipment status request. Equipment is not online: %s",
+                         self.equipment.equipment_name)
+            return {"status": False, "message": "Equipment is not online"}
+        try:
+            s1f4 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(1, 3)(svids))
+            return self.equipment.secs_decode(s1f4)
+        except Exception as e:
+            logger.error("Error select equipment status request: %s", e)
+            return {"status": False, "message": "Error select equipment status request"}
+
+    def status_variable_namelist_request(self, svids: list[int] = None):
+        """
+        s1f11 status variable namelist request
+        """
+        if not self.equipment.is_online:
+            logger.error("Status variable namelist request. Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
 
-        s1f4 = self.equipment.send_and_waitfor_response(
-            self.equipment.stream_function(1, 3)(svids))
-        return self.equipment.secs_decode(s1f4)
+        try:
+            s1f12 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(1, 11)(svids))
+            return self.equipment.secs_decode(s1f12)
+        except Exception as e:
+            logger.error("Error status variable namelist request: %s", e)
+            return {"status": False, "message": "Error status variable namelist request"}
 
-    def req_equipment_constant(self, ceids: list[int] = None):
+    def data_variable_namelist_request(self, vids: list[int] = None):
         """
-        s2f13
+        s1f21 data variable namelist request
         """
         if not self.equipment.is_online:
-            logger.error("Equipment is not online: %s",
+            logger.error("Data variable namelist request. Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
 
-        s2f14 = self.equipment.send_and_waitfor_response(
-            self.equipment.stream_function(2, 13)(ceids))
-        return self.equipment.secs_decode(s2f14)
+        try:
+            s1f22 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(1, 21)(vids))
+            return self.equipment.secs_decode(s1f22)
+        except Exception as e:
+            logger.error("Error data variable namelist request: %s", e)
+            return {"status": False, "message": "Error data variable namelist request"}
 
-    def req_status_variable_namelist(self, svids: list[int] = None):
+    def collection_event_namelist_request(self, ceids: list[int] = None):
         """
-        s1f11
-        Comment: Host sends L:0 to request all SVIDs.
+        s1f23 collection event namelist request
         """
         if not self.equipment.is_online:
-            logger.error("Equipment is not online: %s",
+            logger.error("Collection event namelist request. Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
-        s1f12 = self.equipment.send_and_waitfor_response(
-            self.equipment.stream_function(1, 11)(svids))
-        return self.equipment.secs_decode(s1f12)
 
-    def req_equipment_constant_namelist(self, ecids: list[int] = None):
+        try:
+            s1f24 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(1, 23)(ceids))
+            return self.equipment.secs_decode(s1f24)
+        except Exception as e:
+            logger.error("Error collection event namelist request: %s", e)
+            return {"status": False, "message": "Error collection event namelist request"}
+
+    def equipment_constant_request(self, ceids: list[int] = None):
         """
-        s2f29
-        Comment: Host sends L:0 for all ECIDs
+        s2f13 equipment constant request
         """
         if not self.equipment.is_online:
-            logger.error("Equipment is not online: %s",
+            logger.error("Equipment constant request. Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
-        s2f30 = self.equipment.send_and_waitfor_response(
-            self.equipment.stream_function(2, 29)(ecids))
-        return self.equipment.secs_decode(s2f30)
 
-    def req_s1f21(self, vids: list[int] = None):
+        try:
+            s2f14 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(2, 13)(ceids))
+            return self.equipment.secs_decode(s2f14)
+        except Exception as e:
+            logger.error("Error equipment constant request: %s", e)
+            return {"status": False, "message": "Error equipment constant request"}
+
+    def equipment_constant_namelist_request(self, ecids: list[int] = None):
         """
-        s1f21 Data Variable Namelist Request
+        s2f29 equipment constant namelist request
         """
         if not self.equipment.is_online:
-            logger.error("Equipment is not online: %s",
+            logger.error("Equipment constant namelist request. Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
-        s1f12 = self.equipment.send_and_waitfor_response(
-            self.equipment.stream_function(1, 21)(vids))
-        return self.equipment.secs_decode(s1f12)
 
-    def req_event_report(self, ceid: int):
+        try:
+            s2f30 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(2, 29)(ecids))
+            return self.equipment.secs_decode(s2f30)
+        except Exception as e:
+            logger.error("Error equipment constant namelist request: %s", e)
+            return {"status": False, "message": "Error equipment constant namelist request"}
+
+    def event_report_request(self, ceid: int):
         """
         s6f15 event report request
         """
         if not self.equipment.is_online:
-            logger.error("Equipment is not online: %s",
+            logger.error("Event report request. Equipment is not online: %s",
                          self.equipment.equipment_name)
             return {"status": False, "message": "Equipment is not online"}
-        s6f16 = self.equipment.send_and_waitfor_response(
-            self.equipment.stream_function(6, 15)(ceid))
-        return self.equipment.secs_decode(s6f16)
+
+        try:
+            s6f16 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(6, 15)(ceid))
+            return self.equipment.secs_decode(s6f16)
+        except Exception as e:
+            logger.error("Error event report request: %s", e)
+            return {"status": False, "message": "Error event report request"}
+
+    # def req_equipment_status(self, svids: list[int]):
+    #     """
+    #     s1f3
+    #     """
+    #     if not self.equipment.is_online:
+    #         logger.error("Equipment is not online: %s",
+    #                      self.equipment.equipment_name)
+    #         return {"status": False, "message": "Equipment is not online"}
+
+    #     s1f4 = self.equipment.send_and_waitfor_response(
+    #         self.equipment.stream_function(1, 3)(svids))
+    #     return self.equipment.secs_decode(s1f4)
+
+    # def req_equipment_constant(self, ceids: list[int] = None):
+    #     """
+    #     s2f13
+    #     """
+    #     if not self.equipment.is_online:
+    #         logger.error("Equipment is not online: %s",
+    #                      self.equipment.equipment_name)
+    #         return {"status": False, "message": "Equipment is not online"}
+
+    #     s2f14 = self.equipment.send_and_waitfor_response(
+    #         self.equipment.stream_function(2, 13)(ceids))
+    #     return self.equipment.secs_decode(s2f14)
+
+    # def req_status_variable_namelist(self, svids: list[int] = None):
+    #     """
+    #     s1f11
+    #     Comment: Host sends L:0 to request all SVIDs.
+    #     """
+    #     if not self.equipment.is_online:
+    #         logger.error("Equipment is not online: %s",
+    #                      self.equipment.equipment_name)
+    #         return {"status": False, "message": "Equipment is not online"}
+    #     s1f12 = self.equipment.send_and_waitfor_response(
+    #         self.equipment.stream_function(1, 11)(svids))
+    #     return self.equipment.secs_decode(s1f12)
+
+    # def req_equipment_constant_namelist(self, ecids: list[int] = None):
+    #     """
+    #     s2f29
+    #     Comment: Host sends L:0 for all ECIDs
+    #     """
+    #     if not self.equipment.is_online:
+    #         logger.error("Equipment is not online: %s",
+    #                      self.equipment.equipment_name)
+    #         return {"status": False, "message": "Equipment is not online"}
+    #     s2f30 = self.equipment.send_and_waitfor_response(
+    #         self.equipment.stream_function(2, 29)(ecids))
+    #     return self.equipment.secs_decode(s2f30)
+
+    # def req_data_variable_namelist(self, vids: list[int] = None):
+    #     """
+    #     s1f21 Data Variable Namelist Request
+    #     """
+    #     if not self.equipment.is_online:
+    #         logger.error("Equipment is not online: %s",
+    #                      self.equipment.equipment_name)
+    #         return {"status": False, "message": "Equipment is not online"}
+    #     s1f12 = self.equipment.send_and_waitfor_response(
+    #         self.equipment.stream_function(1, 21)(vids))
+    #     return self.equipment.secs_decode(s1f12)
+
+    # def req_event_report(self, ceid: int):
+    #     """
+    #     s6f15 event report request
+    #     """
+    #     if not self.equipment.is_online:
+    #         logger.error("Equipment is not online: %s",
+    #                      self.equipment.equipment_name)
+    #         return {"status": False, "message": "Equipment is not online"}
+    #     s6f16 = self.equipment.send_and_waitfor_response(
+    #         self.equipment.stream_function(6, 15)(ceid))
+    #     return self.equipment.secs_decode(s6f16)
+
     # define equipment events
 
     def enable_events(self, ceids: list[int] = None):
