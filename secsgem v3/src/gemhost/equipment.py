@@ -56,7 +56,6 @@ class SecsControl:
         return status
 
     # communication control
-
     def enable(self):
         """Enable equipment"""
         if self.equipment.is_enable:
@@ -507,11 +506,11 @@ class Equipment(secsgem.gem.GemHostHandler):
             f"equipments/status/communication_state/{self.equipment_name}", self.communication_state.current.name)
 
         threading.Timer(
-            0.01, self.secs_control.unsubscribe_event_report).start()
-        threading.Timer(0.01, self.secs_control.subscribe_lot_control).start()
-        threading.Timer(0.01, self.secs_control.control_state).start()
-        threading.Timer(0.01, self.secs_control.process_state).start()
-        threading.Timer(0.01, self.secs_control.process_program).start()
+            0.1, self.secs_control.unsubscribe_event_report).start()
+        threading.Timer(0.1, self.secs_control.subscribe_lot_control).start()
+        threading.Timer(0.1, self.secs_control.control_state).start()
+        threading.Timer(0.1, self.secs_control.process_state).start()
+        threading.Timer(0.1, self.secs_control.process_program).start()
 
     def _on_state_wait_cra(self, _):
         super()._on_state_wait_cra(_)
