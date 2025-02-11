@@ -60,18 +60,18 @@ PP_CHANGE_EVENT = {
 SUBSCRIBE_LOT_CONTROL = {
     "FCL": [
         # subscribe request validate lot
-        {"ceid": 20, "dvs": [81, 33], "report_id": 1000},
+        {"CEID": 20, "DVS": [81, 33], "report_id": 1000},
         # subscribe lot open
-        {"ceid": 21, "dvs": [82, 33], "report_id": 1001},
+        {"CEID": 21, "DVS": [82, 33], "report_id": 1001},
         # subscribe lot close
-        {"ceid": 22, "dvs": [83, 33], "report_id": 1002}
+        {"CEID": 22, "DVS": [83, 33], "report_id": 1002}
     ],
     "FCLX": [
         # subscribe request validate lot
-        {"ceid": 58, "dvs": [3081, 7], "report_id": 1000},
+        {"CEID": 58, "DVS": [3081, 7], "report_id": 1000},
         # subscribe lot open
-        {"ceid": 40, "dvs": [3026, 7], "report_id": 1001},
+        {"CEID": 40, "DVS": [3026, 7], "report_id": 1001},
         # subscribe lot close
-        {"ceid": 41, "dvs": [3027, 7], "report_id": 1002}
+        {"CEID": 41, "DVS": [3027, 7], "report_id": 1002}
     ],
 }

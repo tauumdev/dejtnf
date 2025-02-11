@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from src.gemhost.equipment import Equipment
 
 from src.utils.config.app_config import RECIPE_DIR
-from src.utils.config.status_variable_define import PROCESS_STATE_CHANG_EVENT, SUBSCRIBE_LOT_CONTROL, VID_MODEL, VID_CONTROL_STATE, VID_PP_NAME
+from src.utils.config.status_variable_define import CONTROL_STATE_VID, PROCESS_STATE_CHANG_EVENT, SUBSCRIBE_LOT_CONTROL, VID_MODEL, VID_CONTROL_STATE, VID_PP_NAME
 
 logger = logging.getLogger("app_logger")
 
@@ -292,6 +292,33 @@ class SecsControl:
                 logger.error("Error reading recipe file: %s", e)
                 return None
 
+        def send_load_query(self, ppid: str):
+            """
+            Handle S7F1 Process Program Load Request
+            """
+            if not self.equipment.is_online:
+                logger.error("Equipment is not online: %s",
+                             self.equipment.equipment_name)
+                return {"status": False, "message": "Equipment is not online"}
+
+            ppbody = self.get_recipe_file(ppid)
+            if not ppbody:
+                logger.warning("Recipe not found: %s", ppid)
+                return {"status": False, "message": "Recipe not found"}
+
+            ppgnt = {1: "Ok", 2: "Already have", 3: "No space", 4: "Invalid PPID",
+                     5: "Busy, try later", 6: "Will not accept", 7: "Other error"}
+            try:
+                s7f2 = self.equipment.send_and_waitfor_response(
+                    self.equipment.stream_function(7, 1)({"PPID": ppid, "LENGTH": len(ppbody)}))
+                decode_s7f2 = self.equipment.secs_decode(s7f2)
+                response_code = decode_s7f2.get()
+                response_message = ppgnt.get(response_code, "Unknown code")
+                return {"status": response_code == 0, "message": response_message}
+            except Exception as e:
+                logger.error("Error sending load query: %s", e)
+                return {"status": False, "message": "Error sending load query"}
+
         def receive_load_query(self, handle, packet: HsmsPacket):
             """
             Handle S7F2 Process Program Load Inquire
@@ -420,35 +447,37 @@ class SecsControl:
         """
         get control state
         """
-        define_state_message = {
-            1: "Off-Line/Equipment Off-Line",
-            2: "Off-Line/Attempt On-Line",
-            3: "Off-Line/Host Off-Line",
-            4: "On-Line/Local",
-            5: "On-Line/Remote"
-        }
+        vid_model = CONTROL_STATE_VID.get(self.equipment.equipment_model)
 
-        model_vid = VID_CONTROL_STATE
-
-        vid = model_vid.get(self.equipment.equipment_model)
-        if not vid:
-            logger.warning("Invalid equipment model: %s",
+        if not vid_model:
+            logger.warning("Get control state: Invalid equipment model: %s",
                            self.equipment.equipment_model)
-            return "Off-line"
+            return "Off-Line"
         if not self.equipment.is_enabled:
-            return "Off-line"
+            logger.error("Get control state: Equipment is not online: %s",
+                         self.equipment.equipment_name)
+            return "Off-Line"
+
         try:
+            vid = vid_model.get("VID")
+            state_value = vid_model.get("STATE")
+
+            if not vid:
+                logger.warning("Get control state: VID not found: %s",
+                               self.equipment.equipment_model)
+                return "Off-Line"
+
             s1f4 = self.equipment.secs_decode(self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(1, 3)([vid]))).get()
             if isinstance(s1f4, list):
-                state = define_state_message.get(s1f4[0])
+                state = state_value.get(s1f4[0])
                 self.equipment.control_state = state
                 return state
             logger.error("Error get control state: %s", s1f4)
-            return "Off-line"
+            return "Off-Line"
         except Exception as e:
             logger.error("Error get control state: %s", e)
-            return "Off-line"
+            return "Off-Line"
 
     def get_process_state(self):
         """
@@ -483,7 +512,6 @@ class SecsControl:
             self.equipment.mqtt_client.client.publish(
                 f"equipments/status/process_state/{self.equipment.equipment_name}", state_name, 0, retain=True)
 
-            # return {"status": True, "message": state_name}
             return state_name
 
     def get_ppid(self):
@@ -625,13 +653,6 @@ class SecsControl:
         }
         return equipment_status
 
-    # s1f3 equipment status request
-    # s2f13 equipment constant request
-    # s1f11 status variable namelist request
-    # s2f29 equipment constant namelist request
-    # s1f21 data variable namelist request
-    # s6f15 event report request
-
     def select_equipment_status_request(self, svids: list[int] = None):
         """
         s1f3 select equipment status request
@@ -749,82 +770,6 @@ class SecsControl:
         except Exception as e:
             logger.error("Error event report request: %s", e)
             return {"status": False, "message": "Error event report request"}
-
-    # def req_equipment_status(self, svids: list[int]):
-    #     """
-    #     s1f3
-    #     """
-    #     if not self.equipment.is_online:
-    #         logger.error("Equipment is not online: %s",
-    #                      self.equipment.equipment_name)
-    #         return {"status": False, "message": "Equipment is not online"}
-
-    #     s1f4 = self.equipment.send_and_waitfor_response(
-    #         self.equipment.stream_function(1, 3)(svids))
-    #     return self.equipment.secs_decode(s1f4)
-
-    # def req_equipment_constant(self, ceids: list[int] = None):
-    #     """
-    #     s2f13
-    #     """
-    #     if not self.equipment.is_online:
-    #         logger.error("Equipment is not online: %s",
-    #                      self.equipment.equipment_name)
-    #         return {"status": False, "message": "Equipment is not online"}
-
-    #     s2f14 = self.equipment.send_and_waitfor_response(
-    #         self.equipment.stream_function(2, 13)(ceids))
-    #     return self.equipment.secs_decode(s2f14)
-
-    # def req_status_variable_namelist(self, svids: list[int] = None):
-    #     """
-    #     s1f11
-    #     Comment: Host sends L:0 to request all SVIDs.
-    #     """
-    #     if not self.equipment.is_online:
-    #         logger.error("Equipment is not online: %s",
-    #                      self.equipment.equipment_name)
-    #         return {"status": False, "message": "Equipment is not online"}
-    #     s1f12 = self.equipment.send_and_waitfor_response(
-    #         self.equipment.stream_function(1, 11)(svids))
-    #     return self.equipment.secs_decode(s1f12)
-
-    # def req_equipment_constant_namelist(self, ecids: list[int] = None):
-    #     """
-    #     s2f29
-    #     Comment: Host sends L:0 for all ECIDs
-    #     """
-    #     if not self.equipment.is_online:
-    #         logger.error("Equipment is not online: %s",
-    #                      self.equipment.equipment_name)
-    #         return {"status": False, "message": "Equipment is not online"}
-    #     s2f30 = self.equipment.send_and_waitfor_response(
-    #         self.equipment.stream_function(2, 29)(ecids))
-    #     return self.equipment.secs_decode(s2f30)
-
-    # def req_data_variable_namelist(self, vids: list[int] = None):
-    #     """
-    #     s1f21 Data Variable Namelist Request
-    #     """
-    #     if not self.equipment.is_online:
-    #         logger.error("Equipment is not online: %s",
-    #                      self.equipment.equipment_name)
-    #         return {"status": False, "message": "Equipment is not online"}
-    #     s1f12 = self.equipment.send_and_waitfor_response(
-    #         self.equipment.stream_function(1, 21)(vids))
-    #     return self.equipment.secs_decode(s1f12)
-
-    # def req_event_report(self, ceid: int):
-    #     """
-    #     s6f15 event report request
-    #     """
-    #     if not self.equipment.is_online:
-    #         logger.error("Equipment is not online: %s",
-    #                      self.equipment.equipment_name)
-    #         return {"status": False, "message": "Equipment is not online"}
-    #     s6f16 = self.equipment.send_and_waitfor_response(
-    #         self.equipment.stream_function(6, 15)(ceid))
-    #     return self.equipment.secs_decode(s6f16)
 
     # define equipment events
 

@@ -1,7 +1,7 @@
 import logging
 from secsgem.hsms.packets import HsmsPacket
 from secsgem.secs.dataitems import ACKC6
-from src.utils.config.status_variable_define import CONTROL_STATE, PP_CHANGE_EVENT, PROCESS_STATE_CHANG_EVENT
+from src.utils.config.status_variable_define import CONTROL_STATE_EVENT, PP_CHANGE_EVENT, PROCESS_STATE_CHANG_EVENT
 from src.validate.validate_lot import ValidateLot
 from typing import TYPE_CHECKING
 
@@ -82,7 +82,7 @@ class HandlerEventsReceive:
         if ceid:
             try:
                 # control state
-                control_state = CONTROL_STATE.get(
+                control_state = CONTROL_STATE_EVENT.get(
                     self.equipment.equipment_model, {}).get(ceid)
                 if control_state:
                     self.equipment.control_state = control_state
@@ -100,8 +100,7 @@ class HandlerEventsReceive:
 
                 if model_process_state:
                     if ceid == model_process_state_ceid:
-                        # print("ceid == model_process_state_ceid")
-                        s1f4 = self.equipment.secs_control.req_equipment_status(
+                        s1f4 = self.equipment.secs_control.select_equipment_status_request(
                             [model_process_state_vid]).get()
                         state_code = s1f4[0]
                         state_name = next(
@@ -120,12 +119,9 @@ class HandlerEventsReceive:
                 # process program change
                 model_pp_change = PP_CHANGE_EVENT.get(
                     self.equipment.equipment_model, {})
-                # model_pp_change_ceid = model_pp_change.get("CEID")
-                # model_pp_change_vid = model_pp_change.get("VID")
                 if model_pp_change:
                     if ceid == model_pp_change.get("CEID"):
-                        # print("ceid == model_pp_change.get('CEID')")
-                        s1f4 = self.equipment.secs_control.req_equipment_status(
+                        s1f4 = self.equipment.secs_control.select_equipment_status_request(
                             [model_pp_change.get("VID")]).get()
                         ppid = s1f4[0]
                         print(f"Process Program Change: {ppid}")
