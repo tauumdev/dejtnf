@@ -105,13 +105,7 @@ class EquipmentControlCli(Cmd):
         """
         return True
 
-    def do_eq_status(self, _):
-        """
-        Get equipment status
-        Usage: eq_status
-        """
-        print(self.equipment.secs_control.equipment_status())
-
+    # equipment communication
     def do_enable(self, _):
         """
         Enable equipment
@@ -142,6 +136,14 @@ class EquipmentControlCli(Cmd):
         """
         print(self.equipment.secs_control.offline())
 
+    def do_comm_req(self, _):
+        """
+        Communication request
+        Usage: comm_req
+        """
+        print(self.equipment.secs_control.communication_request())
+
+    # equipment state
     def do_control_state(self, _):
         """
         Get control state
@@ -158,6 +160,14 @@ class EquipmentControlCli(Cmd):
         process_state = self.equipment.secs_control.process_state()
         print(f"Process state: {process_state}")
 
+    def do_eq_status(self, _):
+        """
+        Get equipment status
+        Usage: eq_status
+        """
+        print(self.equipment.secs_control.equipment_status())
+
+    # event and status variable
     def do_select_eq_status_req(self, vids: str):
         """
         S1F3 Select equipment status request
@@ -185,10 +195,10 @@ class EquipmentControlCli(Cmd):
         dvids = [int(dvid) for dvid in dvids.split(",")] if dvids else []
         print(self.equipment.secs_control.data_variable_namelist_request(dvids))
 
-    def do_coll_event_list_req(self, ceids: str):
+    def do_coll_evt_list_req(self, ceids: str):
         """
         S1F23 Get collection event name list request
-        Usage: coll_event_list_req [<ceid>]
+        Usage: coll_evt_list_req [<ceid>]
         """
 
         ceids = [int(ceid) for ceid in ceids.split(",")] if ceids else []
@@ -253,8 +263,63 @@ class EquipmentControlCli(Cmd):
         print(self.equipment.secs_control.subscribe_event_report(
             int(ceid), dvs, int(report_id)))
 
+    # Recipe management
+    def do_pp_dir(self, _):
+        """
+        Get PP directory
+        Usage: pp_dir
+        """
+
+        recipes = self.equipment.recipe_management.pp_dir()
+        for recipe in recipes:
+            print(recipe)
+
+    def do_pp_request(self, ppid: str):
+        """
+        Get PP request
+        Usage: pp_request <ppid>
+        """
+        if not ppid:
+            print("PPID is required")
+            return
+        print(self.equipment.recipe_management.pp_request(ppid))
+
+    def do_pp_send(self, ppid: str):
+        """
+        Send PP
+        Usage: pp_send <ppid>
+        """
+        if not ppid:
+            print("PPID is required")
+            return
+        print(self.equipment.recipe_management.pp_send(ppid))
+
+    def do_pp_delete(self, ppid: str):
+        """
+        Delete PP
+        Usage: pp_delete <ppid>
+        """
+        if not ppid:
+            print("PPID is required")
+            return
+        print(self.equipment.recipe_management.pp_delete(ppid))
+
+    def do_pp_select(self, ppid: str):
+        """
+        Select PP
+        Usage: pp_select <ppid>
+        """
+        if not ppid:
+            print("PPID is required")
+            return
+        print(self.equipment.recipe_management.pp_select(ppid))
+
 
 class CommandCli(Cmd):
+    """
+    Main command line interface
+    """
+
     def __init__(self, mqtt_client: MqttClient):
         super().__init__()
         self.prompt = "dejtnf >> "

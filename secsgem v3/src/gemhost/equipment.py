@@ -1,6 +1,5 @@
-import asyncio
+import datetime
 import logging
-import code
 import os
 import threading
 
@@ -8,28 +7,39 @@ import secsgem.common
 import secsgem.gem
 import secsgem.hsms
 import secsgem.secs
-from secsgem.secs.data_items import ACKC6, ACKC5
+from secsgem.secs.data_items import ACKC6, ACKC5, ACKC7
+from src.utils.config.status_variable_define import CONTROL_STATE_EVENT, CONTROL_STATE_VID, PP_CHANGE_EVENT, PROCESS_STATE_CHANG_EVENT, SUBSCRIBE_LOT_CONTROL, VID_PP_NAME
+from src.utils.config.app_config import RECIPE_DIR
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from src.mqtt.mqtt_client import MqttClient
-from src.utils.config.status_variable_define import CONTROL_STATE_EVENT, CONTROL_STATE_VID, PP_CHANGE_EVENT, PROCESS_STATE_CHANG_EVENT, SUBSCRIBE_LOT_CONTROL, VID_PP_NAME
-
 logger = logging.getLogger("app_logger")
 
 
 class CommunicationLogFileHandler(logging.Handler):
-    def __init__(self, path, prefix=""):
+    def __init__(self, path):
         logging.Handler.__init__(self)
 
         self.path = path
-        self.prefix = prefix
 
     def emit(self, record):
-        filename = os.path.join(self.path, "{}_{}_{}.log".format(
-            self.prefix, record.address, record.session_id))
+        ip_without_dots = record.address.replace(".", "")
+        date = datetime.datetime.now().strftime("%Y-%m-%d")
+        filename = os.path.join(
+            self.path, ip_without_dots, "{}_{}.log".format(record.address, date))
         os.makedirs(os.path.dirname(filename), exist_ok=True)
-        with open(filename, 'a', encoding='utf-8') as f:
+        with open(filename, 'a') as f:
             f.write(self.format(record) + "\n")
+
+
+commLogFileHandler = CommunicationLogFileHandler("logs/gem")
+commLogFileHandler.setFormatter(logging.Formatter("%(asctime)s: %(message)s"))
+logging.getLogger("communication").addHandler(commLogFileHandler)
+logging.getLogger("communication").propagate = False
+
+logging.basicConfig(
+    format='%(asctime)s %(name)s.%(funcName)s: %(message)s', level=logging.INFO)
 
 
 class SecsControl:
@@ -51,7 +61,8 @@ class SecsControl:
             "is_connected": self.equipment.is_connected,
             "control_state": self.control_state(),
             "process_state": self.process_state(),
-            "process_program": self.process_program()
+            "process_program": self.process_program(),
+            "active_lot": self.equipment.active_lot
         }
         return status
 
@@ -69,6 +80,16 @@ class SecsControl:
             return
         self.equipment.disable()
         self.equipment.is_enable = False
+
+    def communication_request(self):
+        """Communication request"""
+        if not self.equipment.is_connected:
+            return
+        s1f2 = self.equipment.settings.streams_functions.decode(
+            self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(1, 13)())
+        )
+        return s1f2.get()
 
     def online(self):
         """Go online"""
@@ -112,7 +133,9 @@ class SecsControl:
             self.equipment.mqtt_client.client.publish(
                 f"equipments/status/control_state/{self.equipment.equipment_name}", state_value)
             return state_value
+        self.equipment.control_state = "Off-Line"
         print(f"Failed to get control state: {s1f4}")
+        return "Off-Line"
 
     def process_state(self):
         """Get process state"""
@@ -168,6 +191,8 @@ class SecsControl:
         if not self.equipment.is_connected:
             return
         try:
+            if vids is None:
+                vids = []
             s1f4 = self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(1, 3)(vids))
             if isinstance(s1f4, secsgem.hsms.message.HsmsMessage):
@@ -185,6 +210,8 @@ class SecsControl:
         if not self.equipment.is_connected:
             return
         try:
+            if svids is None:
+                svids = []
             s1f12 = self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(1, 11)(svids))
             if isinstance(s1f12, secsgem.hsms.message.HsmsMessage):
@@ -202,6 +229,8 @@ class SecsControl:
         if not self.equipment.is_connected:
             return
         try:
+            if vids is None:
+                vids = []
             s2f22 = self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(2, 21)(vids))
             if isinstance(s2f22, secsgem.hsms.message.HsmsMessage):
@@ -219,6 +248,8 @@ class SecsControl:
         if not self.equipment.is_connected:
             return
         try:
+            if ceids is None:
+                ceids = []
             s1f24 = self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(1, 23)(ceids))
             if isinstance(s1f24, secsgem.hsms.message.HsmsMessage):
@@ -236,6 +267,8 @@ class SecsControl:
         if not self.equipment.is_connected:
             return
         try:
+            if ecids is None:
+                ecids = []
             s2f14 = self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(2, 13)(ecids))
             if isinstance(s2f14, secsgem.hsms.message.HsmsMessage):
@@ -253,6 +286,8 @@ class SecsControl:
         if not self.equipment.is_connected:
             return
         try:
+            if ecids is None:
+                ecids = []
             s2f30 = self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(2, 29)(ecids))
             if isinstance(s2f30, secsgem.hsms.message.HsmsMessage):
@@ -311,14 +346,23 @@ class SecsControl:
         if not self.equipment.is_connected:
             return
         try:
+            # ceids = ceids if ceids is not None else []
+            if ceids is None:
+                ceids = []
             s2f38 = self.equipment.send_and_waitfor_response(
                 self.equipment.stream_function(2, 37)({"CEED": enable, "CEID": ceids}))
+            # print(self.equipment.settings.streams_functions.decode(s2f38))
             if isinstance(s2f38, secsgem.hsms.message.HsmsMessage):
                 _code = self.equipment.settings.streams_functions.decode(
                     s2f38).get()
+                if enable:
+                    logger.info("Enabled CEID: %s", ceids if ceids else "All")
+                else:
+                    logger.info("Disabled CEID: %s", ceids if ceids else "All")
                 return "ok" if _code == 0 else "denied"
             return None
         except Exception as e:
+            print("Error: ", e)
             print(e)
             return None
 
@@ -381,7 +425,253 @@ class SecsControl:
                 print(self.subscribe_event_report(ceid, dvs, report_id))
 
 
-class ReceivedEvent:
+class RecipeManagement:
+    def __init__(self, equipment: "Equipment"):
+        self.equipment = equipment
+
+    def save_recipe(self, ppid: str, content: bytes):
+        """
+        Save recipe to a file with error handling.
+        Returns True if successful, False otherwise.
+        """
+        # Define base directory
+        base_path = os.path.join(
+            RECIPE_DIR, self.equipment.equipment_model, self.equipment.equipment_name, "upload")
+
+        try:
+            # Create directory if it doesn't exist
+            os.makedirs(base_path, exist_ok=True)
+
+            # Sanitize filename to prevent path traversal
+            safe_file_name = os.path.basename(ppid)
+            full_path = os.path.join(base_path, safe_file_name)
+
+            # Write content to file
+            with open(full_path, 'wb') as file:
+                file.write(content)
+
+            logger.info("File saved successfully: %s", full_path)
+            return True
+
+        except IOError as e:
+            logger.error("File save error: %s | %s", full_path, str(e))
+            return False
+        except Exception as e:
+            logger.error(
+                "Unexpected error saving file: %s | %s", full_path, str(e))
+            return False
+
+    def get_recipe_file(self, ppid: str):
+        """
+        Get recipe file as content.
+        """
+        # Define base directory
+        base_path = os.path.join(
+            RECIPE_DIR, self.equipment.equipment_model,
+            self.equipment.equipment_name,
+            "current", ppid)
+        try:
+            with open(base_path, "rb") as file:
+                return file.read()
+        except Exception as e:
+            logger.error("Error reading recipe file: %s", e)
+            return None
+
+    def send_load_query(self, ppid: str):
+        """
+        Handle S7F1 Process Program Load Request
+        """
+        if not self.equipment.is_online:
+            logger.error("Equipment is not online: %s",
+                         self.equipment.equipment_name)
+            return {"status": False, "message": "Equipment is not online"}
+
+        ppbody = self.get_recipe_file(ppid)
+        if not ppbody:
+            logger.warning("Recipe not found: %s", ppid)
+            return {"status": False, "message": "Recipe not found"}
+
+        ppgnt = {1: "Ok", 2: "Already have", 3: "No space", 4: "Invalid PPID",
+                    5: "Busy, try later", 6: "Will not accept", 7: "Other error"}
+        try:
+            s7f2 = self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(7, 1)({"PPID": ppid, "LENGTH": len(ppbody)}))
+            decode_s7f2 = self.equipment.settings.streams_functions.decode(
+                s7f2)
+            response_code = decode_s7f2.get()
+            response_message = ppgnt.get(response_code, "Unknown code")
+            return {"status": response_code == 0, "message": response_message}
+        except Exception as e:
+            logger.error("Error sending load query: %s", e)
+            return {"status": False, "message": "Error sending load query"}
+
+    def receive_load_query(self, handle, message: secsgem.common.Message):
+        """
+        Handle S7F2 Process Program Load Inquire
+        """
+        logger.info("<<-- S7F2")
+        self.equipment.send_response(self.equipment.stream_function(7, 2)(
+            ACKC7.ACCEPTED), message.header.system)
+        decode = self.equipment.settings.streams_functions.decode(message)
+
+        print(decode)
+
+    def pp_dir(self):
+        """
+        s7f19 - Process Program Directory Inquiry
+        """
+        if not self.equipment.is_online:
+            logger.error("Equipment is not online: %s",
+                         self.equipment.equipment_name)
+            return
+
+        return self.equipment.settings.streams_functions.decode(
+            self.equipment.send_and_waitfor_response(
+                self.equipment.stream_function(7, 19)())
+        ).get()
+
+    def pp_request(self, ppid: str):
+        """
+        s7f5
+        """
+        if not self.equipment.is_online:
+            logger.error("Equipment is not online: %s",
+                         self.equipment.equipment_name)
+            return
+
+        s7f6 = self.equipment.send_and_waitfor_response(
+            self.equipment.stream_function(7, 5)(ppid))
+        decode_s7f6 = self.equipment.settings.streams_functions.decode(s7f6)
+        ppid = decode_s7f6.PPID.get()
+        ppbody = decode_s7f6.PPBODY.get()
+
+        if not ppid or not ppbody:
+            logger.error("Request recipe: %s on %s, Error: %s",
+                         ppid, self.equipment.equipment_name, "Recipe not found")
+            return
+
+        save_recipe = self.save_recipe(
+            ppid, ppbody)
+        if not save_recipe:
+            print("Failed to save recipe file", ppid)
+        return "Recipe save successfully on: " + self.equipment.equipment_name + "upload"
+
+    def pp_receive(self, handle, message: secsgem.common.Message):
+        """
+        Receive a recipe from equipment and save
+        """
+        decode = self.equipment.settings.streams_functions.decode(message)
+        ppid = decode.PPID.get()
+        ppbody = decode.PPBODY.get()
+
+        if not ppid or not ppbody:
+            logger.error("Upload recipe: %s on %s, Error: %s",
+                         ppid, self.equipment.equipment_name, "Invalid recipe")
+            return
+
+        save_recipe = self.save_recipe(
+            ppid, ppbody)
+        if not save_recipe:
+            print("Failed to save recipe file", ppid)
+
+    def pp_send(self, ppid: str):
+        """
+        Send recipe to equipment
+        """
+        if not self.equipment.is_online:
+            logger.error("Equipment is not online: %s",
+                         self.equipment.equipment_name)
+            return
+
+        ppbody = self.get_recipe_file(ppid)
+        if not ppbody:
+            logger.warning("Recipe not found: %s", ppid)
+            return
+        ppbody_binaries = secsgem.secs.variables.Binary(ppbody)
+        s7f4 = self.equipment.send_and_waitfor_response(
+            self.equipment.stream_function(7, 3)({"PPID": ppid,  "PPBODY": ppbody_binaries}))  # "LENGTH": len(ppbody),
+
+        ackc7 = {0: "Accepted", 1: "Permission not granted", 2: "Length error",
+                 3: "Matrix overflow", 4: "PPID not found", 5: "Unsupported mode",
+                 6: "Initiated for asynchronous completion", 7: "Storage limit error"}
+
+        decode_s7f4 = self.equipment.settings.streams_functions.decode(
+            s7f4).get()
+
+        print(
+            f"Send recipe: {ppid} to {self.equipment.equipment_name}, Response: {ackc7.get(decode_s7f4)}")
+        logger.info("Send recipe: %s to %s, Response: %s",
+                    ppid, self.equipment.equipment_name, ackc7.get(decode_s7f4))
+
+        return ackc7.get(decode_s7f4)
+
+    def pp_delete(self, ppid: str):
+        """
+        Delete recipe from equipment
+        """
+        if not self.equipment.is_online:
+            logger.error("Equipment is not online: %s",
+                         self.equipment.equipment_name)
+            return
+
+        s7f8 = self.equipment.send_and_waitfor_response(
+            self.equipment.stream_function(7, 17)(ppid))
+
+        ackc7 = {0: "Accepted", 1: "Permission not granted", 2: "Length error",
+                 3: "Matrix overflow", 4: "PPID not found", 5: "Unsupported mode",
+                 6: "Initiated for asynchronous completion", 7: "Storage limit error"}
+
+        decode_s7f8 = self.equipment.settings.streams_functions.decode(
+            s7f8).get()
+
+        print(
+            f"Delete recipe: {ppid} from {self.equipment.equipment_name}, Response: {ackc7.get(decode_s7f8)}")
+        logger.info("Delete recipe: %s from %s, Response: %s",
+                    ppid, self.equipment.equipment_name, ackc7.get(decode_s7f8))
+
+        return ackc7.get(decode_s7f8)
+
+    def pp_select(self, ppid: str):
+        """
+        Select recipe from equipment
+        """
+        if not self.equipment.is_online:
+            logger.error("Equipment is not online: %s",
+                         self.equipment.equipment_name)
+            return
+
+        model_cmd = {
+            "FCL": {"RCMD": "PP-SELECT", "PARAMS": [{"CPNAME": "PPName", "CPVAL": ppid}]},
+            "FCLX": {"RCMD": "PP-SELECT", "PARAMS": [{"CPNAME": "PPName", "CPVAL": ppid}]},
+            "STI": {"RCMD": "PPSELECT", "PARAMS": [{"CPNAME": "RecipeName", "CPVAL": ppid}]}
+        }
+
+        cmd = model_cmd.get(self.equipment.equipment_model)
+        if cmd is None:
+            logger.error("Model not supported: %s",
+                         self.equipment.equipment_model)
+            return
+        try:
+            hcack = {0: "ok", 1: "invalid command", 2: "cannot do now",
+                     3: "parameter error", 4: "initiated for asynchronous completion",
+                     5: "rejected, already in desired condition", 6: "invalid object"}
+            s2f42 = self.equipment.settings.streams_functions.decode(
+                self.equipment.send_and_waitfor_response(
+                    self.equipment.stream_function(2, 41)(cmd))
+            )
+            code = s2f42.HCACK.get()
+            print(
+                f"Select recipe: {ppid} on {self.equipment.equipment_name}, Response: {hcack.get(code)}")
+
+            return hcack.get(code)
+        except Exception as e:
+            print(e)
+            return None
+
+
+class Event:
+    """Event class"""
+
     def __init__(self, equipment: "Equipment"):
         self.equipment = equipment
 
@@ -428,7 +718,9 @@ class ReceivedEvent:
                     0.01, self.equipment.secs_control.process_program).start()
 
 
-class ReceivedAlarm:
+class Alarm:
+    """Alarm class"""
+
     def __init__(self, equipment: "Equipment"):
         self.equipment = equipment
 
@@ -437,7 +729,9 @@ class ReceivedAlarm:
         handler.send_response(self.equipment.stream_function(
             5, 2)(ACKC5.ACCEPTED), message.header.system)
         decode = self.equipment.settings.streams_functions.decode(message)
-        # print(f"Message: {decode.get()}")
+
+        self.equipment.mqtt_client.client.publish(
+            f"equipments/status/alarm/{self.equipment.equipment_name}", f"ALID: {decode.ALID.get()} ALCD: {decode.ALCD.get()} ALTX: {decode.ALTX.get()}")
 
 
 class Equipment(secsgem.gem.GemHostHandler):
@@ -457,11 +751,17 @@ class Equipment(secsgem.gem.GemHostHandler):
         self.SOFTREV = "1.0.0"
 
         self.secs_control = SecsControl(self)
-        self.received_event = ReceivedEvent(self)
+        self.received_event = Event(self)
         self.register_stream_function(6, 11, self.received_event.receive_event)
-        self.received_alarm = ReceivedAlarm(self)
+        self.received_alarm = Alarm(self)
         self.register_stream_function(5, 1, self.received_alarm.receive_alarm)
 
+        self.recipe_management = RecipeManagement(self)
+        self.register_stream_function(
+            7, 1, self.recipe_management.receive_load_query)
+        self.register_stream_function(7, 3, self.recipe_management.pp_receive)
+
+        self.register_stream_function(1, 14, self.on_s01f14)
         self.register_stream_function(9, 1, self.s09f1)
         self.register_stream_function(9, 3, self.s09f3)
         self.register_stream_function(9, 5, self.s09f5)
@@ -478,6 +778,13 @@ class Equipment(secsgem.gem.GemHostHandler):
     def is_connected(self):
         """Check if equipment is connected"""
         return getattr(self._protocol, "_connected", False)
+
+    @property
+    def is_online(self):
+        """Check if equipment is online"""
+        if self.control_state in ["On-Line", "On-Line/Local", "On-Line/Remote"]:
+            return True
+        return False
 
     def enable(self):
         if self.is_connected:
@@ -497,82 +804,85 @@ class Equipment(secsgem.gem.GemHostHandler):
             f"equipments/status/secs_message/{self.equipment_name}", str(self.settings.streams_functions.decode(message)))
         return super()._on_message_received(data)
 
+    def _init_subscribe_lotcontrol(self):
+
+        # subscribe lot control
+        # self.secs_control.unsubscribe_event_report()
+        # self.secs_control.subscribe_lot_control()
+        # self.secs_control.enable_disable_event(True, [])
+
+        # get equipment status
+        print("control state: ", self.secs_control.control_state())
+        print("process state: ", self.secs_control.process_state())
+        print("process program: ", self.secs_control.process_program())
+
     def _on_state_communicating(self, _):
         super()._on_state_communicating(_)
-        print("Equipment is state communicating")
-        print("Communication state: ", self.communication_state.current.name)
+        state = self.communication_state.current.name
+        print("On communicating - Communication state: ",
+              state)
 
         self.mqtt_client.client.publish(
-            f"equipments/status/communication_state/{self.equipment_name}", self.communication_state.current.name)
-
-        threading.Timer(
-            0.1, self.secs_control.unsubscribe_event_report).start()
-        threading.Timer(0.1, self.secs_control.subscribe_lot_control).start()
-        threading.Timer(0.1, self.secs_control.control_state).start()
-        threading.Timer(0.1, self.secs_control.process_state).start()
-        threading.Timer(0.1, self.secs_control.process_program).start()
+            f"equipments/status/communication_state/{self.equipment_name}", state)
+        if state == "COMMUNICATING":
+            threading.Timer(
+                0.1, self._init_subscribe_lotcontrol).start()
 
     def _on_state_wait_cra(self, _):
         super()._on_state_wait_cra(_)
-        print("Equipment is state wait cra")
-        print("Communication state: ", self.communication_state.current.name)
+        print("On wait cra - Communication state: ",
+              self.communication_state.current.name)
         self.mqtt_client.client.publish(
             f"equipments/status/communication_state/{self.equipment_name}", self.communication_state.current.name)
 
     def on_connection_closed(self, _):
         super().on_connection_closed(_)
-        print("Equipment connection closed")
-        print("Communication state: ", self.communication_state.current.name)
+        print("On closed - Communication state: ",
+              self.communication_state.current.name)
         self.mqtt_client.client.publish(
             f"equipments/status/communication_state/{self.equipment_name}", self.communication_state.current.name)
 
-    def s09f1(self, handle, packet):
+    def on_s01f14(self, handle, message):
+        print(self.settings.streams_functions.decode(message))
+
+    def s09f1(self, handle, message):
         """Unrecognized Device ID"""
         logger.warning("s09f1:Unrecognized Device ID (UDN): %s",
                        self.equipment_name)
         print("s09f1:Unrecognized Device ID (UDN): %s",
               self.equipment_name)
 
-    def s09f3(self, handle, packet):
+    def s09f3(self, handle, message):
         """Unrecognized Stream Function"""
         logger.warning("s09f3:Unrecognized Stream Function (SFCD): %s",
                        self.equipment_name)
         print("s09f3:Unrecognized Stream Function (SFCD): %s",
               self.equipment_name)
 
-    def s09f5(self, handle, packet):
+    def s09f5(self, handle, message):
         """Unrecognized Function Type"""
         logger.warning("s09f5:Unrecognized Function Type (UFN): %s",
                        self.equipment_name)
         print("s09f5:Unrecognized Function Type (UFN): %s",
               self.equipment_name)
 
-    def s09f7(self, handle, packet):
+    def s09f7(self, handle, message):
         """Illegal Data (IDN)"""
         logger.warning("s09f7:Illegal Data (IDN): %s",
                        self.equipment_name)
         print("s09f7:Illegal Data (IDN): %s",
               self.equipment_name)
 
-    def s09f9(self, handle, packet):
+    def s09f9(self, handle, message):
         """Transaction Timer Timeout (TTN)"""
         logger.warning("s09f9:Transaction Timer Timeout (TTN): %s",
                        self.equipment_name)
         print("s09f9:Transaction Timer Timeout (TTN): %s",
               self.equipment_name)
 
-    def s09f11(self, handle, packet):
+    def s09f11(self, handle, message):
         """Data Too Long (DLN)"""
         logger.warning("s09f11:Data Too Long (DLN): %s",
                        self.equipment_name)
         print("s09f11:Data Too Long (DLN): %s",
               self.equipment_name)
-
-
-commLogFileHandler = CommunicationLogFileHandler("logs/gem")
-commLogFileHandler.setFormatter(logging.Formatter("%(asctime)s: %(message)s"))
-logging.getLogger("communication").addHandler(commLogFileHandler)
-logging.getLogger("communication").propagate = False
-
-logging.basicConfig(
-    format='%(asctime)s %(name)s.%(funcName)s: %(message)s', level=logging.INFO)
