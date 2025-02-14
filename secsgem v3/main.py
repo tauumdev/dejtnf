@@ -314,6 +314,20 @@ class EquipmentControlCli(Cmd):
             return
         print(self.equipment.recipe_management.pp_select(ppid))
 
+    def do_al_request(self, alid: str):
+        """
+        Get AL request
+        Usage: al_request <alid>
+        """
+        # if not alid:
+        #     print("ALID is required")
+        #     return
+        try:
+            print(self.equipment.settings.streams_functions.decode(
+                self.equipment.send_and_waitfor_response(self.equipment.stream_function(5, 5)([202]))))
+        except Exception as e:
+            print(e)
+
 
 class CommandCli(Cmd):
     """
