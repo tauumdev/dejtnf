@@ -78,6 +78,7 @@ class SecsGemHost(secsgem.gem.GemHostHandler):
         self.register_stream_function(5, 1, HandlerAlarm(self).receive_alarm)
         self.register_stream_function(6, 11, HandlerEvent(self).receive_event)
         self.secs_control = SecsControl(self)
+        self.register_stream_function(7, 3, self.secs_control.pp_recive)
 
         self._protocol.events.disconnected += self.on_connection_closed
 

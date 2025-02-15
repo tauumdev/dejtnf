@@ -40,6 +40,10 @@ class SecsControl(Cmd):
         print("Initial equipment Subscribe lot control and Get equipment status")
 
         self.get_control_state()
+
+        self.unsubscribe_event_report()
+        self.subscribe_lot_control()
+
         self.get_process_state()
         self.get_process_program()
 
@@ -457,6 +461,7 @@ class SecsControl(Cmd):
             print("Equipment is not online")
             return "Equipment is not online"
 
+        print("Unsubscribe event report : ", self.gem_host.equipment_name)
         response = self.gem_host.send_and_waitfor_response(
             self.gem_host.stream_function(2, 33)(
                 {"DATAID": 0, "DATA": []})
@@ -478,6 +483,7 @@ class SecsControl(Cmd):
         if subscribe is None:
             return f"SUBSCRIBE_LOT_CONTROL is not define for {self.gem_host.equipment_model}"
 
+        print("Subscribe lot control : ", self.gem_host.equipment_name)
         for sub in subscribe:
             ceid = sub.get("CEID")
             dvs = sub.get("DVS")
@@ -701,12 +707,12 @@ class SecsControl(Cmd):
         """
         handler.send_response(self.gem_host.stream_function(
             7, 4)(ACKC7.ACCEPTED), message.header.system)
-
         decode = self.gem_host.settings.streams_functions.decode(message)
 
         ppid = decode.PPID.get()
         ppbody = decode.PPBODY.get()
-
+        logger.info("Receive PPID: %s, PPBODY: %s from: %s",
+                    ppid, ppbody, self.gem_host.equipment_name)
         if not ppid or not ppbody:
             print("PPID or PPBODY is empty")
             return
