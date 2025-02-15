@@ -27,15 +27,15 @@ class ControlCli(Cmd):
         """
         return True
 
-    def do_enable(self, _):
+    def do_connect(self, _):
         """
-        Enable equipment
+        Connect equipment
         """
         print(self.gem_host.secs_control.enable_equipment())
 
-    def do_disable(self, _):
+    def do_disconnect(self, _):
         """
-        Disable equipment
+        Disconnect equipment
         """
         print(self.gem_host.secs_control.disable_equipment())
 
@@ -44,6 +44,12 @@ class ControlCli(Cmd):
         Request communication
         """
         print(self.gem_host.secs_control.communication_request())
+
+    def do_are_you_there(self, _):
+        """
+        Are you there
+        """
+        print(self.gem_host.are_you_there())
 
     def do_online(self, _):
         """
@@ -85,38 +91,38 @@ class ControlCli(Cmd):
         print(self.gem_host.secs_control.get_process_program())
 
     # equipment status
-    def do_ses_req(self, svid: str):
+    def do_req_svs(self, svid: str):
         """
         S1F3R	Selected Equipment Status Request
-        Usage: ses_req [<svid>]
-        Sample: ses_req 1,2,3 or ses_req
+        Usage: req_ses [<svid>]
+        Sample: req_ses 1,2,3 or req_ses
         """
         svids = [int(s) for s in svid.split(",")] if svid else []
         print(self.gem_host.secs_control.select_equipment_status_request(svids))
 
-    def do_sv_list_req(self, svid: str):
+    def do_req_list_svs(self, svid: str):
         """
         S1F11R	Status Variable Namelist Request
-        Usage: sv_list_req [<svid>]
-        Sample: sv_list_req 1,2,3 or sv_list_req
+        Usage: req_list_svs [<svid>]
+        Sample: req_list_svs 1,2,3 or req_list_svs
         """
         svids = [int(s) for s in svid.split(",")] if svid else []
         print(self.gem_host.secs_control.status_variable_namelist_request(svids))
 
-    def do_dv_list_req(self, dvid: str):
+    def do_req_list_dvs(self, dvid: str):
         """
         S1F21R	Data Variable Namelist Request
-        Usage: dv_list_req [<dvid>]
-        Sample: dv_list_req 1,2,3 or dv_list_req
+        Usage: req_list_dvs [<dvid>]
+        Sample: req_list_dvs 1,2,3 or req_list_dvs
         """
         dvids = [int(d) for d in dvid.split(",")] if dvid else []
         print(self.gem_host.secs_control.data_variable_namelist_request(dvids))
 
-    def do_ce_list_req(self, ceid: str):
+    def do_req_list_ces(self, ceid: str):
         """
         S1F23R	Collection Event Namelist Request
-        Usage: ce_list_req [<ceid>]
-        Sample: ce_list_req 1,2,3 or ce_list_req
+        Usage: req_list_ces [<ceid>]
+        Sample: req_list_ces 1,2,3 or req_list_ces
         """
         ceids = [int(c) for c in ceid.split(",")] if ceid else []
         response = self.gem_host.secs_control.collection_event_namelist_request(
@@ -126,25 +132,45 @@ class ControlCli(Cmd):
         else:
             print(response)
 
-    def do_ec_req(self, ecid: str):
+    def do_req_ecs(self, ecid: str):
         """
         S2F13R	Equipment Constant Request
-        Usage: ec_req [<ceid>]
-        Sample: ec_req 1,2,3 or ec_req
+        Usage: req_ecs [<ceid>]
+        Sample: req_ecs 1,2,3 or req_ecs
         """
         ceids = [int(c) for c in ecid.split(",")] if ecid else []
         print(self.gem_host.secs_control.equipment_constant_request(ceids))
 
-    def do_ec_list_req(self, ecid: str):
+    def do_req_list_ecs(self, ecid: str):
         """
         S2F15R	Equipment Constant Namelist Request
-        Usage: ec_list_req [<ceid>]
-        Sample: ec_list_req 1,2,3 or ec_list_req
+        Usage: req_list_ecs [<ceid>]
+        Sample: req_list_ecs 1,2,3 or req_list_ecs
         """
         ceids = [int(c) for c in ecid.split(",")] if ecid else []
         print(self.gem_host.secs_control.equipment_constant_namelist_request(ceids))
 
+    def do_set_ec(self, arg: str):
+        """
+        S2F15	Set Equipment Constant
+        Usage: set_ec <ceid> <vid> <value>
+        Sample: set_ec 1 100 200
+        """
+        args = arg.split()
+        if len(args) != 2:
+            print("Invalid arguments")
+            print("Usage: set_ec <ceid> <value>")
+            print("Sample: set_ec 1 200")
+            return
+        ceid = int(args[0])
+        value = args[1]
+
+        eac = {0: "ok", 1: "one or more constants does not exist",
+               2: "busy", 3: "one or more values out of range"}
+        response_code = self.gem_host.set_ec(ceid, value)
+        print(eac[response_code])
     # event and report
+
     def do_enable_disable_event(self, arg: str):
         """
         S2F37	Enable/Disable Event Report

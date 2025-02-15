@@ -208,8 +208,8 @@ class SecsControl(Cmd):
             return f"VID_PP_NAME is not define for {self.gem_host.equipment_model}"
 
         response = self.select_equipment_status_request([vid_model])
-
-        if isinstance(response, list):
+        if not isinstance(response, str):
+            response = response.get()
             self.gem_host.process_program = response[0]
             self.gem_host.mqtt_client.client.publish(
                 f"equipments/status/process_program/{self.gem_host.equipment_name}", self.gem_host.process_program)
