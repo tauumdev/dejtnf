@@ -1,14 +1,16 @@
 from cmd import Cmd
 import json
 import logging
+import os
 import secsgem.common
 import secsgem.gem
 import secsgem.hsms
 import secsgem.secs
-
+from secsgem.secs.data_items import ACKC7
 from typing import TYPE_CHECKING
 
 from config.status_variable_define import CONTROL_STATE_VID, PROCESS_STATE_CHANG_EVENT, SUBSCRIBE_LOT_CONTROL, VID_PP_NAME
+from config.app_config import RECIPE_DIR
 
 if TYPE_CHECKING:
     from src.mqtt.mqtt_client import MqttClient
@@ -504,3 +506,285 @@ class SecsControl(Cmd):
                          4: "Initiated for Asynchronous Completion", 5: "Rejected, Already in Desired Condition", 6: "Invalid Object"}
                 return (f"HCACK: {hcack.get(s2f42_decode.HCACK.get(), 'Unknown code')}")
         return "Lot ID is empty"
+
+    def reject_lot(self, lot_id: str):
+        """
+        Reject lot
+        """
+        if lot_id:
+            secs_cmd = {"RCMD": "LOT_REJECT", "PARAMS": [
+                {"CPNAME": "LotID", "CPVAL": lot_id}]}
+
+            s2f42 = self.gem_host.send_and_waitfor_response(
+                self.gem_host.stream_function(2, 41)(secs_cmd))
+
+            if isinstance(s2f42, secsgem.common.Message):
+                s2f42_decode = self.gem_host.settings.streams_functions.decode(
+                    s2f42)
+
+                hcack = {0: "OK", 1: "Invalid Command", 2: "Cannot Do Now", 3: "Parameter Error",
+                         4: "Initiated for Asynchronous Completion", 5: "Rejected, Already in Desired Condition", 6: "Invalid Object"}
+                return (f"HCACK: {hcack.get(s2f42_decode.HCACK.get(), 'Unknown code')}")
+        return "Lot ID is empty"
+
+    def add_lot_fclx(self, lot_id: str):
+        """
+        Open lot
+        """
+        if lot_id:
+            secs_cmd = {"DATAID": 0, "OBJSPEC": "OBJ", "RCMD": "ADD_LOT", "PARAMS": [
+                {"CPNAME": "LotID", "CEPVAL": lot_id}]}
+            s2f50 = self.gem_host.send_and_waitfor_response(
+                self.gem_host.stream_function(2, 49)(secs_cmd))
+
+            if isinstance(s2f50, secsgem.common.Message):
+                s2f50_decode = self.gem_host.settings.streams_functions.decode(
+                    s2f50)
+
+                hcack = {0: "OK", 1: "Invalid Command", 2: "Cannot Do Now", 3: "Parameter Error",
+                         4: "Initiated for Asynchronous Completion", 5: "Rejected, Already in Desired Condition", 6: "Invalid Object"}
+                return (f"HCACK: {hcack.get(s2f50_decode.HCACK.get(), 'Unknown code')}")
+        return "Lot ID is empty"
+
+    def reject_lot_fclx(self, lot_id: str, reject_reason: str):
+        """
+        Close lot
+        """
+        if lot_id:
+            secs_cmd = {"DATAID": 101, "OBJSPEC": "LOTCONTROL", "RCMD": "REJECT_LOT",
+                        "PARAMS": [
+                            {"CPNAME": "LotID", "CEPVAL": lot_id},
+                            {"CPNAME": "Reason", "CEPVAL": reject_reason}
+                        ]}
+            s2f50 = self.gem_host.send_and_waitfor_response(
+                self.gem_host.stream_function(2, 49)(secs_cmd))
+
+            if isinstance(s2f50, secsgem.common.Message):
+                s2f50_decode = self.gem_host.settings.streams_functions.decode(
+                    s2f50)
+
+                hcack = {0: "OK", 1: "Invalid Command", 2: "Cannot Do Now", 3: "Parameter Error",
+                         4: "Initiated for Asynchronous Completion", 5: "Rejected, Already in Desired Condition", 6: "Invalid Object"}
+                return (f"HCACK: {hcack.get(s2f50_decode.HCACK.get(), 'Unknown code')}")
+        return "Lot ID is empty"
+
+    # recipe management
+    def _store_recipe(self, recipe_name: str, recipe_data: bytes):
+        """
+        Store recipe to file
+        path: /recipes/equipment_name/uploaded/recipe_name
+        """
+
+        # Define base directory
+        base_path = os.path.join(
+            RECIPE_DIR, self.gem_host.equipment_model, self.gem_host.equipment_name, "upload")
+
+        try:
+            os.makedirs(base_path, exist_ok=True)
+            # Sanitize filename to prevent path traversal
+            safe_file_name = os.path.basename(recipe_name)
+            full_path = os.path.join(base_path, safe_file_name)
+
+            # Write recipe data to file
+            with open(full_path, "wb") as f:
+                f.write(recipe_data)
+                print(f"Recipe {recipe_name} stored successfully")
+                return True
+        except Exception as e:
+            print(f"Error storing recipe {recipe_name}: {e}")
+            return False
+
+    def _get_recipe(self, recipe_name: str):
+        """
+        Get recipe from file
+        """
+
+        # Define base directory
+        base_path = os.path.join(
+            RECIPE_DIR, self.gem_host.equipment_model, self.gem_host.equipment_name, "current")
+
+        try:
+            # Sanitize filename to prevent path traversal
+            safe_file_name = os.path.basename(recipe_name)
+            full_path = os.path.join(base_path, safe_file_name)
+
+            # Read recipe data from file
+            with open(full_path, "rb") as f:
+                recipe_data = f.read()
+                print(f"Recipe {recipe_name} read successfully")
+                return recipe_data
+        except Exception as e:
+            print(f"Error reading recipe {recipe_name}: {e}")
+            return None
+
+    def pp_list(self):
+        """
+        S7F19R	Current Process Program Dir Request
+        """
+        if not self.gem_host.is_online:
+            logger.warning("PP Directory Request Equipment %s is not online",
+                           self.gem_host.equipment_name)
+            print("Equipment is not online")
+            return "Equipment is not online"
+
+        response = self.gem_host.send_and_waitfor_response(
+            self.gem_host.stream_function(7, 19)()
+        )
+        if isinstance(response, secsgem.hsms.HsmsMessage):
+            return self.gem_host.settings.streams_functions.decode(
+                response)
+        return "No response"
+
+    def pp_load_inquire(self, ppid: str):
+        """
+        S7F1R	Process Program Load Inquire
+        """
+        if not self.gem_host.is_online:
+            logger.warning("PP Load Inquire Equipment %s is not online",
+                           self.gem_host.equipment_name)
+            print("Equipment is not online")
+            return "Equipment is not online"
+
+        pp_body = self._get_recipe(ppid)
+        if pp_body is None:
+            return f"Recipe {ppid} not found"
+
+        response = self.gem_host.send_and_waitfor_response(
+            self.gem_host.stream_function(7, 1)(
+                {"PPID": ppid, "LENGTH": len(pp_body)})
+        )
+        if isinstance(response, secsgem.hsms.HsmsMessage):
+            return self.gem_host.settings.streams_functions.decode(
+                response)
+        return "No response"
+
+    def pp_load_grant(self, handler: secsgem.secs.SecsHandler, message: secsgem.common.Message):
+        """
+        S7F2	Process Program Load Grant
+        eac =   0 - ok
+                1 - one or more constants does not exist
+                2 - busy
+                3 - one or more values out of range
+        """
+
+        self.gem_host.send_response(self.gem_host.stream_function(
+            7, 2)(ACKC7.ACCEPTED), message.header.system)
+
+    def pp_request(self, ppid: str):
+        """
+        S7F5R	Process Program Request
+        """
+        if not self.gem_host.is_online:
+            logger.warning("PP Request Equipment %s is not online",
+                           self.gem_host.equipment_name)
+            print("Equipment is not online")
+            return "Equipment is not online"
+
+        response = self.gem_host.send_and_waitfor_response(
+            self.gem_host.stream_function(7, 5)(ppid)
+        )
+        if isinstance(response, secsgem.hsms.HsmsMessage):
+            decode_response = self.gem_host.settings.streams_functions.decode(
+                response)
+            ppid_ = decode_response.PPID.get()
+            ppbody = decode_response.PPBODY.get()
+            if not ppid or not ppbody:
+                print("PPID or PPBODY is empty")
+                return "PPID or PPBODY is empty"
+
+            self._store_recipe(ppid_, ppbody)
+        return "No response"
+
+    def pp_recive(self, handler: secsgem.secs.SecsHandler, message: secsgem.common.Message):
+        """
+        Handle S7F3 Process Program Receive
+        """
+        handler.send_response(self.gem_host.stream_function(
+            7, 4)(ACKC7.ACCEPTED), message.header.system)
+
+        decode = self.gem_host.settings.streams_functions.decode(message)
+
+        ppid = decode.PPID.get()
+        ppbody = decode.PPBODY.get()
+
+        if not ppid or not ppbody:
+            print("PPID or PPBODY is empty")
+            return
+
+        self._store_recipe(ppid, ppbody)
+
+    def pp_delete(self,  ppids: list[int | str]):
+        """
+        S7F17	Process Program Delete
+        :param ppids: list of PPID to delete
+        """
+        if not self.gem_host.is_online:
+            logger.warning("PP Delete Equipment %s is not online",
+                           self.gem_host.equipment_name)
+            print("Equipment is not online")
+            return "Equipment is not online"
+
+        response = self.gem_host.send_and_waitfor_response(
+            self.gem_host.stream_function(7, 17)(ppids)
+        )
+        if isinstance(response, secsgem.hsms.HsmsMessage):
+            ackc7 = {0: "Accepted", 1: "Permission not granted", 2: "Length error",
+                     3: "Matrix overflow", 4: "PPID not found", 5: "Unsupported mode",
+                     6: "Initiated for asynchronous completion", 7: "Storage limit error"}
+
+            response_code = self.gem_host.settings.streams_functions.decode(
+                response).get()
+            return ackc7.get(response_code, f"Unknown code: {response_code}")
+        return "No response"
+
+    def pp_send(self, ppid: str):
+        """
+        S7F3R	Process Program Send
+        """
+        if not self.gem_host.is_online:
+            logger.warning("PP Send Equipment %s is not online",
+                           self.gem_host.equipment_name)
+            print("Equipment is not online")
+            return "Equipment is not online"
+
+        pp_body = self._get_recipe(ppid)
+        if pp_body is None:
+            return f"Recipe {ppid} not found"
+        pp_body_bytes = secsgem.secs.variables.Binary(pp_body)
+        response = self.gem_host.send_and_waitfor_response(
+            self.gem_host.stream_function(7, 3)(
+                {"PPID": ppid, "PPBODY": pp_body_bytes})
+        )
+        if isinstance(response, secsgem.hsms.HsmsMessage):
+            ackc7 = {0: "Accepted", 1: "Permission not granted", 2: "Length error",
+                     3: "Matrix overflow", 4: "PPID not found", 5: "Unsupported mode",
+                     6: "Initiated for asynchronous completion", 7: "Storage limit error"}
+            response_code = self.gem_host.settings.streams_functions.decode(
+                response).get()
+            return ackc7.get(response_code, f"Unknown code: {response_code}")
+        return "No response"
+
+    def pp_select(self, ppid: str):
+        """
+        Process Program Select 
+        :param ppid: Process Program ID
+        """
+        if not self.gem_host.is_online:
+            logger.warning("PP Select Equipment %s is not online",
+                           self.gem_host.equipment_name)
+            print("Equipment is not online")
+            return "Equipment is not online"
+
+        rcmd = {"RCMD": "PP_SELECT", "PARAMS": [
+            {"CPNAME": "PPName", "CPVAL": ppid}]}
+        response = self.gem_host.send_and_waitfor_response(
+            self.gem_host.stream_function(2, 41)(rcmd)
+        )
+        if isinstance(response, secsgem.hsms.HsmsMessage):
+            s2f42_decode = self.gem_host.settings.streams_functions.decode(
+                response)
+
+            hcack = {0: "OK", 1: "Invalid Command", 2: "Cannot Do Now", 3: "Parameter Error",
+                     4: "Initiated for Asynchronous Completion", 5: "Rejected, Already in Desired Condition", 6: "Invalid Object"}
+            return (f"HCACK: {hcack.get(s2f42_decode.HCACK.get(), 'Unknown code')}")
+        return "No response"

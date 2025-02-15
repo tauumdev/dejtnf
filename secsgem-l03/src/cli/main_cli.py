@@ -4,6 +4,7 @@ from src.mqtt.mqtt_client import MqttClient
 from src.manager.host_manager import SecsGemHostManager
 
 from src.cli.control.control_cli import ControlCli
+from src.cli.config.config_cli import ConfigCli
 
 
 class MainCli(Cmd):
@@ -53,3 +54,9 @@ class MainCli(Cmd):
             return
 
         ControlCli(gem_host).cmdloop()
+
+    def do_config(self, _):
+        """
+        Configure equipment
+        """
+        ConfigCli(self.secs_hosts).cmdloop()

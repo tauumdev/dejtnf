@@ -137,40 +137,40 @@ class SecsGemHost(secsgem.gem.GemHostHandler):
         """Unrecognized Device ID"""
         logger.warning("s09f1:Unrecognized Device ID (UDN): %s",
                        self.equipment_name)
-        print("s09f1:Unrecognized Device ID (UDN): %s",
+        print("s09f1:Unrecognized Device ID (UDN): ",
               self.equipment_name)
 
     def s09f3(self, handle, message):
         """Unrecognized Stream Function"""
         logger.warning("s09f3:Unrecognized Stream Function (SFCD): %s",
                        self.equipment_name)
-        print("s09f3:Unrecognized Stream Function (SFCD): %s",
+        print("s09f3:Unrecognized Stream Function (SFCD): ",
               self.equipment_name)
 
     def s09f5(self, handle, message):
         """Unrecognized Function Type"""
         logger.warning("s09f5:Unrecognized Function Type (UFN): %s",
                        self.equipment_name)
-        print("s09f5:Unrecognized Function Type (UFN): %s",
+        print("s09f5:Unrecognized Function Type (UFN): ",
               self.equipment_name)
 
     def s09f7(self, handle, message):
         """Illegal Data (IDN)"""
         logger.warning("s09f7:Illegal Data (IDN): %s",
                        self.equipment_name)
-        print("s09f7:Illegal Data (IDN): %s",
+        print("s09f7:Illegal Data (IDN): ",
               self.equipment_name)
 
     def s09f9(self, handle, message):
         """Transaction Timer Timeout (TTN)"""
         logger.warning("s09f9:Transaction Timer Timeout (TTN): %s",
                        self.equipment_name)
-        print("s09f9:Transaction Timer Timeout (TTN): %s",
+        print("s09f9:Transaction Timer Timeout (TTN): ",
               self.equipment_name)
 
     def s09f11(self, handle, message):
         """Data Too Long (DLN)"""
         logger.warning("s09f11:Data Too Long (DLN): %s",
                        self.equipment_name)
-        print("s09f11:Data Too Long (DLN): %s",
+        print("s09f11:Data Too Long (DLN): ",
               self.equipment_name)

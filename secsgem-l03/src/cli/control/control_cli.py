@@ -21,7 +21,7 @@ class ControlCli(Cmd):
         """
         pass
 
-    def do_exit(self, _):
+    def do_return(self, _):
         """
         Exit control
         """
@@ -255,4 +255,114 @@ class ControlCli(Cmd):
         """
         self.gem_host.secs_control.subscribe_lot_control()
 
-    # process program
+    # lot management
+    def do_accept_lot(self, arg: str):
+        """
+        Accept lot
+        Usage: accept_lot <lot_id>
+        """
+        if not arg:
+            print("Invalid arguments")
+            print("Usage: accept_lot <lot_id>")
+            return
+        print(self.gem_host.secs_control.accept_lot(arg))
+
+    def do_reject_lot(self, arg: str):
+        """
+        Reject lot
+        Usage: reject_lot <lot_id>
+        """
+        if not arg:
+            print("Invalid arguments")
+            print("Usage: reject_lot <lot_id>")
+            return
+        print(self.gem_host.secs_control.reject_lot(arg))
+
+    def do_add_lot_fclx(self, arg: str):
+        """
+        Add lot
+        Usage: add_lot <lot_id>
+        """
+        if not arg:
+            print("Invalid arguments")
+            print("Usage: add_lot <lot_id>")
+            return
+        print(self.gem_host.secs_control.add_lot_fclx(arg))
+
+    def do_reject_lot_fclx(self, arg: str):
+        """
+        Reject lot
+        Usage: reject_lot <lot_id> <reason>
+        """
+        args = arg.split()
+        if len(args) != 2:
+            print("Invalid arguments")
+            print("Usage: reject_lot <lot_id> <reason>")
+            return
+        print(self.gem_host.secs_control.reject_lot_fclx(args[0], args[1]))
+
+    # recipe management
+    def do_pp_dir(self, _):
+        """
+        Process Program Directory
+        Usage: pp_dir
+        """
+        print(self.gem_host.secs_control.pp_list())
+
+    def do_pp_inquire(self, arg: str):
+        """
+        Process Program Inquire
+        Usage: pp_inquire <pp_id>
+        """
+        if not arg:
+            print("Invalid arguments")
+            print("Usage: pp_inquire <pp_id>")
+            return
+        print(self.gem_host.secs_control.pp_load_inquire(arg))
+
+    def do_pp_send(self, arg: str):
+        """
+        Process Program Send
+        Usage: pp_send <pp_id>
+        """
+        if not arg:
+            print("Invalid arguments")
+            print("Usage: pp_send <pp_id>")
+            return
+        print(self.gem_host.secs_control.pp_send(arg))
+
+    def do_pp_request(self, arg: str):
+        """
+        Process Program Request
+        Usage: pp_request <pp_id>
+        """
+        if not arg:
+            print("Invalid arguments")
+            print("Usage: pp_request <pp_id>")
+            return
+        print(self.gem_host.secs_control.pp_request(arg))
+
+    def do_pp_delete(self, arg: str):
+        """
+        Process Program Delete
+        Usage: pp_delete <pp_id>
+        Sample: pp_delete A,B,1
+        """
+        # ppid as list
+        if not arg:
+            print("Invalid arguments")
+            print("Usage: pp_delete <pp_id>")
+            return
+        ppids = [int(p) for p in arg.split(",")]
+        print(self.gem_host.secs_control.pp_delete(ppids))
+
+    def do_pp_select(self, arg: str):
+        """
+        Process Program Select
+        Usage: pp_select <pp_id>
+        """
+        if not arg:
+            print("Invalid arguments")
+            print("Usage: pp_select <pp_id>")
+            return
+        print(self.gem_host.secs_control.pp_select(arg))
