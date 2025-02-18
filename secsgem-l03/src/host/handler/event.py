@@ -8,11 +8,12 @@ from secsgem.secs.data_items import ACKC6
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from src.mqtt.mqtt_client import MqttClient
     from src.host.gemhost import SecsGemHost
 
 from config.status_variable_define import CONTROL_STATE_EVENT, PROCESS_STATE_NAME
 
+# from lot_management.validate import ValidateLot
+from src.host.handler.lot_management.validate import ValidateLot
 logger = logging.getLogger("app_logger")
 
 
@@ -40,8 +41,7 @@ class HandlerEvent:
                 # print(f"Values: {values}")
 
                 if rptid == 1000:
-                    threading.Timer(0.05, self._req_validate_lot,
-                                    args=[values]).start()
+                    self._req_validate_lot(values)
                 if rptid == 1001:
                     self._lot_open(values)
                 if rptid == 1002:
@@ -59,16 +59,69 @@ class HandlerEvent:
         """
         Validate lot event
         """
-        print(
-            f"Equipment: {self.gem_host.equipment_name} request validate lot")
-        if values:
-            if len(values) == 2:
-                lot_id, ppid = values
-                if lot_id:
-                    print(f"Lot ID: {lot_id}, PPID: {ppid}")
-                    self.gem_host.secs_control.accept_lot(lot_id.upper())
+
+        if values and len(values) == 2:
+            lot_id, ppid = values
+
+            # Check if the request is for recipe with find "," on lot_id
+            req_recipe = True if lot_id.find(",") > 10 else False
+            if req_recipe:
+                parts = lot_id.split(",")
+                lot_id = parts[0]
+                req_recipe = True if len(
+                    parts) > 1 and parts[1].strip().lower() == "recipe" else False
+                if not req_recipe:
+                    print("Invalid request")
+                    threading.Timer(0.05, self._reject_lot, args=[
+                                    lot_id, "Invalid request"]).start()
                     return
-                print("Lot ID is empty")
+
+            # Define validate_lot object
+            validate_lot = ValidateLot(
+                self.gem_host.equipment_name, ppid, lot_id)
+
+            # Recipe request
+            if req_recipe:
+                print(f"Request recipe: {lot_id}")
+                recipe = validate_lot.get_recipe_by_lot()
+                if isinstance(recipe, str):
+                    print(recipe)
+                else:
+                    print(recipe.get("recipe_name"))
+                return
+
+            # Validate lot
+            result = validate_lot.validate()
+            if isinstance(result, str):
+                threading.Timer(0.05, self._reject_lot, args=[
+                                lot_id, result]).start()
+            else:
+                # Accept lot
+                # Check if machine is FCLX is ready to accept lot before accepting
+                threading.Timer(0.05, self._accept_lot, args=[
+                                lot_id, result.product_name, result.recipe_name]).start()
+
+    def _reject_lot(self, lot_id: str, reason: str):
+        """
+        Reject lot event
+        """
+        print(f"Reject lot: {lot_id}, {reason}", self.gem_host.equipment_name)
+
+        if self.gem_host.equipment_model == "FCL":
+            self.gem_host.secs_control.reject_lot(lot_id)
+        elif self.gem_host.equipment_model == "FCLX":
+            self.gem_host.secs_control.reject_lot_fclx(lot_id, reason)
+
+    def _accept_lot(self, lot_id: str, product_name: str, recipe_name: str):
+        """
+        Accept lot event
+        """
+        print(f"Accept lot: {lot_id}, {product_name}, {recipe_name}",
+              self.gem_host.equipment_name)
+        if self.gem_host.equipment_model == "FCL":
+            self.gem_host.secs_control.accept_lot(lot_id)
+        elif self.gem_host.equipment_model == "FCLX":
+            self.gem_host.secs_control.add_lot_fclx(lot_id)
 
     def _lot_open(self, values: list):
         """

@@ -13,7 +13,7 @@ from config.status_variable_define import CONTROL_STATE_VID, PROCESS_STATE_CHANG
 from config.app_config import RECIPE_DIR
 
 if TYPE_CHECKING:
-    from src.mqtt.mqtt_client import MqttClient
+    # from src.mqtt.mqtt_client import MqttClient
     from src.host.gemhost import SecsGemHost
 
 logger = logging.getLogger("app_logger")
@@ -155,7 +155,7 @@ class SecsControl(Cmd):
 
         vid = vid_model.get("VID")
         state = vid_model.get("STATE")
-        response = self.select_equipment_status_request([vid])
+        response = self.select_equipment_status_request([vid]).get()
 
         if isinstance(response, list):
             state_name = next(state_dict[response[0]]
@@ -189,15 +189,17 @@ class SecsControl(Cmd):
             return "Failed to get control state"
 
         response = self.gem_host.settings.streams_functions.decode(
-            s1f4).get()
+            s1f4)
 
-        if isinstance(response, list):
+        if not isinstance(response, str):
+            response = response.get()
             state_name = state.get(response[0], "Unknown")
             self.gem_host.control_state = state_name
             self.gem_host.mqtt_client.client.publish(
                 f"equipments/status/control_state/{self.gem_host.equipment_name}", self.gem_host.control_state)
             return state_name
-        return "Failed to get control state"
+
+        return response
 
     def get_process_program(self):
         """
@@ -220,17 +222,20 @@ class SecsControl(Cmd):
             self.gem_host.mqtt_client.client.publish(
                 f"equipments/status/process_program/{self.gem_host.equipment_name}", self.gem_host.process_program)
             return response[0]
+        return response
 
     def get_equipment_status(self):
         """
         Get equipment status
         """
+        # print(getattr(self.gem_host.settings, "connect_mode", None).name)
         status = {
             "equipment_name": self.gem_host.equipment_name,
             "equipment_model": self.gem_host.equipment_model,
             "address": getattr(self.gem_host.settings, "address", None),
             "port": getattr(self.gem_host.settings, "port", None),
             "session_id": self.gem_host.settings.session_id,
+            "connect_mode": getattr(self.gem_host.settings, "connect_mode", None).name,
             "is_enable": self.gem_host.is_enable,
             "is_communication": self.gem_host.is_communicating,
             "control_state": self.get_control_state(),
@@ -675,6 +680,10 @@ class SecsControl(Cmd):
 
         self.gem_host.send_response(self.gem_host.stream_function(
             7, 2)(ACKC7.ACCEPTED), message.header.system)
+
+        decode = self.gem_host.settings.streams_functions.decode(message)
+        print(decode)
+        print(decode.get())
 
     def pp_request(self, ppid: str):
         """

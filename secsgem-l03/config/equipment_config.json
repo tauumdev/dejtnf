@@ -7,7 +7,7 @@
             "port": 5000,
             "session_id": 61,
             "mode": "ACTIVE",
-            "enable": false
+            "enable": true
         },
         {
             "equipment_name": "TNF-62",
@@ -25,7 +25,7 @@
             "port": 5000,
             "session_id": 70,
             "mode": "ACTIVE",
-            "enable": true
+            "enable": false
         },
         {
             "equipment_name": "TNF-69",

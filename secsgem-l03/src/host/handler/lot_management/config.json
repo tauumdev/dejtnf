@@ -1,0 +1,58 @@
+[
+    {
+        "equipment_name": "TNF-61",
+        "config": [
+            {
+                "package8digit": "LQFA048M",
+                "selection_code": "1100",
+                "data_with_selection_code": [
+                    {
+                        "package_selection_code": "LQFA048MN",
+                        "operation_code": "TNF",
+                        "on_operation": "TNF",
+                        "validate_type": "recipe",
+                        "recipe_name": "TQFP48L_7x7",
+                        "product_name": "TQFP48L_7x7",
+                        "options": {
+                            "use_operation_code": true,
+                            "use_on_operation": true,
+                            "use_lot_hold": true
+                        }
+                    },
+                    {
+                        "package_selection_code": "LQFA048ME",
+                        "operation_code": "TNF",
+                        "on_operation": "TNF",
+                        "validate_type": "recipe",
+                        "recipe_name": "ETQFP48L_7x7",
+                        "product_name": "ETQFP48L_7x7",
+                        "options": {
+                            "use_operation_code": true,
+                            "use_on_operation": true,
+                            "use_lot_hold": true
+                        }
+                    }
+                ]
+            },
+            {
+                "package8digit": "TQFB064M",
+                "selection_code": "1100",
+                "data_with_selection_code": [
+                    {
+                        "package_selection_code": "TQFB064MN",
+                        "operation_code": "TNF",
+                        "on_operation": "TNF",
+                        "validate_type": "recipe",
+                        "recipe_name": "64L_TQFP_10x10",
+                        "product_name": " 64L TQFP 10x10",
+                        "options": {
+                            "use_operation_code": true,
+                            "use_on_operation": true,
+                            "use_lot_hold": true
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]

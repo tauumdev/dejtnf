@@ -140,13 +140,12 @@ class SecsGemHostManager:
                     "address": getattr(equipment.settings, "address", ""),
                     "port": getattr(equipment.settings, "port", "5000"),
                     "session_id": equipment.settings.session_id,
-                    "mode": "ACTIVE" if getattr(equipment.settings, "connect_mode") == secsgem.hsms.HsmsConnectMode.ACTIVE else "PASSIVE",
+                    "mode": getattr(equipment.settings, "connect_mode").name,
                     "enable": equipment.is_enable
                 })
 
             with open(EQUIPMENTS_CONFIG_PATH, "w", encoding="utf-8") as f:
                 json.dump({"equipments": equipments}, f, indent=4)
-                # print("Equipments saved to file")
                 return "Equipments saved to file"
         except Exception as e:
             print(f"Error saving equipments: {e}")
@@ -164,7 +163,7 @@ class SecsGemHostManager:
                 "address": getattr(equipment.settings, "address", ""),
                 "port": getattr(equipment.settings, "port", "5000"),
                 "session_id": equipment.settings.session_id,
-                "mode": "ACTIVE" if getattr(equipment.settings, "connect_mode") == secsgem.hsms.HsmsConnectMode.ACTIVE else "PASSIVE",
+                "mode": getattr(equipment.settings, "connect_mode").name,
                 "enable": equipment.is_enable
             })
 

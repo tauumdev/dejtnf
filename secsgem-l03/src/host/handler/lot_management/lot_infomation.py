@@ -1,8 +1,11 @@
-
 import json
+import logging
+from typing import Dict, List, Optional, Union
+from urllib.parse import quote, urlencode
+
 import requests
-from typing import Optional, Union, List, Dict
-from urllib.parse import urlencode, quote
+
+logger = logging.getLogger("app_logger")
 
 
 class LotInformation:
@@ -17,8 +20,56 @@ class LotInformation:
         self.lot_data = None
         self.field_by_name = {}
         self.field_by_desc = {}
-        # self._load_data()
         self._load_data_api()
+
+    def _load_data_api(self):
+        """
+        Load Lot Information data from API
+        """
+        lot_info_api = self._LotInfoAPI()
+        try:
+            self.lot_data = lot_info_api.get_lot_info([self.lot_id])
+            if self.lot_data and isinstance(self.lot_data, list):
+                output_info = self.lot_data[0].get("OutputLotInfo", [])
+                for field in output_info:
+                    self.field_by_name[field["FieldName"]] = field["Value"]
+                    if "Description" in field:
+                        self.field_by_desc[field["Description"]] = field
+
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print(f"Error: {str(e)}")
+
+    def get_field_value(self, field_names: Union[str, List[str]]) -> Dict:
+        """
+        Get field values with API caching
+        Args:
+            field_names: Single field name or list of field names
+        """
+        if not self.lot_data:
+            return {"status": False, "message": "Data not loaded", "data": None}
+
+        field_names = [field_names] if isinstance(
+            field_names, str) else field_names
+        result = {name: self.field_by_name.get(
+            name, "Not found") for name in field_names}
+
+        return {"status": True, "message": "Success", "data": result}
+
+    def get_field_by_description(self, descriptions: Union[str, List[str]]) -> Dict:
+        """
+        Get fields by description with API fallback
+        Args:
+            descriptions: Single description or list of descriptions
+        """
+        if not self.lot_data:
+            return {"status": False, "message": "Data not loaded", "data": None}
+
+        descriptions = [descriptions] if isinstance(
+            descriptions, str) else descriptions
+        result = {desc: self.field_by_desc.get(
+            desc, "Not found") for desc in descriptions}
+
+        return {"status": True, "message": "Success", "data": result}
 
     class _LotInfoAPI:
         """
@@ -32,9 +83,9 @@ class LotInformation:
 
         def __init__(
             self,
-            base_url: str,
-            log_id: str,
-            en_number: str,
+            base_url: str = "http://utlwebprd1/OEEwebAPI",
+            log_id: str = "1231562",
+            en_number: str = "226383",
             token: str = "OEE_WEB_API"
         ):
 
@@ -118,77 +169,11 @@ class LotInformation:
             """
             return self.get_lot_info([lot_id])
 
-    def _load_data_api(self):
-        api_client = self._LotInfoAPI(
-            base_url="http://utlwebprd1/OEEwebAPI",
-            log_id="1231562",
-            en_number="226383"
-        )
-        try:
-            self.lot_data = api_client.get_lot_info([self.lot_id])
-
-            if self.lot_data and isinstance(self.lot_data, list):
-                output_info = self.lot_data[0].get("OutputLotInfo", [])
-                for field in output_info:
-                    self.field_by_name[field["FieldName"]] = field["Value"]
-                    if "Description" in field:
-                        self.field_by_desc[field["Description"]] = field
-
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"Error: {str(e)}")
-
-    def _load_data(self):
-        print("Loading data from API")
-        try:
-            with open('files/lotdetail.json', 'r', encoding='utf-8') as file:
-                self.lot_data = json.load(file)
-                if self.lot_data and isinstance(self.lot_data, list):
-                    output_info = self.lot_data[0].get("OutputLotInfo", [])
-                    for field in output_info:
-                        self.field_by_name[field["FieldName"]] = field["Value"]
-                        if "Description" in field:
-                            self.field_by_desc[field["Description"]] = field
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"Error: {str(e)}")
-
-    def get_field_value(self, field_names: Union[str, List[str]]) -> Dict:
-        """
-        Get field values with API caching
-        Args:
-            field_names: Single field name or list of field names
-        """
-        if not self.lot_data:
-            return {"status": False, "message": "Data not loaded", "data": None}
-
-        field_names = [field_names] if isinstance(
-            field_names, str) else field_names
-        result = {name: self.field_by_name.get(
-            name, "Not found") for name in field_names}
-
-        return {"status": True, "message": "Success", "data": result}
-
-    def get_field_by_description(self, descriptions: Union[str, List[str]]) -> Dict:
-        """
-        Get fields by description with API fallback
-        Args:
-            descriptions: Single description or list of descriptions
-        """
-        if not self.lot_data:
-            return {"status": False, "message": "Data not loaded", "data": None}
-
-        descriptions = [descriptions] if isinstance(
-            descriptions, str) else descriptions
-        result = {desc: self.field_by_desc.get(
-            desc, "Not found") for desc in descriptions}
-
-        return {"status": True, "message": "Success", "data": result}
-
 
 # if __name__ == "__main__":
+#     # Example usage
+#     lot_info = LotInformation("ONCPS0453.2")
 
-#     print("Lot Information")
-
-#     lot_info = LotInformation("RNMFS0030.1")
 #     result_by_field = lot_info.get_field_value(
 #         [
 #             "LOT PARAMETERS",
@@ -202,7 +187,6 @@ class LotInformation:
 #         ])
 #     print(result_by_field)
 
-#     lot_info = LotInformation("RNMFS0030.1")
 #     result_by_description = lot_info.get_field_by_description(
 #         ["Lot Qty", "LOT_STATUS"])
 #     print(result_by_description)
