@@ -55,6 +55,12 @@ class HandlerEvent:
 
         self._control_state(ceid)
 
+    def _send_recipe(self, lot_id: str, recipe_name: str):
+        """
+        Send recipe to equipment
+        """
+        pass
+
     def _req_validate_lot(self, values: list):
         """
         Validate lot event
@@ -72,6 +78,7 @@ class HandlerEvent:
                     parts) > 1 and parts[1].strip().lower() == "recipe" else False
                 if not req_recipe:
                     print("Invalid request")
+                    # Reject lot
                     threading.Timer(0.05, self._reject_lot, args=[
                                     lot_id, "Invalid request"]).start()
                     return
@@ -85,9 +92,14 @@ class HandlerEvent:
                 print(f"Request recipe: {lot_id}")
                 recipe = validate_lot.get_recipe_by_lot()
                 if isinstance(recipe, str):
-                    print(recipe)
+                    # Reject lot
+                    threading.Timer(0.05, self._reject_lot, args=[
+                                    lot_id, recipe]).start()
                 else:
+                    recipe_name = recipe.get("recipe_name")
+                    # find recipe by recipe name
                     print(recipe.get("recipe_name"))
+
                 return
 
             # Validate lot

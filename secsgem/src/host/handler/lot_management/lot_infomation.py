@@ -30,6 +30,12 @@ class LotInformation:
         try:
             self.lot_data = lot_info_api.get_lot_info([self.lot_id])
             if self.lot_data and isinstance(self.lot_data, list):
+                status = self.lot_data[0].get("Status", False)
+                if not status:
+                    logger.error(
+                        "Failed to retrieve Lot Information for %s", self.lot_id)
+                    self.lot_data = None
+                    return
                 output_info = self.lot_data[0].get("OutputLotInfo", [])
                 for field in output_info:
                     self.field_by_name[field["FieldName"]] = field["Value"]
