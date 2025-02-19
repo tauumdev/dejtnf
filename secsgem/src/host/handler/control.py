@@ -790,8 +790,16 @@ class SecsControl(Cmd):
             print("Equipment is not online")
             return "Equipment is not online"
 
-        rcmd = {"RCMD": "PP_SELECT", "PARAMS": [
-            {"CPNAME": "PPName", "CPVAL": ppid}]}
+        rcmd_model = {
+            "FCL": {"RCMD": "PP_SELECT", "PARAMS": [
+                {"CPNAME": "PPName", "CPVAL": ppid}]},
+            "FCLX": {"RCMD": "PP-SELECT", "PARAMS": [
+                {"CPNAME": "PPName", "CPVAL": ppid}]},
+        }
+
+        rcmd = rcmd_model.get(self.gem_host.equipment_model)
+        if rcmd is None:
+            return f"RCMD is not define for {self.gem_host.equipment_model}"
         response = self.gem_host.send_and_waitfor_response(
             self.gem_host.stream_function(2, 41)(rcmd)
         )
@@ -803,3 +811,49 @@ class SecsControl(Cmd):
                      4: "Initiated for Asynchronous Completion", 5: "Rejected, Already in Desired Condition", 6: "Invalid Object"}
             return (f"HCACK: {hcack.get(s2f42_decode.HCACK.get(), 'Unknown code')}")
         return "No response"
+
+    # # remote command
+
+    def send_remote_command(self, rcmd: str, params: list[str]):
+        """
+        Send remote command
+        :param rcmd: Remote command
+        :param params: list of command parameters
+        """
+        if rcmd:
+            secs_cmd = {"RCMD": rcmd, "PARAMS": params}
+            print(secs_cmd)
+            s2f42 = self.gem_host.send_and_waitfor_response(
+                self.gem_host.stream_function(2, 41)(secs_cmd))
+
+            if isinstance(s2f42, secsgem.common.Message):
+                s2f42_decode = self.gem_host.settings.streams_functions.decode(
+                    s2f42)
+
+                hcack = {0: "OK", 1: "Invalid Command", 2: "Cannot Do Now", 3: "Parameter Error",
+                         4: "Initiated for Asynchronous Completion", 5: "Rejected, Already in Desired Condition", 6: "Invalid Object"}
+                return (f"HCACK: {hcack.get(s2f42_decode.HCACK.get(), 'Unknown code')}")
+        return "RCMD is empty"
+
+    def send_enhanched_remote_command(self, objspec: str, rcmd: str, params: list[str]):
+        """
+        Send remote command
+        :param rcmd: Remote command
+        :param params: list of command parameters
+        """
+        if rcmd:
+            # secs_cmd = {"RCMD": rcmd, "PARAMS": params}
+            secs_cmd = {"DATAID": 0, "OBJSPEC": objspec, "RCMD": rcmd,
+                        "PARAMS": params}
+            print(secs_cmd)
+            s2f50 = self.gem_host.send_and_waitfor_response(
+                self.gem_host.stream_function(2, 49)(secs_cmd))
+
+            if isinstance(s2f50, secsgem.common.Message):
+                s2f50_decode = self.gem_host.settings.streams_functions.decode(
+                    s2f50)
+
+                hcack = {0: "OK", 1: "Invalid Command", 2: "Cannot Do Now", 3: "Parameter Error",
+                         4: "Initiated for Asynchronous Completion", 5: "Rejected, Already in Desired Condition", 6: "Invalid Object"}
+                return (f"HCACK: {hcack.get(s2f50_decode.HCACK.get(), 'Unknown code')}")
+        return "RCMD is empty"

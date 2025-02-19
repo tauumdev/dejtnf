@@ -55,70 +55,87 @@ class HandlerEvent:
 
         self._control_state(ceid)
 
-    def _send_recipe(self, lot_id: str, recipe_name: str):
-        """
-        Send recipe to equipment
-        """
-        pass
-
     def _req_validate_lot(self, values: list):
         """
         Validate lot event
         """
-
-        if values and len(values) == 2:
-            lot_id, ppid = values
-
-            # Check if the request is for recipe with find "," on lot_id
-            req_recipe = True if lot_id.find(",") > 10 else False
-            if req_recipe:
+        def process_lot_id(lot_id):
+            if "," in lot_id:
                 parts = lot_id.split(",")
-                lot_id = parts[0]
-                req_recipe = True if len(
-                    parts) > 1 and parts[1].strip().lower() == "recipe" else False
-                if not req_recipe:
-                    print("Invalid request")
-                    # Reject lot
-                    threading.Timer(0.05, self._reject_lot, args=[
-                                    lot_id, "Invalid request"]).start()
-                    return
+                lot_id = parts[0].upper()
+                if len(parts) > 1 and parts[1].strip().lower() == "recipe":
+                    # Recipe request
+                    logger.info("Request recipe for lot: %s, %s",
+                                lot_id, self.gem_host.equipment_name)
+                    return lot_id, True
+                logger.error("Invalid request: %s, %s", lot_id,
+                             self.gem_host.equipment_name)
+                return None, False
+            return lot_id.upper(), False
 
-            # Define validate_lot object
-            validate_lot = ValidateLot(
-                self.gem_host.equipment_name, ppid, lot_id)
+        if values and len(values) == 5:
+            lot_id, ppid, PlannedLots, NumberOfActiveLots, ActiveLots = values
+            if not lot_id:
+                print("Lot ID is required")
+                return
+        elif values and len(values) == 2:
+            lot_id, ppid = values
+            if not lot_id:
+                print("Lot ID is required")
+                return
+        else:
+            print("Invalid number of values")
+            threading.Timer(0.5, self._reject_lot, args=(
+                lot_id, "Invalid number of values")).start()
+            return
 
-            # Recipe request
-            if req_recipe:
-                print(f"Request recipe: {lot_id}")
-                recipe = validate_lot.get_recipe_by_lot()
-                if isinstance(recipe, str):
-                    # Reject lot
-                    threading.Timer(0.05, self._reject_lot, args=[
-                                    lot_id, recipe]).start()
-                else:
-                    recipe_name = recipe.get("recipe_name")
-                    # find recipe by recipe name
-                    print(recipe.get("recipe_name"))
+        lot_id, is_recipe_request = process_lot_id(lot_id)
+        if lot_id is None:
+            print("Invalid request")
+            threading.Timer(0.5, self._reject_lot, args=(
+                lot_id, "Invalid request")).start()
+            return
 
+        # Define validate_lot object
+        validate_lot = ValidateLot(self.gem_host.equipment_name, ppid, lot_id)
+
+        if is_recipe_request:
+
+            print(f"{self.gem_host.equipment_name} request recipe with lot: {lot_id}")
+            recipe = validate_lot.get_recipe_by_lot()
+            if isinstance(recipe, dict):
+                # Send recipe to equipment
+                recipe_name = recipe.get("recipe_name")
+                print("Recipe found: ", recipe_name)
+                print("Continue to send recipe")
                 return
 
-            # Validate lot
-            result = validate_lot.validate()
-            if isinstance(result, str):
-                threading.Timer(0.05, self._reject_lot, args=[
-                                lot_id, result]).start()
-            else:
-                # Accept lot
-                # Check if machine is FCLX is ready to accept lot before accepting
-                threading.Timer(0.05, self._accept_lot, args=[
-                                lot_id, result.product_name, result.recipe_name]).start()
+            # Recipe not found
+            print(recipe)
+            threading.Timer(0.5, self._reject_lot, args=(
+                lot_id, "Recipe not found")).start()
+            return
+
+        # Validate lot
+        result = validate_lot.validate()
+        if isinstance(result, str):
+            print("Reject lot", result)
+            threading.Timer(0.5, self._reject_lot, args=(
+                lot_id, result)).start()
+        else:
+            # Accept lot
+            # Check if machine is FCLX is ready to accept lot before accepting
+            print("Accept lot")
+            print(result)
+            threading.Timer(0.5, self._accept_lot, args=(
+                lot_id, result.product_name, result.recipe_name)).start()
 
     def _reject_lot(self, lot_id: str, reason: str):
         """
         Reject lot event
         """
-        print(f"Reject lot: {lot_id}, {reason}", self.gem_host.equipment_name)
-
+        logger.error("Reject lot: %s, %s, %s", lot_id,
+                     reason, self.gem_host.equipment_name)
         if self.gem_host.equipment_model == "FCL":
             self.gem_host.secs_control.reject_lot(lot_id)
         elif self.gem_host.equipment_model == "FCLX":
@@ -128,8 +145,6 @@ class HandlerEvent:
         """
         Accept lot event
         """
-        print(f"Accept lot: {lot_id}, {product_name}, {recipe_name}",
-              self.gem_host.equipment_name)
         if self.gem_host.equipment_model == "FCL":
             self.gem_host.secs_control.accept_lot(lot_id)
         elif self.gem_host.equipment_model == "FCLX":
@@ -139,27 +154,29 @@ class HandlerEvent:
         """
         Lot open event
         """
-        print(f"Equipment: {self.gem_host.equipment_name} lot open")
         if values:
             if len(values) == 2:
                 lot_id, ppid = values
                 self.gem_host.active_lot = lot_id
                 self.gem_host.mqtt_client.client.publish(
                     f"equipments/status/active_lot/{self.gem_host.equipment_name}", self.gem_host.active_lot, retain=True)
-                print(f"Lot ID: {lot_id}, PPID: {ppid}")
+
+                logger.info("Lot opened: %s, %s, %s", lot_id,
+                            ppid, self.gem_host.equipment_name)
 
     def _lot_close(self, values: list):
         """
         Lot close event
         """
-        print(f"Equipment: {self.gem_host.equipment_name} lot close")
         if values:
             if len(values) == 2:
                 lot_id, ppid = values
                 self.gem_host.active_lot = None
                 self.gem_host.mqtt_client.client.publish(
                     f"equipments/status/active_lot/{self.gem_host.equipment_name}", self.gem_host.active_lot, retain=True)
-                print(f"Lot ID: {lot_id}, PPID: {ppid}")
+
+                logger.info("Lot closed: %s, %s, %s", lot_id,
+                            ppid, self.gem_host.equipment_name)
 
     def _control_state(self, ceid: int):
         """

@@ -50,7 +50,7 @@ class EquipmentConfig:
     def _load_config(self):
         """Load Equipment Configuration data from API"""
         try:
-            with open("src\lot_management\config.json", "r", encoding="utf-8") as f:
+            with open("src/host/handler/lot_management/config.json", "r", encoding="utf-8") as f:
                 data = json.load(f)
                 self._process_config_data(data)
         except (FileNotFoundError, json.JSONDecodeError) as e:

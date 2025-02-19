@@ -1,12 +1,12 @@
-<Product xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" mode="Production" id="16L TSSOP" revision="52" rev-date="2025-02-13T15:05:25.4453074+07:00" d1p1:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:d1p1="xmlns">
+<Product xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" mode="Production" id="SOIC 16L 15R" revision="4" rev-date="2024-11-12T16:29:53.4267157+01:00" d1p1:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:d1p1="xmlns" fileversion="16.0.0">
   <IsQualified>false</IsQualified>
   <LotControl mode="Production" revision="0">
-    <Scenario>Automatic</Scenario>
+    <Scenario>SingleMagazine</Scenario>
     <OffloadInitialStrips>false</OffloadInitialStrips>
     <PlannedLotScenarioCountMagazines>false</PlannedLotScenarioCountMagazines>
     <CloseLotOnNoMoreMagazines>true</CloseLotOnNoMoreMagazines>
     <RunEmptyOnNoMoreMagazines>true</RunEmptyOnNoMoreMagazines>
-    <RunEmptyMode>RunEmptyStrips</RunEmptyMode>
+    <RunEmptyMode>RunEmptyMagazine</RunEmptyMode>
     <ValidateLotOnHost>true</ValidateLotOnHost>
     <ValidateStripOnHost>false</ValidateStripOnHost>
     <ValidateTrayOnHost>false</ValidateTrayOnHost>
@@ -22,7 +22,7 @@
   </LotControl>
   <Leadframe>
     <Size>
-      <X>300</X>
+      <X>299.6</X>
       <Y>100</Y>
     </Size>
     <Thickness>0</Thickness>
@@ -34,12 +34,12 @@
         <Y>0</Y>
       </Offset>
       <Count>
-        <X>10</X>
+        <X>12</X>
         <Y>1</Y>
       </Count>
       <Pitch>
-        <X>30</X>
-        <Y>13.208</Y>
+        <X>25</X>
+        <Y>0</Y>
       </Pitch>
     </DeviceMap>
     <GroupsInMap>
@@ -48,12 +48,12 @@
         <Y>0</Y>
       </Offset>
       <Count>
-        <X>2</X>
+        <X>1</X>
         <Y>1</Y>
       </Count>
       <Pitch>
-        <X>15</X>
-        <Y>13.208</Y>
+        <X>0</X>
+        <Y>0</Y>
       </Pitch>
     </GroupsInMap>
     <DeviceGroup>
@@ -63,37 +63,33 @@
       </Offset>
       <Count>
         <X>2</X>
-        <Y>11</Y>
+        <Y>15</Y>
       </Count>
       <Pitch>
-        <X>6.1</X>
-        <Y>8.35</Y>
+        <X>11.05</X>
+        <Y>6.1</Y>
       </Pitch>
       <Interdition>
-        <InterditionType>0</InterditionType>
+        <InterditionType>1</InterditionType>
         <X>0.635</X>
         <Y>0.635</Y>
       </Interdition>
       <DeviceOrientation>
         <PointsTo>Right</PointsTo>
       </DeviceOrientation>
-      <RowOrientations>
-        <Orientation>0</Orientation>
-      </RowOrientations>
-      <ColumnOrientations>
-        <Orientation>0</Orientation>
-      </ColumnOrientations>
+      <RowOrientations />
+      <ColumnOrientations />
     </DeviceGroup>
     <RecipeOrientation>0</RecipeOrientation>
     <MapHole>
       <Mask>
         <PointsTo>Unknown</PointsTo>
       </Mask>
-      <Index>5</Index>
+      <Index>0</Index>
       <Location>
         <Center>
-          <X>-7.5</X>
-          <Y>48</Y>
+          <X>7.208</X>
+          <Y>-48.4</Y>
           <Z>0</Z>
           <Space>Leadframe</Space>
         </Center>
@@ -112,11 +108,34 @@
       <Mask>
         <PointsTo>Unknown</PointsTo>
       </Mask>
-      <Index>0</Index>
+      <Index>1</Index>
       <Location>
         <Center>
-          <X>7.5</X>
-          <Y>48</Y>
+          <X>-4.22</X>
+          <Y>-48.4</Y>
+          <Z>0</Z>
+          <Space>Leadframe</Space>
+        </Center>
+        <Width>4.064</Width>
+        <Height>3.048</Height>
+      </Location>
+      <Width>2.032</Width>
+      <Height>1.524</Height>
+      <Radius>0.762</Radius>
+      <Presence>All</Presence>
+      <IsVirtual>false</IsVirtual>
+      <MinimumScore>0.75</MinimumScore>
+      <ScalingTolerance>0</ScalingTolerance>
+    </MapHole>
+    <MapHole>
+      <Mask>
+        <PointsTo>Unknown</PointsTo>
+      </Mask>
+      <Index>2</Index>
+      <Location>
+        <Center>
+          <X>5.028</X>
+          <Y>48.4</Y>
           <Z>0</Z>
           <Space>Leadframe</Space>
         </Center>
@@ -138,8 +157,8 @@
       <Index>3</Index>
       <Location>
         <Center>
-          <X>-4.45</X>
-          <Y>-48</Y>
+          <X>-6.025</X>
+          <Y>48.4</Y>
           <Z>0</Z>
           <Space>Leadframe</Space>
         </Center>
@@ -161,31 +180,8 @@
       <Index>4</Index>
       <Location>
         <Center>
-          <X>10.55</X>
-          <Y>-48</Y>
-          <Z>0</Z>
-          <Space>Leadframe</Space>
-        </Center>
-        <Width>3.048</Width>
-        <Height>3.048</Height>
-      </Location>
-      <Width>1.524</Width>
-      <Height>1.524</Height>
-      <Radius>0.762</Radius>
-      <Presence>All</Presence>
-      <IsVirtual>false</IsVirtual>
-      <MinimumScore>0.75</MinimumScore>
-      <ScalingTolerance>0</ScalingTolerance>
-    </MapHole>
-    <MapHole>
-      <Mask>
-        <PointsTo>Unknown</PointsTo>
-      </Mask>
-      <Index>6</Index>
-      <Location>
-        <Center>
-          <X>-3</X>
-          <Y>48</Y>
+          <X>7.728</X>
+          <Y>48.4</Y>
           <Z>0</Z>
           <Space>Leadframe</Space>
         </Center>
@@ -200,147 +196,32 @@
       <MinimumScore>0.75</MinimumScore>
       <ScalingTolerance>0</ScalingTolerance>
     </MapHole>
-    <MapHole>
-      <Mask>
-        <PointsTo>Unknown</PointsTo>
-      </Mask>
-      <Index>7</Index>
-      <Location>
-        <Center>
-          <X>12</X>
-          <Y>48</Y>
-          <Z>0</Z>
-          <Space>Leadframe</Space>
-        </Center>
-        <Width>2</Width>
-        <Height>2</Height>
-      </Location>
-      <Width>1</Width>
-      <Height>1</Height>
-      <Radius>0.762</Radius>
-      <Presence>All</Presence>
-      <IsVirtual>false</IsVirtual>
-      <MinimumScore>0.75</MinimumScore>
-      <ScalingTolerance>0</ScalingTolerance>
-    </MapHole>
-    <RunnerMapHole>
-      <Mask>
-        <PointsTo>Unknown</PointsTo>
-      </Mask>
-      <Index>1</Index>
-      <Location>
-        <Center>
-          <X>0</X>
-          <Y>20</Y>
-          <Z>0</Z>
-          <Space>Leadframe</Space>
-        </Center>
-        <Width>2.54</Width>
-        <Height>50</Height>
-      </Location>
-      <Width>1.27</Width>
-      <Height>25</Height>
-      <Radius>0.5</Radius>
-      <Presence>All</Presence>
-      <IsVirtual>false</IsVirtual>
-      <MinimumScore>0.75</MinimumScore>
-      <ScalingTolerance>0</ScalingTolerance>
-    </RunnerMapHole>
-    <RunnerMapHole>
-      <Mask>
-        <PointsTo>Unknown</PointsTo>
-      </Mask>
-      <Index>2</Index>
-      <Location>
-        <Center>
-          <X>0</X>
-          <Y>-40</Y>
-          <Z>0</Z>
-          <Space>Leadframe</Space>
-        </Center>
-        <Width>2.54</Width>
-        <Height>16</Height>
-      </Location>
-      <Width>1.27</Width>
-      <Height>8</Height>
-      <Radius>0.5</Radius>
-      <Presence>All</Presence>
-      <IsVirtual>true</IsVirtual>
-      <MinimumScore>0.75</MinimumScore>
-      <ScalingTolerance>0</ScalingTolerance>
-    </RunnerMapHole>
-    <RunnerMapHole>
-      <Mask>
-        <PointsTo>Unknown</PointsTo>
-      </Mask>
-      <Index>0</Index>
-      <Location>
-        <Center>
-          <X>0</X>
-          <Y>40</Y>
-          <Z>0</Z>
-          <Space>Leadframe</Space>
-        </Center>
-        <Width>2.54</Width>
-        <Height>16</Height>
-      </Location>
-      <Width>1.27</Width>
-      <Height>8</Height>
-      <Radius>0.5</Radius>
-      <Presence>All</Presence>
-      <IsVirtual>false</IsVirtual>
-      <MinimumScore>0.75</MinimumScore>
-      <ScalingTolerance>0</ScalingTolerance>
-    </RunnerMapHole>
-    <RunnerMapHole>
-      <Mask>
-        <PointsTo>Unknown</PointsTo>
-      </Mask>
-      <Index>3</Index>
-      <Location>
-        <Center>
-          <X>0</X>
-          <Y>-15</Y>
-          <Z>0</Z>
-          <Space>Leadframe</Space>
-        </Center>
-        <Width>2.54</Width>
-        <Height>70</Height>
-      </Location>
-      <Width>1.27</Width>
-      <Height>35</Height>
-      <Radius>0.5</Radius>
-      <Presence>All</Presence>
-      <IsVirtual>false</IsVirtual>
-      <MinimumScore>0.75</MinimumScore>
-      <ScalingTolerance>0</ScalingTolerance>
-    </RunnerMapHole>
     <RunnerMaps>
       <Offset>
         <X>0</X>
         <Y>0</Y>
       </Offset>
       <Count>
-        <X>10</X>
+        <X>12</X>
         <Y>1</Y>
       </Count>
       <Pitch>
-        <X>30</X>
+        <X>25</X>
         <Y>0</Y>
       </Pitch>
     </RunnerMaps>
     <MaxSPM>200</MaxSPM>
-    <LeadframeHoleOffsetOrigin>1</LeadframeHoleOffsetOrigin>
+    <LeadframeHoleOffsetOrigin>0</LeadframeHoleOffsetOrigin>
   </Leadframe>
   <Device>
     <BodySize>
-      <X>5</X>
-      <Y>4.4</Y>
+      <X>10</X>
+      <Y>4</Y>
     </BodySize>
-    <CornerChamfer>0.1</CornerChamfer>
-    <TopMoldHeight>0.437</TopMoldHeight>
+    <CornerChamfer>0</CornerChamfer>
+    <TopMoldHeight>1.68</TopMoldHeight>
     <TopChamfer>0</TopChamfer>
-    <BottomMoldHeight>0.437</BottomMoldHeight>
+    <BottomMoldHeight>1.45</BottomMoldHeight>
     <BottomChamfer>0</BottomChamfer>
     <IsDambarCut>false</IsDambarCut>
     <IsLeadsCut>false</IsLeadsCut>
@@ -364,22 +245,6 @@
       </Location>
     </Heatsink>
     <HasFeatures>false</HasFeatures>
-    <Feature Index="0">
-      <Material>Frame</Material>
-      <Location>
-        <Center>
-          <X>0</X>
-          <Y>0</Y>
-          <Z>0</Z>
-          <Space>Device</Space>
-          <Rx>0</Rx>
-          <Ry>0</Ry>
-          <Rz>0</Rz>
-        </Center>
-        <Width>2</Width>
-        <Height>2</Height>
-      </Location>
-    </Feature>
     <Side>
       <Orientation>
         <PointsTo>Upper</PointsTo>
@@ -390,22 +255,22 @@
       </LeadOffset>
       <LeadCount>8</LeadCount>
       <RemovedLeadCount>0</RemovedLeadCount>
-      <LeadPitch>0.65</LeadPitch>
+      <LeadPitch>1.27</LeadPitch>
       <LeadSize>
-        <X>1</X>
-        <Y>0.22</Y>
+        <X>1.0354999999999999</X>
+        <Y>0.35</Y>
       </LeadSize>
-      <DambarThickness>0.25</DambarThickness>
+      <DambarThickness>0.3</DambarThickness>
       <DambarPosition>
-        <X>0.15</X>
+        <X>0.1</X>
         <Y>0</Y>
         <Z>0</Z>
         <Space>DeviceSide</Space>
       </DambarPosition>
-      <NominalProtrusion>0.045</NominalProtrusion>
-      <ShoulderLength>0.4</ShoulderLength>
+      <NominalProtrusion>0</NominalProtrusion>
+      <ShoulderLength>0.3</ShoulderLength>
       <FootLength>0.2</FootLength>
-      <FootDisplacement>0.6</FootDisplacement>
+      <FootDisplacement>0.683</FootDisplacement>
     </Side>
     <Side>
       <Orientation>
@@ -417,25 +282,25 @@
       </LeadOffset>
       <LeadCount>8</LeadCount>
       <RemovedLeadCount>0</RemovedLeadCount>
-      <LeadPitch>0.65</LeadPitch>
+      <LeadPitch>1.27</LeadPitch>
       <LeadSize>
-        <X>1</X>
-        <Y>0.22</Y>
+        <X>1.0354999999999999</X>
+        <Y>0.35</Y>
       </LeadSize>
-      <DambarThickness>0.25</DambarThickness>
+      <DambarThickness>0.3</DambarThickness>
       <DambarPosition>
-        <X>0.15</X>
+        <X>0.1</X>
         <Y>0</Y>
         <Z>0</Z>
         <Space>DeviceSide</Space>
       </DambarPosition>
-      <NominalProtrusion>0.045</NominalProtrusion>
-      <ShoulderLength>0.4</ShoulderLength>
+      <NominalProtrusion>0</NominalProtrusion>
+      <ShoulderLength>0.3</ShoulderLength>
       <FootLength>0.2</FootLength>
-      <FootDisplacement>0.6</FootDisplacement>
+      <FootDisplacement>0.683</FootDisplacement>
     </Side>
     <HasCustomLeads>false</HasCustomLeads>
-    <Pin1Orientation>4</Pin1Orientation>
+    <Pin1Orientation>1</Pin1Orientation>
     <Pin1Location>1</Pin1Location>
   </Device>
   <Control>
@@ -479,6 +344,10 @@
     </Elevator>
     <StripPusher>
       <PushCurrentMode>2</PushCurrentMode>
+      <PusherBaseWidth>30</PusherBaseWidth>
+      <PusherLength>0</PusherLength>
+      <PusherOffset>0</PusherOffset>
+      <PusherMagazineOffset>0</PusherMagazineOffset>
     </StripPusher>
     <RfidReader>
       <Enabled>false</Enabled>
@@ -497,22 +366,22 @@
     <OperationMode>2</OperationMode>
     <MaxStripsInMagazine>50</MaxStripsInMagazine>
     <MagazineIdReaderType>0</MagazineIdReaderType>
-    <UnloadProcessedMagazineAtOffload>true</UnloadProcessedMagazineAtOffload>
-    <EnableFirstStripInspection>false</EnableFirstStripInspection>
+    <UnloadProcessedMagazineAtOffload>false</UnloadProcessedMagazineAtOffload>
+    <EnableFirstStripInspection>0</EnableFirstStripInspection>
     <VacuumHead>
       <VacHeadHeight>186</VacHeadHeight>
       <UpPosition>40</UpPosition>
-      <WaitPosition>30</WaitPosition>
+      <WaitPosition>15</WaitPosition>
       <FeedstationPosition>5</FeedstationPosition>
-      <StackPosition>-15</StackPosition>
-      <VacuumLevel>0</VacuumLevel>
+      <StackPosition>-16</StackPosition>
+      <VacuumLevel>-0.5</VacuumLevel>
       <OpenBufferBeforePick>true</OpenBufferBeforePick>
       <UseGripper>false</UseGripper>
       <StackAlignPosition>-11.8</StackAlignPosition>
       <PushCurrentPercentage>30</PushCurrentPercentage>
     </VacuumHead>
     <Elevator>
-      <BottomPlateThickness>3</BottomPlateThickness>
+      <BottomPlateThickness>2</BottomPlateThickness>
       <MagazineHeight>500</MagazineHeight>
       <TopPosition>670</TopPosition>
       <MaximumFillHeight>300</MaximumFillHeight>
@@ -531,7 +400,7 @@
       <GrabSettings>
         <GrabSetting Id="0">
           <Enabled>false</Enabled>
-          <ShutterTime>5.3122689075630234</ShutterTime>
+          <ShutterTime>8</ShutterTime>
           <Lights>
             <Light0Deg>0</Light0Deg>
             <Light45Deg>0</Light45Deg>
@@ -561,21 +430,21 @@
             <Height>1</Height>
           </SearchArea>
           <CheckAllHoles>false</CheckAllHoles>
-          <HoleId>10000</HoleId>
-          <HoleId>10002</HoleId>
-          <HoleId>10004</HoleId>
-          <HoleId>10007</HoleId>
+          <HoleId>12000</HoleId>
+          <HoleId>12001</HoleId>
+          <HoleId>12002</HoleId>
+          <HoleId>12003</HoleId>
+          <HoleId>12004</HoleId>
           <PositionTolerance>1.5</PositionTolerance>
-          <NextPositionTolerance>1.5</NextPositionTolerance>
           <ScalingTolerance>0</ScalingTolerance>
           <MinimumScorePercentage>75</MinimumScorePercentage>
         </Algorithm>
         <Algorithm xsi:type="LeadCountRecipe" Index="0">
           <Name>LeadCount</Name>
-          <UsePreviousResult>true</UsePreviousResult>
+          <UsePreviousResult>false</UsePreviousResult>
           <EnableInspection>true</EnableInspection>
           <GrabId>0</GrabId>
-          <HasCustomSearchArea>false</HasCustomSearchArea>
+          <HasCustomSearchArea>true</HasCustomSearchArea>
           <SearchArea>
             <Center>
               <X>-0.2</X>
@@ -595,10 +464,10 @@
         </Algorithm>
         <Algorithm xsi:type="LeadWidthRecipe" Index="0">
           <Name>LeadWidth</Name>
-          <UsePreviousResult>true</UsePreviousResult>
+          <UsePreviousResult>false</UsePreviousResult>
           <EnableInspection>false</EnableInspection>
           <GrabId>0</GrabId>
-          <HasCustomSearchArea>false</HasCustomSearchArea>
+          <HasCustomSearchArea>true</HasCustomSearchArea>
           <SearchArea>
             <Center>
               <X>0</X>
@@ -660,9 +529,8 @@
             <Width>1</Width>
             <Height>1</Height>
           </SearchArea>
-          <PositionTolerance>1.5</PositionTolerance>
-          <PositionToleranceVertical>1.5</PositionToleranceVertical>
-          <ScalingTolerance>2</ScalingTolerance>
+          <PositionTolerance>2</PositionTolerance>
+          <ScalingTolerance>0</ScalingTolerance>
           <MinimumScorePercentage>75</MinimumScorePercentage>
           <UseMapHoles>true</UseMapHoles>
           <UseRunnerHoles>false</UseRunnerHoles>
@@ -691,7 +559,6 @@
           </SearchArea>
           <CheckAllHoles>false</CheckAllHoles>
           <PositionTolerance>2</PositionTolerance>
-          <NextPositionTolerance>2</NextPositionTolerance>
           <ScalingTolerance>0</ScalingTolerance>
           <MinimumScorePercentage>75</MinimumScorePercentage>
         </Algorithm>
@@ -734,60 +601,7 @@
       <DeviceInspection>
         <Algorithm xsi:type="BodyMeasurementRecipe" Index="0">
           <Name>BodyMeasurement1</Name>
-          <UsePreviousResult>false</UsePreviousResult>
-          <EnableInspection>true</EnableInspection>
-          <GrabId>0</GrabId>
-          <HasCustomSearchArea>false</HasCustomSearchArea>
-          <SearchArea>
-            <Center>
-              <X>0</X>
-              <Y>0</Y>
-              <Z>0</Z>
-              <Space />
-              <Rx>0</Rx>
-              <Ry>0</Ry>
-              <Rz>0</Rz>
-            </Center>
-            <Width>1</Width>
-            <Height>1</Height>
-          </SearchArea>
-          <NumberOfMeasures>6</NumberOfMeasures>
-          <MeasureLength>1</MeasureLength>
-          <Threshold>40</Threshold>
-          <SizeTolerance>0.25</SizeTolerance>
-          <RotationTolerance>1</RotationTolerance>
-          <BodyMustBePresent>false</BodyMustBePresent>
-          <MeasureRotation>false</MeasureRotation>
-          <SearchInwards>false</SearchInwards>
-        </Algorithm>
-        <Algorithm xsi:type="BodyAlignmentRecipe" Index="0">
-          <Name>BodyAlignment1</Name>
-          <UsePreviousResult>false</UsePreviousResult>
-          <EnableInspection>true</EnableInspection>
-          <GrabId>0</GrabId>
-          <HasCustomSearchArea>false</HasCustomSearchArea>
-          <SearchArea>
-            <Center>
-              <X>0</X>
-              <Y>0</Y>
-              <Z>0</Z>
-              <Space />
-              <Rx>0</Rx>
-              <Ry>0</Ry>
-              <Rz>0</Rz>
-            </Center>
-            <Width>10.3</Width>
-            <Height>7.5</Height>
-          </SearchArea>
-          <SearchTolerance>1.5</SearchTolerance>
-          <ScaleTolerance>0.03</ScaleTolerance>
-          <MinimumContrast>40</MinimumContrast>
-          <BlackOnWhite>true</BlackOnWhite>
-          <MinimumScore>0.3</MinimumScore>
-        </Algorithm>
-        <Algorithm xsi:type="IncompleteFillRecipe" Index="0">
-          <Name>IncompleteFill1</Name>
-          <UsePreviousResult>false</UsePreviousResult>
+          <UsePreviousResult>true</UsePreviousResult>
           <EnableInspection>true</EnableInspection>
           <GrabId>0</GrabId>
           <HasCustomSearchArea>false</HasCustomSearchArea>
@@ -802,7 +616,35 @@
               <Rz>0</Rz>
             </Center>
             <Width>10</Width>
-            <Height>7</Height>
+            <Height>4.5</Height>
+          </SearchArea>
+          <NumberOfMeasures>1</NumberOfMeasures>
+          <MeasureLength>1</MeasureLength>
+          <Threshold>25.6</Threshold>
+          <SizeTolerance>0.25</SizeTolerance>
+          <RotationTolerance>1</RotationTolerance>
+          <BodyMustBePresent>false</BodyMustBePresent>
+          <MeasureRotation>false</MeasureRotation>
+          <SearchInwards>false</SearchInwards>
+        </Algorithm>
+        <Algorithm xsi:type="IncompleteFillRecipe" Index="0">
+          <Name>IncompleteFill1</Name>
+          <UsePreviousResult>true</UsePreviousResult>
+          <EnableInspection>true</EnableInspection>
+          <GrabId>0</GrabId>
+          <HasCustomSearchArea>true</HasCustomSearchArea>
+          <SearchArea>
+            <Center>
+              <X>0</X>
+              <Y>0</Y>
+              <Z>0</Z>
+              <Space />
+              <Rx>0</Rx>
+              <Ry>0</Ry>
+              <Rz>0</Rz>
+            </Center>
+            <Width>9.906</Width>
+            <Height>4.6</Height>
           </SearchArea>
           <InspectionMargin>0.1</InspectionMargin>
           <InspectionWidth>0.5</InspectionWidth>
@@ -813,7 +655,7 @@
           <MinimumTotalArea>2</MinimumTotalArea>
           <MeasureTotalArea>true</MeasureTotalArea>
         </Algorithm>
-        <IsEnabled>true</IsEnabled>
+        <IsEnabled>false</IsEnabled>
       </DeviceInspection>
       <StripIdReader>
         <Bank>1</Bank>
@@ -857,7 +699,7 @@
     </Outfeed>
     <Infeed />
     <RejectControl>
-      <RejectMethod>2</RejectMethod>
+      <RejectMethod>1</RejectMethod>
       <MaxNofSuccessiveRejects>3</MaxNofSuccessiveRejects>
       <RejectPushPercentage>30</RejectPushPercentage>
       <MaxStripsInRejectBin>1</MaxStripsInRejectBin>
@@ -865,8 +707,8 @@
     <Pusher>
       <Width>10</Width>
       <Clearance>10</Clearance>
-      <UnloadSpeedPercentage>25</UnloadSpeedPercentage>
-      <LoadSpeedPercentage>20</LoadSpeedPercentage>
+      <UnloadSpeedPercentage>30</UnloadSpeedPercentage>
+      <LoadSpeedPercentage>30</LoadSpeedPercentage>
       <PushStripOffset>0</PushStripOffset>
       <PushCurrentPercentage>100</PushCurrentPercentage>
     </Pusher>
@@ -903,7 +745,7 @@
     <MaxStripsInMagazine>50</MaxStripsInMagazine>
     <MagazineIdReaderType>0</MagazineIdReaderType>
     <UnloadProcessedMagazineAtOffload>true</UnloadProcessedMagazineAtOffload>
-    <EnableFirstStripInspection>false</EnableFirstStripInspection>
+    <EnableFirstStripInspection>0</EnableFirstStripInspection>
     <VacuumHead>
       <VacHeadHeight>186</VacHeadHeight>
       <UpPosition>40</UpPosition>
@@ -962,7 +804,6 @@
           </SearchArea>
           <CheckAllHoles>false</CheckAllHoles>
           <PositionTolerance>2</PositionTolerance>
-          <NextPositionTolerance>2</NextPositionTolerance>
           <ScalingTolerance>0</ScalingTolerance>
           <MinimumScorePercentage>75</MinimumScorePercentage>
         </Algorithm>
@@ -1093,7 +934,7 @@
     <MaxStripsInMagazine>50</MaxStripsInMagazine>
     <MagazineIdReaderType>0</MagazineIdReaderType>
     <UnloadProcessedMagazineAtOffload>true</UnloadProcessedMagazineAtOffload>
-    <EnableFirstStripInspection>false</EnableFirstStripInspection>
+    <EnableFirstStripInspection>0</EnableFirstStripInspection>
     <VacuumHead>
       <VacHeadHeight>186</VacHeadHeight>
       <UpPosition>40</UpPosition>
@@ -1152,7 +993,6 @@
           </SearchArea>
           <CheckAllHoles>false</CheckAllHoles>
           <PositionTolerance>2</PositionTolerance>
-          <NextPositionTolerance>2</NextPositionTolerance>
           <ScalingTolerance>0</ScalingTolerance>
           <MinimumScorePercentage>75</MinimumScorePercentage>
         </Algorithm>
@@ -1287,27 +1127,30 @@
     <BinNr>0</BinNr>
     <AllowedToolIDs>
       <ToolID>
-        <Number>24100</Number>
+        <Number>12164</Number>
+      </ToolID>
+      <ToolID>
+        <Number>19064</Number>
       </ToolID>
     </AllowedToolIDs>
     <Tool>
       <DisableTopToolAirBlow>0</DisableTopToolAirBlow>
       <EnableTopToolAirBlow>-2</EnableTopToolAirBlow>
       <Number>19999</Number>
-      <T1>45</T1>
-      <T2>48.05</T2>
-      <Z1>66</Z1>
-      <L1>7.5</L1>
+      <T1>46.269</T1>
+      <T2>55.527</T2>
+      <Z1>65.6</Z1>
+      <L1>18.18</L1>
       <Up>2</Up>
-      <CenterToFirstSeparationLocationDistance>0</CenterToFirstSeparationLocationDistance>
+      <CenterToFirstSeparationLocationDistance>7</CenterToFirstSeparationLocationDistance>
       <IndexOffsetFirstSepPos>1</IndexOffsetFirstSepPos>
       <ColumnsBtwnStrokes>0</ColumnsBtwnStrokes>
-      <UnclampAngle>155</UnclampAngle>
-      <ClampAngle>155</ClampAngle>
+      <UnclampAngle>150</UnclampAngle>
+      <ClampAngle>150</ClampAngle>
       <EmptyColumnsBtwnLeadframes>2</EmptyColumnsBtwnLeadframes>
       <AdditionalColumnsBtwnLeadframes>false</AdditionalColumnsBtwnLeadframes>
       <ToolSPM>100</ToolSPM>
-      <ToolSpeedPercentage>20</ToolSpeedPercentage>
+      <ToolSpeedPercentage>35</ToolSpeedPercentage>
       <PunchLayout />
       <SwitchablePhases>
         <Enabled>false</Enabled>
@@ -1317,7 +1160,7 @@
       <BinningEnabled>false</BinningEnabled>
       <MaximumRejectPercentage>10</MaximumRejectPercentage>
       <PunchConfig>
-        <NofRows>11</NofRows>
+        <NofRows>15</NofRows>
         <NofColumns>1</NofColumns>
       </PunchConfig>
       <TopToolSafety>
@@ -1354,8 +1197,8 @@
       <ScrapCollectorMaxCounter>100</ScrapCollectorMaxCounter>
     </ScrapBin>
     <DbcOncePerFrame>false</DbcOncePerFrame>
-    <TriggerOffset>0</TriggerOffset>
-    <IgnoreMissingDevices>false</IgnoreMissingDevices>
+    <TriggerOffset>-5</TriggerOffset>
+    <IgnoreMissingDevices>true</IgnoreMissingDevices>
     <PreAlignment>
       <Algorithm xsi:type="PreAlignmentRecipe" Index="0">
         <Name>PreAlignment</Name>
@@ -1376,9 +1219,8 @@
           <Width>1</Width>
           <Height>1</Height>
         </SearchArea>
-        <PositionTolerance>1</PositionTolerance>
-        <PositionToleranceVertical>1.5</PositionToleranceVertical>
-        <ScalingTolerance>5</ScalingTolerance>
+        <PositionTolerance>2.3</PositionTolerance>
+        <ScalingTolerance>0</ScalingTolerance>
         <MinimumScorePercentage>75</MinimumScorePercentage>
         <UseMapHoles>true</UseMapHoles>
         <UseRunnerHoles>false</UseRunnerHoles>
@@ -1386,9 +1228,9 @@
       <IsEnabled>true</IsEnabled>
     </PreAlignment>
     <DeviceInspection>
-      <Algorithm xsi:type="BodyAlignmentRecipe" Index="0">
-        <Name>BodyAlignment1</Name>
-        <UsePreviousResult>false</UsePreviousResult>
+      <Algorithm xsi:type="BodyMeasurementRecipe" Index="0">
+        <Name>BodyMeasurement1</Name>
+        <UsePreviousResult>true</UsePreviousResult>
         <EnableInspection>true</EnableInspection>
         <GrabId>0</GrabId>
         <HasCustomSearchArea>true</HasCustomSearchArea>
@@ -1402,18 +1244,21 @@
             <Ry>0</Ry>
             <Rz>0</Rz>
           </Center>
-          <Width>5</Width>
-          <Height>4.4</Height>
+          <Width>10</Width>
+          <Height>4</Height>
         </SearchArea>
-        <SearchTolerance>2</SearchTolerance>
-        <ScaleTolerance>0.05</ScaleTolerance>
-        <MinimumContrast>40</MinimumContrast>
-        <BlackOnWhite>true</BlackOnWhite>
-        <MinimumScore>0.4</MinimumScore>
+        <NumberOfMeasures>1</NumberOfMeasures>
+        <MeasureLength>1</MeasureLength>
+        <Threshold>25.6</Threshold>
+        <SizeTolerance>1.5</SizeTolerance>
+        <RotationTolerance>1</RotationTolerance>
+        <BodyMustBePresent>false</BodyMustBePresent>
+        <MeasureRotation>false</MeasureRotation>
+        <SearchInwards>false</SearchInwards>
       </Algorithm>
       <Algorithm xsi:type="DambarCheckRecipe" Index="0">
         <Name>DambarCheck1</Name>
-        <UsePreviousResult>false</UsePreviousResult>
+        <UsePreviousResult>true</UsePreviousResult>
         <EnableInspection>true</EnableInspection>
         <GrabId>0</GrabId>
         <HasCustomSearchArea>true</HasCustomSearchArea>
@@ -1427,15 +1272,15 @@
             <Ry>0</Ry>
             <Rz>0</Rz>
           </Center>
-          <Width>5</Width>
-          <Height>4.4</Height>
+          <Width>10</Width>
+          <Height>4</Height>
         </SearchArea>
         <DarkLeads>true</DarkLeads>
         <CheckUncutDambar>false</CheckUncutDambar>
         <Threshold>25.6</Threshold>
         <MeasureProtrusion>false</MeasureProtrusion>
         <ProtrusionTolerance>0.5</ProtrusionTolerance>
-        <MeasuringLineExtension>1.5</MeasuringLineExtension>
+        <MeasuringLineExtension>1</MeasuringLineExtension>
       </Algorithm>
       <IsEnabled>true</IsEnabled>
     </DeviceInspection>
@@ -1468,14 +1313,6 @@
     <RejectVerification>
       <IsEnabled>false</IsEnabled>
     </RejectVerification>
-    <StripPose>
-      <X>0</X>
-      <Y>0</Y>
-      <Z>0</Z>
-      <rX>0</rX>
-      <rY>0</rY>
-      <rZ>0</rZ>
-    </StripPose>
     <Tester>
       <Installed>false</Installed>
       <Enabled>true</Enabled>
@@ -1485,13 +1322,21 @@
       <ColumnsToLPPhase>1</ColumnsToLPPhase>
       <ColumnsToRejectPhase>10</ColumnsToRejectPhase>
     </Tester>
+    <StripPose>
+      <X>0</X>
+      <Y>0</Y>
+      <Z>0</Z>
+      <rX>0</rX>
+      <rY>0</rY>
+      <rZ>0</rZ>
+    </StripPose>
     <DustAspirator>
       <BypassDustAspirator>false</BypassDustAspirator>
+      <ActivateDustAspiratorTimeout>10</ActivateDustAspiratorTimeout>
       <MaxMeasuredFlow>3.93802809715271</MaxMeasuredFlow>
       <MinimumFlowPercentage>70</MinimumFlowPercentage>
       <NrOfLeadframesForAFullDustBin>10000</NrOfLeadframesForAFullDustBin>
       <CleanFilterTime>2</CleanFilterTime>
-      <ActivateDustAspiratorTimeout>10</ActivateDustAspiratorTimeout>
       <DeactivateDustAspiratorTime>1</DeactivateDustAspiratorTime>
     </DustAspirator>
   </Press1>
@@ -1504,27 +1349,30 @@
     <BinNr>0</BinNr>
     <AllowedToolIDs>
       <ToolID>
-        <Number>24101</Number>
+        <Number>66666</Number>
+      </ToolID>
+      <ToolID>
+        <Number>23032</Number>
       </ToolID>
     </AllowedToolIDs>
     <Tool>
       <DisableTopToolAirBlow>0</DisableTopToolAirBlow>
       <EnableTopToolAirBlow>-2</EnableTopToolAirBlow>
       <Number>1</Number>
-      <T1>45</T1>
-      <T2>48.05</T2>
+      <T1>55.842</T1>
+      <T2>55.208</T2>
       <Z1>66</Z1>
-      <L1>7.5</L1>
+      <L1>18.18</L1>
       <Up>2</Up>
-      <CenterToFirstSeparationLocationDistance>0</CenterToFirstSeparationLocationDistance>
+      <CenterToFirstSeparationLocationDistance>7</CenterToFirstSeparationLocationDistance>
       <IndexOffsetFirstSepPos>1</IndexOffsetFirstSepPos>
       <ColumnsBtwnStrokes>0</ColumnsBtwnStrokes>
-      <UnclampAngle>155</UnclampAngle>
-      <ClampAngle>155</ClampAngle>
+      <UnclampAngle>145</UnclampAngle>
+      <ClampAngle>150</ClampAngle>
       <EmptyColumnsBtwnLeadframes>2</EmptyColumnsBtwnLeadframes>
       <AdditionalColumnsBtwnLeadframes>false</AdditionalColumnsBtwnLeadframes>
       <ToolSPM>100</ToolSPM>
-      <ToolSpeedPercentage>20</ToolSpeedPercentage>
+      <ToolSpeedPercentage>25</ToolSpeedPercentage>
       <PunchLayout />
       <SwitchablePhases>
         <Enabled>false</Enabled>
@@ -1534,7 +1382,7 @@
       <BinningEnabled>false</BinningEnabled>
       <MaximumRejectPercentage>10</MaximumRejectPercentage>
       <PunchConfig>
-        <NofRows>11</NofRows>
+        <NofRows>15</NofRows>
         <NofColumns>1</NofColumns>
       </PunchConfig>
       <TopToolSafety>
@@ -1571,8 +1419,8 @@
       <ScrapCollectorMaxCounter>100</ScrapCollectorMaxCounter>
     </ScrapBin>
     <DbcOncePerFrame>false</DbcOncePerFrame>
-    <TriggerOffset>0</TriggerOffset>
-    <IgnoreMissingDevices>false</IgnoreMissingDevices>
+    <TriggerOffset>-5</TriggerOffset>
+    <IgnoreMissingDevices>true</IgnoreMissingDevices>
     <PreAlignment>
       <Algorithm xsi:type="PreAlignmentRecipe" Index="0">
         <Name>PreAlignment</Name>
@@ -1593,9 +1441,8 @@
           <Width>1</Width>
           <Height>1</Height>
         </SearchArea>
-        <PositionTolerance>1.5</PositionTolerance>
-        <PositionToleranceVertical>1.5</PositionToleranceVertical>
-        <ScalingTolerance>1</ScalingTolerance>
+        <PositionTolerance>2</PositionTolerance>
+        <ScalingTolerance>0</ScalingTolerance>
         <MinimumScorePercentage>75</MinimumScorePercentage>
         <UseMapHoles>true</UseMapHoles>
         <UseRunnerHoles>false</UseRunnerHoles>
@@ -1603,12 +1450,12 @@
       <IsEnabled>true</IsEnabled>
     </PreAlignment>
     <DeviceInspection>
-      <Algorithm xsi:type="BodyAlignmentRecipe" Index="0">
-        <Name>BodyAlignment1</Name>
+      <Algorithm xsi:type="BodyMeasurementRecipe" Index="0">
+        <Name>BodyMeasurement1</Name>
         <UsePreviousResult>true</UsePreviousResult>
         <EnableInspection>true</EnableInspection>
         <GrabId>0</GrabId>
-        <HasCustomSearchArea>false</HasCustomSearchArea>
+        <HasCustomSearchArea>true</HasCustomSearchArea>
         <SearchArea>
           <Center>
             <X>0</X>
@@ -1619,21 +1466,24 @@
             <Ry>0</Ry>
             <Rz>0</Rz>
           </Center>
-          <Width>5</Width>
+          <Width>10</Width>
           <Height>4</Height>
         </SearchArea>
-        <SearchTolerance>2</SearchTolerance>
-        <ScaleTolerance>0.05</ScaleTolerance>
-        <MinimumContrast>40</MinimumContrast>
-        <BlackOnWhite>true</BlackOnWhite>
-        <MinimumScore>0.3</MinimumScore>
+        <NumberOfMeasures>1</NumberOfMeasures>
+        <MeasureLength>1</MeasureLength>
+        <Threshold>25.6</Threshold>
+        <SizeTolerance>1.5</SizeTolerance>
+        <RotationTolerance>1</RotationTolerance>
+        <BodyMustBePresent>false</BodyMustBePresent>
+        <MeasureRotation>false</MeasureRotation>
+        <SearchInwards>false</SearchInwards>
       </Algorithm>
       <Algorithm xsi:type="LeadInspectRecipe" Index="0">
         <Name>LeadInspect1</Name>
-        <UsePreviousResult>false</UsePreviousResult>
+        <UsePreviousResult>true</UsePreviousResult>
         <EnableInspection>true</EnableInspection>
         <GrabId>0</GrabId>
-        <HasCustomSearchArea>false</HasCustomSearchArea>
+        <HasCustomSearchArea>true</HasCustomSearchArea>
         <SearchArea>
           <Center>
             <X>0</X>
@@ -1644,23 +1494,23 @@
             <Ry>0</Ry>
             <Rz>0</Rz>
           </Center>
-          <Width>10.3</Width>
-          <Height>7.5</Height>
+          <Width>10</Width>
+          <Height>4</Height>
         </SearchArea>
         <CameraHeight>250</CameraHeight>
-        <Threshold>17.92</Threshold>
+        <Threshold>25.6</Threshold>
         <Sigma>1</Sigma>
         <DarkLeads>true</DarkLeads>
         <LeadWidthTolerance>0.1</LeadWidthTolerance>
         <LeadPitchTolerance>0.1</LeadPitchTolerance>
-        <LeadTipTolerance>0.5</LeadTipTolerance>
-        <LeadTipTipTolerance>0.1</LeadTipTipTolerance>
-        <LeadBentTolerance>0.25</LeadBentTolerance>
+        <LeadTipTolerance>0.15</LeadTipTolerance>
+        <LeadTipTipTolerance>0.25</LeadTipTipTolerance>
+        <LeadBentTolerance>0.2</LeadBentTolerance>
         <MeasureWidth>false</MeasureWidth>
-        <MeasureTip>false</MeasureTip>
-        <MeasurePitch>true</MeasurePitch>
+        <MeasureTip>true</MeasureTip>
+        <MeasurePitch>false</MeasurePitch>
         <MeasureBentLead>true</MeasureBentLead>
-        <MeasureTipTip>false</MeasureTipTip>
+        <MeasureTipTip>true</MeasureTipTip>
         <CheckContamination>false</CheckContamination>
         <LeadsAreFormed>true</LeadsAreFormed>
       </Algorithm>
@@ -1695,14 +1545,6 @@
     <RejectVerification>
       <IsEnabled>false</IsEnabled>
     </RejectVerification>
-    <StripPose>
-      <X>0</X>
-      <Y>0</Y>
-      <Z>0</Z>
-      <rX>0</rX>
-      <rY>0</rY>
-      <rZ>0</rZ>
-    </StripPose>
     <Tester>
       <Installed>false</Installed>
       <Enabled>true</Enabled>
@@ -1712,13 +1554,21 @@
       <ColumnsToLPPhase>1</ColumnsToLPPhase>
       <ColumnsToRejectPhase>10</ColumnsToRejectPhase>
     </Tester>
+    <StripPose>
+      <X>0</X>
+      <Y>0</Y>
+      <Z>0</Z>
+      <rX>0</rX>
+      <rY>0</rY>
+      <rZ>0</rZ>
+    </StripPose>
     <DustAspirator>
       <BypassDustAspirator>false</BypassDustAspirator>
+      <ActivateDustAspiratorTimeout>10</ActivateDustAspiratorTimeout>
       <MaxMeasuredFlow>10</MaxMeasuredFlow>
       <MinimumFlowPercentage>70</MinimumFlowPercentage>
       <NrOfLeadframesForAFullDustBin>10000</NrOfLeadframesForAFullDustBin>
       <CleanFilterTime>2</CleanFilterTime>
-      <ActivateDustAspiratorTimeout>10</ActivateDustAspiratorTimeout>
       <DeactivateDustAspiratorTime>1</DeactivateDustAspiratorTime>
     </DustAspirator>
   </Press2>
@@ -1812,14 +1662,6 @@
     <RejectVerification>
       <IsEnabled>false</IsEnabled>
     </RejectVerification>
-    <StripPose>
-      <X>0</X>
-      <Y>0</Y>
-      <Z>0</Z>
-      <rX>0</rX>
-      <rY>0</rY>
-      <rZ>0</rZ>
-    </StripPose>
     <Tester>
       <Installed>false</Installed>
       <Enabled>true</Enabled>
@@ -1829,13 +1671,21 @@
       <ColumnsToLPPhase>1</ColumnsToLPPhase>
       <ColumnsToRejectPhase>10</ColumnsToRejectPhase>
     </Tester>
+    <StripPose>
+      <X>0</X>
+      <Y>0</Y>
+      <Z>0</Z>
+      <rX>0</rX>
+      <rY>0</rY>
+      <rZ>0</rZ>
+    </StripPose>
     <DustAspirator>
       <BypassDustAspirator>true</BypassDustAspirator>
+      <ActivateDustAspiratorTimeout>10</ActivateDustAspiratorTimeout>
       <MaxMeasuredFlow>0</MaxMeasuredFlow>
       <MinimumFlowPercentage>70</MinimumFlowPercentage>
       <NrOfLeadframesForAFullDustBin>10000</NrOfLeadframesForAFullDustBin>
       <CleanFilterTime>2</CleanFilterTime>
-      <ActivateDustAspiratorTimeout>10</ActivateDustAspiratorTimeout>
       <DeactivateDustAspiratorTime>1</DeactivateDustAspiratorTime>
     </DustAspirator>
   </Press3>
@@ -1929,14 +1779,6 @@
     <RejectVerification>
       <IsEnabled>false</IsEnabled>
     </RejectVerification>
-    <StripPose>
-      <X>0</X>
-      <Y>0</Y>
-      <Z>0</Z>
-      <rX>0</rX>
-      <rY>0</rY>
-      <rZ>0</rZ>
-    </StripPose>
     <Tester>
       <Installed>false</Installed>
       <Enabled>true</Enabled>
@@ -1946,13 +1788,21 @@
       <ColumnsToLPPhase>1</ColumnsToLPPhase>
       <ColumnsToRejectPhase>10</ColumnsToRejectPhase>
     </Tester>
+    <StripPose>
+      <X>0</X>
+      <Y>0</Y>
+      <Z>0</Z>
+      <rX>0</rX>
+      <rY>0</rY>
+      <rZ>0</rZ>
+    </StripPose>
     <DustAspirator>
       <BypassDustAspirator>true</BypassDustAspirator>
+      <ActivateDustAspiratorTimeout>10</ActivateDustAspiratorTimeout>
       <MaxMeasuredFlow>0</MaxMeasuredFlow>
       <MinimumFlowPercentage>70</MinimumFlowPercentage>
       <NrOfLeadframesForAFullDustBin>10000</NrOfLeadframesForAFullDustBin>
       <CleanFilterTime>2</CleanFilterTime>
-      <ActivateDustAspiratorTimeout>10</ActivateDustAspiratorTimeout>
       <DeactivateDustAspiratorTime>1</DeactivateDustAspiratorTime>
     </DustAspirator>
   </Press4>
@@ -1962,16 +1812,16 @@
       <StripTakeOverPosition>40</StripTakeOverPosition>
       <WheelPosition>36</WheelPosition>
       <HomingSensorPosition>61</HomingSensorPosition>
-      <DistanceBetweenStrips>1</DistanceBetweenStrips>
     </AlignStrip>
     <HookStripOnBeam>
       <InfeedStopperPosition>152.065</InfeedStopperPosition>
       <PreLoadSafetyDistance>10</PreLoadSafetyDistance>
+      <DistanceBetweenStrips>25</DistanceBetweenStrips>
       <FrontColumnsPickup>1</FrontColumnsPickup>
       <WalkingBeamColumns>0</WalkingBeamColumns>
       <Velocity>1500</Velocity>
       <MaxAcceleration>6000</MaxAcceleration>
-      <SingleStripMode>false</SingleStripMode>
+      <InfeedStopperDistance>1</InfeedStopperDistance>
       <UnclampWheelAtPickPosition>false</UnclampWheelAtPickPosition>
     </HookStripOnBeam>
     <ProcessColumn>
@@ -1984,7 +1834,6 @@
       <PickAngle>310</PickAngle>
       <TopToolAirDisableAngle>220</TopToolAirDisableAngle>
       <TopToolAirEnableAngle>0</TopToolAirEnableAngle>
-      <InPositionWindow>15</InPositionWindow>
       <BypassDustAspirator>false</BypassDustAspirator>
     </ProcessColumn>
     <Tool>
@@ -2047,11 +1896,11 @@
     </Bulk>
     <DustAspirator>
       <BypassDustAspirator>false</BypassDustAspirator>
+      <ActivateDustAspiratorTimeout>10</ActivateDustAspiratorTimeout>
       <MaxMeasuredFlow>5</MaxMeasuredFlow>
       <MinimumFlowPercentage>70</MinimumFlowPercentage>
       <NrOfLeadframesForAFullDustBin>10000</NrOfLeadframesForAFullDustBin>
       <CleanFilterTime>2</CleanFilterTime>
-      <ActivateDustAspiratorTimeout>10</ActivateDustAspiratorTimeout>
       <DeactivateDustAspiratorTime>1</DeactivateDustAspiratorTime>
     </DustAspirator>
   </PowerPress1>
@@ -2061,16 +1910,16 @@
       <StripTakeOverPosition>40</StripTakeOverPosition>
       <WheelPosition>36</WheelPosition>
       <HomingSensorPosition>61</HomingSensorPosition>
-      <DistanceBetweenStrips>1</DistanceBetweenStrips>
     </AlignStrip>
     <HookStripOnBeam>
       <InfeedStopperPosition>152.065</InfeedStopperPosition>
       <PreLoadSafetyDistance>10</PreLoadSafetyDistance>
+      <DistanceBetweenStrips>25</DistanceBetweenStrips>
       <FrontColumnsPickup>1</FrontColumnsPickup>
       <WalkingBeamColumns>0</WalkingBeamColumns>
       <Velocity>1500</Velocity>
       <MaxAcceleration>6000</MaxAcceleration>
-      <SingleStripMode>false</SingleStripMode>
+      <InfeedStopperDistance>1</InfeedStopperDistance>
       <UnclampWheelAtPickPosition>false</UnclampWheelAtPickPosition>
     </HookStripOnBeam>
     <ProcessColumn>
@@ -2083,7 +1932,6 @@
       <PickAngle>310</PickAngle>
       <TopToolAirDisableAngle>220</TopToolAirDisableAngle>
       <TopToolAirEnableAngle>0</TopToolAirEnableAngle>
-      <InPositionWindow>15</InPositionWindow>
       <BypassDustAspirator>false</BypassDustAspirator>
     </ProcessColumn>
     <Tool>
@@ -2146,11 +1994,11 @@
     </Bulk>
     <DustAspirator>
       <BypassDustAspirator>false</BypassDustAspirator>
+      <ActivateDustAspiratorTimeout>10</ActivateDustAspiratorTimeout>
       <MaxMeasuredFlow>5</MaxMeasuredFlow>
       <MinimumFlowPercentage>70</MinimumFlowPercentage>
       <NrOfLeadframesForAFullDustBin>10000</NrOfLeadframesForAFullDustBin>
       <CleanFilterTime>2</CleanFilterTime>
-      <ActivateDustAspiratorTimeout>10</ActivateDustAspiratorTimeout>
       <DeactivateDustAspiratorTime>1</DeactivateDustAspiratorTime>
     </DustAspirator>
   </PowerPress2>
@@ -2173,15 +2021,6 @@
         <UnloadFromFillPosition>0</UnloadFromFillPosition>
       </SwapTubes>
     </TubeHandler>
-    <DustAspirator>
-      <BypassDustAspirator>false</BypassDustAspirator>
-      <MaxMeasuredFlow>5</MaxMeasuredFlow>
-      <MinimumFlowPercentage>70</MinimumFlowPercentage>
-      <NrOfLeadframesForAFullDustBin>10000</NrOfLeadframesForAFullDustBin>
-      <CleanFilterTime>2</CleanFilterTime>
-      <ActivateDustAspiratorTimeout>10</ActivateDustAspiratorTimeout>
-      <DeactivateDustAspiratorTime>1</DeactivateDustAspiratorTime>
-    </DustAspirator>
   </TubeOffloader>
   <SeparatorFCL>
     <BridgeMode>false</BridgeMode>
@@ -2189,46 +2028,46 @@
     <DustAspiratorBypassed>false</DustAspiratorBypassed>
     <Tool>
       <Number>0</Number>
-      <T1>26.058</T1>
-      <T2>25.55</T2>
-      <Z1>93.3</Z1>
-      <L1>11.058</L1>
-      <Up>8</Up>
+      <T1>27.858</T1>
+      <T2>24.683</T2>
+      <Z1>92.8</Z1>
+      <L1>9.633</L1>
+      <Up>3</Up>
       <CenterToFirstSeparationLocationDistance>0</CenterToFirstSeparationLocationDistance>
       <IndexOffsetFirstSepPos>0</IndexOffsetFirstSepPos>
-      <ColumnsBtwnStrokes>0</ColumnsBtwnStrokes>
+      <ColumnsBtwnStrokes>1</ColumnsBtwnStrokes>
       <EmptyColumnsBtwnLeadframes>2</EmptyColumnsBtwnLeadframes>
-      <AdditionalColumnsBtwnLeadframes>false</AdditionalColumnsBtwnLeadframes>
+      <AdditionalColumnsBtwnLeadframes>true</AdditionalColumnsBtwnLeadframes>
       <SeparationPatternEnabled>false</SeparationPatternEnabled>
       <PunchConfig>
-        <NofRows>11</NofRows>
-        <NofColumns>8</NofColumns>
+        <NofRows>15</NofRows>
+        <NofColumns>3</NofColumns>
       </PunchConfig>
     </Tool>
     <AllowedToolIDs>
       <ToolID>
-        <Number>24102</Number>
+        <Number>23033</Number>
       </ToolID>
     </AllowedToolIDs>
     <Bufferplate>
       <Size>
-        <X>80</X>
-        <Y>120</Y>
+        <X>100</X>
+        <Y>180</Y>
       </Size>
       <Thickness>0</Thickness>
       <TopMoldHeight>0</TopMoldHeight>
       <BottomMoldHeight>0</BottomMoldHeight>
       <DeviceMap>
         <Offset>
-          <X>0</X>
-          <Y>0</Y>
+          <X>16</X>
+          <Y>-5.5</Y>
         </Offset>
         <Count>
-          <X>4</X>
+          <X>1</X>
           <Y>1</Y>
         </Count>
         <Pitch>
-          <X>15.3</X>
+          <X>0</X>
           <Y>0</Y>
         </Pitch>
       </DeviceMap>
@@ -2252,11 +2091,11 @@
           <Y>0</Y>
         </Offset>
         <Count>
-          <X>2</X>
-          <Y>11</Y>
+          <X>3</X>
+          <Y>15</Y>
         </Count>
         <Pitch>
-          <X>6</X>
+          <X>25.2</X>
           <Y>10.85</Y>
         </Pitch>
         <Interdition>
@@ -2272,8 +2111,8 @@
       </DeviceGroup>
     </Bufferplate>
     <BufferplatePose>
-      <X>1.5</X>
-      <Y>5.5</Y>
+      <X>0</X>
+      <Y>0</Y>
       <Z>0</Z>
       <Space>ModuleBase</Space>
       <Rx>0</Rx>
@@ -2298,7 +2137,7 @@
       <HasCustomSearchArea>true</HasCustomSearchArea>
       <SearchArea>
         <Center>
-          <X>7</X>
+          <X>0</X>
           <Y>0</Y>
           <Z>0</Z>
           <Space />
@@ -2306,33 +2145,33 @@
           <Ry>0</Ry>
           <Rz>0</Rz>
         </Center>
-        <Width>4</Width>
-        <Height>4</Height>
+        <Width>10</Width>
+        <Height>6</Height>
       </SearchArea>
       <LightOnDark>true</LightOnDark>
-      <Threshold>50</Threshold>
-      <MinimumSize>10</MinimumSize>
+      <Threshold>53.76</Threshold>
+      <MinimumSize>5</MinimumSize>
       <MaximumSize>1000</MaximumSize>
       <ExpectedHoleCount>1</ExpectedHoleCount>
     </CarrierInspection>
     <PickFromTool>
-      <HeadToolPosX>5.6950001</HeadToolPosX>
+      <HeadToolPosX>5.4590001</HeadToolPosX>
       <HeadToolPosRz>0</HeadToolPosRz>
-      <VacuumOnTime>300</VacuumOnTime>
-      <HeadBufferClearPosX>8.2470006</HeadBufferClearPosX>
+      <VacuumOnTime>150</VacuumOnTime>
+      <HeadBufferClearPosX>11.0590009</HeadBufferClearPosX>
       <VisionPreTriggerDistance>20</VisionPreTriggerDistance>
-      <DisableAirblow>true</DisableAirblow>
+      <DisableAirblow>false</DisableAirblow>
     </PickFromTool>
     <PlaceOnBuffer>
-      <HeadBufferTeachPosX>177.0870056</HeadBufferTeachPosX>
+      <HeadBufferTeachPosX>179.1369934</HeadBufferTeachPosX>
       <HeadBufferFirstUnloadPosX>0</HeadBufferFirstUnloadPosX>
       <HeadBufferPosRz>0</HeadBufferPosRz>
       <PitchCorrectionActive>true</PitchCorrectionActive>
-      <BufferPlateID>2</BufferPlateID>
+      <BufferPlateID>1</BufferPlateID>
       <VacuumOffTime>50</VacuumOffTime>
       <BlowOffTime>50</BlowOffTime>
-      <WaitAfterHeadDownTime>80</WaitAfterHeadDownTime>
-      <WaitAfterBlowOffTime>80</WaitAfterBlowOffTime>
+      <WaitAfterHeadDownTime>150</WaitAfterHeadDownTime>
+      <WaitAfterBlowOffTime>200</WaitAfterBlowOffTime>
     </PlaceOnBuffer>
     <PickFromBuffer>
       <HeadBufferPos>-150</HeadBufferPos>
@@ -2343,21 +2182,22 @@
       <AlwaysPickAllRows>false</AlwaysPickAllRows>
     </PickFromBuffer>
     <PushInTube>
-      <HeadBufferPos>-134.9960021</HeadBufferPos>
-      <HeadBufferClearPos>-1.716</HeadBufferClearPos>
-      <VisionPreTriggerDistance>30</VisionPreTriggerDistance>
-      <BufferToProductsInTubeDistance>134.3999938</BufferToProductsInTubeDistance>
-      <BufferToTubeClearDistance>134.3999938</BufferToTubeClearDistance>
-      <BufferToPushOutTubeDistance>134.3999938</BufferToPushOutTubeDistance>
+      <HeadBufferPos>-138.0740051</HeadBufferPos>
+      <HeadBufferClearPos>-3</HeadBufferClearPos>
+      <VisionPreTriggerDistance>0</VisionPreTriggerDistance>
+      <BufferToProductsInTubeDistance>135.1499938</BufferToProductsInTubeDistance>
+      <BufferToTubeClearDistance>135.1499938</BufferToTubeClearDistance>
+      <BufferToPushOutTubeDistance>135.1499938</BufferToPushOutTubeDistance>
       <CleaningInterval>0</CleaningInterval>
       <NofCleaningCycles>3</NofCleaningCycles>
       <WaitTimeBeforePush>50</WaitTimeBeforePush>
-      <WaitTimeAfterPush>100</WaitTimeAfterPush>
+      <WaitTimeAfterPush>50</WaitTimeAfterPush>
       <WaitTimeAfterAirBlowOff>50</WaitTimeAfterAirBlowOff>
       <PushRetry>true</PushRetry>
       <PushMinimumColumns>1</PushMinimumColumns>
-      <DeviceClearance>4.9499998</DeviceClearance>
-      <PushSpeedPercentage>80</PushSpeedPercentage>
+      <DeviceClearance>1.8999999</DeviceClearance>
+      <PushSpeedPercentage>100</PushSpeedPercentage>
+      <BufferToTrackColumnDivideFactor>1</BufferToTrackColumnDivideFactor>
     </PushInTube>
     <PlaceOnTray>
       <HeadTrayPos>0</HeadTrayPos>
@@ -2374,7 +2214,6 @@
       <Vacuum>
         <CombineVacuumRows>3</CombineVacuumRows>
       </Vacuum>
-      <NofColumns>4</NofColumns>
     </OffloadHead>
     <OffloadScrap>
       <ScrapBinMaxCounter>0</ScrapBinMaxCounter>
@@ -2385,17 +2224,14 @@
       <Y>0</Y>
       <Z>0</Z>
       <rX>0</rX>
-      <rY>3.1415926535897931</rY>
+      <rY>0</rY>
       <rZ>0</rZ>
     </StripPose>
-    <SeparateDevices>
-      <ToolSpeed>100</ToolSpeed>
-    </SeparateDevices>
   </SeparatorFCL>
   <MultiChannelFCL>
     <MultiChannel>
       <Size>
-        <X>527</X>
+        <X>523</X>
         <Y>180</Y>
       </Size>
       <Thickness>0</Thickness>
@@ -2407,8 +2243,8 @@
           <Y>0</Y>
         </Offset>
         <Count>
-          <X>80</X>
-          <Y>11</Y>
+          <X>48</X>
+          <Y>15</Y>
         </Count>
         <Pitch>
           <X>0</X>
@@ -2462,30 +2298,23 @@
       <NrOfMultiChannelsUntilEmpty>1</NrOfMultiChannelsUntilEmpty>
     </EmptyStack>
     <Transport>
-      <FillPosition>-423.7999877</FillPosition>
+      <FillPosition>-421.3770141</FillPosition>
       <DistanceBetweenGrippers>205</DistanceBetweenGrippers>
-      <UseGrippers>true</UseGrippers>
-      <NumberOfCups>4</NumberOfCups>
     </Transport>
     <LoadEmptyMultiChannel>
       <LoadPosition>-3</LoadPosition>
-      <BufferPosition>-200</BufferPosition>
-      <UseBufferClamping>false</UseBufferClamping>
-      <CodeReaderEnabled>false</CodeReaderEnabled>
-      <ReadCodePosition>-50</ReadCodePosition>
-      <LoadAllTubesBeforeValidate>false</LoadAllTubesBeforeValidate>
-      <MaxSuccessiveReadFailures>1</MaxSuccessiveReadFailures>
-      <MaxSuccessiveRejects>1</MaxSuccessiveRejects>
+      <PositionToActivateCup1>-10</PositionToActivateCup1>
     </LoadEmptyMultiChannel>
     <OffloadFullMultiChannel>
-      <StackPosition>-424.7600097</StackPosition>
+      <StackPosition>-420.2000122</StackPosition>
+      <StackWidth>180</StackWidth>
     </OffloadFullMultiChannel>
     <PrepareToFill>
       <ShowCenteringError>false</ShowCenteringError>
       <OrientationCheckPresent>false</OrientationCheckPresent>
     </PrepareToFill>
     <ProcessMultiChannel>
-      <NumberOfOrientationRetry>20</NumberOfOrientationRetry>
+      <NumberOfOrientationRetry>3</NumberOfOrientationRetry>
     </ProcessMultiChannel>
   </MultiChannelFCL>
   <TrayHandlerFCL>
@@ -2541,12 +2370,10 @@
     <Infeed>
       <Gripper>
         <HomePosition>55</HomePosition>
+        <MaximumRange>200</MaximumRange>
         <DistanceToMaxPosition>10</DistanceToMaxPosition>
         <DistanceToMinPosition>10</DistanceToMinPosition>
         <MoveSpeedPercentage>100</MoveSpeedPercentage>
-        <ReturnSpeedPercentage>100</ReturnSpeedPercentage>
-        <AlignSpeedPercentage>100</AlignSpeedPercentage>
-        <PushCurrentMode>1</PushCurrentMode>
       </Gripper>
       <GripperTransport>
         <LeftGripperDistance>20</LeftGripperDistance>
@@ -2554,19 +2381,14 @@
         <MinClampArea>5</MinClampArea>
         <ClampOnEdge>false</ClampOnEdge>
       </GripperTransport>
-      <Clamp>
-        <UsedClampPattern>1</UsedClampPattern>
-      </Clamp>
     </Infeed>
     <Outfeed>
       <Gripper>
         <HomePosition>55</HomePosition>
+        <MaximumRange>200</MaximumRange>
         <DistanceToMaxPosition>10</DistanceToMaxPosition>
         <DistanceToMinPosition>10</DistanceToMinPosition>
         <MoveSpeedPercentage>100</MoveSpeedPercentage>
-        <ReturnSpeedPercentage>100</ReturnSpeedPercentage>
-        <AlignSpeedPercentage>100</AlignSpeedPercentage>
-        <PushCurrentMode>1</PushCurrentMode>
       </Gripper>
       <GripperTransport>
         <LeftGripperDistance>20</LeftGripperDistance>
@@ -2574,9 +2396,6 @@
         <MinClampArea>5</MinClampArea>
         <ClampOnEdge>false</ClampOnEdge>
       </GripperTransport>
-      <Clamp>
-        <UsedClampPattern>1</UsedClampPattern>
-      </Clamp>
     </Outfeed>
     <Rotator>
       <HomeAxisEveryStart>false</HomeAxisEveryStart>
@@ -2590,24 +2409,7 @@
     <TurnTable>
       <TableDiameter>120</TableDiameter>
       <TableCenterPosition>274</TableCenterPosition>
-      <Bypassed>false</Bypassed>
     </TurnTable>
-    <InspectStrip>
-      <StripIdReaderEnabled>false</StripIdReaderEnabled>
-      <GrabSettings />
-      <LeadframeInspection>
-        <IsEnabled>false</IsEnabled>
-      </LeadframeInspection>
-      <RemainingRunnerInspection>
-        <IsEnabled>false</IsEnabled>
-      </RemainingRunnerInspection>
-      <DeviceInspection>
-        <IsEnabled>false</IsEnabled>
-      </DeviceInspection>
-      <PreAlignment>
-        <IsEnabled>false</IsEnabled>
-      </PreAlignment>
-    </InspectStrip>
     <LoadStripPose>
       <X>0</X>
       <Y>0</Y>
@@ -2616,124 +2418,7 @@
       <rY>0</rY>
       <rZ>0</rZ>
     </LoadStripPose>
-    <UnloadStripPose>
-      <X>0</X>
-      <Y>0</Y>
-      <Z>0</Z>
-      <rX>0</rX>
-      <rY>0</rY>
-      <rZ>0</rZ>
-    </UnloadStripPose>
   </Rotator1>
-  <Rotator2>
-    <VerifyStrip />
-    <OutfeedStrip />
-    <LoadStrip>
-      <StripTakeOverPosition>95</StripTakeOverPosition>
-    </LoadStrip>
-    <AlignStrip>
-      <AlignSensorPosition>185</AlignSensorPosition>
-      <PreAlignOffset>-10</PreAlignOffset>
-    </AlignStrip>
-    <LoadTurnTable>
-      <UnloadPosition>270</UnloadPosition>
-    </LoadTurnTable>
-    <RotateStrip />
-    <UnloadStrip>
-      <UnitWidth>548</UnitWidth>
-      <ExtraUnloadDistance>0</ExtraUnloadDistance>
-      <MinDistanceFollowing>20</MinDistanceFollowing>
-    </UnloadStrip>
-    <OutfeedLoadStrip>
-      <OutfeedSensorPosition>450</OutfeedSensorPosition>
-    </OutfeedLoadStrip>
-    <Infeed>
-      <Gripper>
-        <HomePosition>55</HomePosition>
-        <DistanceToMaxPosition>10</DistanceToMaxPosition>
-        <DistanceToMinPosition>-10</DistanceToMinPosition>
-        <MoveSpeedPercentage>100</MoveSpeedPercentage>
-        <ReturnSpeedPercentage>100</ReturnSpeedPercentage>
-        <AlignSpeedPercentage>100</AlignSpeedPercentage>
-        <PushCurrentMode>1</PushCurrentMode>
-      </Gripper>
-      <GripperTransport>
-        <LeftGripperDistance>20</LeftGripperDistance>
-        <RightGripperDistance>20</RightGripperDistance>
-        <MinClampArea>5</MinClampArea>
-        <ClampOnEdge>false</ClampOnEdge>
-      </GripperTransport>
-      <Clamp>
-        <UsedClampPattern>1</UsedClampPattern>
-      </Clamp>
-    </Infeed>
-    <Outfeed>
-      <Gripper>
-        <HomePosition>55</HomePosition>
-        <DistanceToMaxPosition>10</DistanceToMaxPosition>
-        <DistanceToMinPosition>-10</DistanceToMinPosition>
-        <MoveSpeedPercentage>100</MoveSpeedPercentage>
-        <ReturnSpeedPercentage>100</ReturnSpeedPercentage>
-        <AlignSpeedPercentage>100</AlignSpeedPercentage>
-        <PushCurrentMode>1</PushCurrentMode>
-      </Gripper>
-      <GripperTransport>
-        <LeftGripperDistance>20</LeftGripperDistance>
-        <RightGripperDistance>20</RightGripperDistance>
-        <MinClampArea>5</MinClampArea>
-        <ClampOnEdge>false</ClampOnEdge>
-      </GripperTransport>
-      <Clamp>
-        <UsedClampPattern>1</UsedClampPattern>
-      </Clamp>
-    </Outfeed>
-    <Rotator>
-      <HomeAxisEveryStart>false</HomeAxisEveryStart>
-      <TurnCWAngle>1570</TurnCWAngle>
-      <TurnCCWAngle>0</TurnCCWAngle>
-      <SpeedPercentage>100</SpeedPercentage>
-      <HomeSpeedPercentage>50</HomeSpeedPercentage>
-      <TurnPushCurrentPct>50</TurnPushCurrentPct>
-      <TurnPushOffset>25</TurnPushOffset>
-    </Rotator>
-    <TurnTable>
-      <TableDiameter>120</TableDiameter>
-      <TableCenterPosition>274</TableCenterPosition>
-      <Bypassed>false</Bypassed>
-    </TurnTable>
-    <InspectStrip>
-      <StripIdReaderEnabled>false</StripIdReaderEnabled>
-      <GrabSettings />
-      <LeadframeInspection>
-        <IsEnabled>false</IsEnabled>
-      </LeadframeInspection>
-      <RemainingRunnerInspection>
-        <IsEnabled>false</IsEnabled>
-      </RemainingRunnerInspection>
-      <DeviceInspection>
-        <IsEnabled>false</IsEnabled>
-      </DeviceInspection>
-      <PreAlignment>
-        <IsEnabled>false</IsEnabled>
-      </PreAlignment>
-    </InspectStrip>
-    <LoadStripPose>
-      <X>0</X>
-      <Y>0</Y>
-      <Z>0</Z>
-      <rX>0</rX>
-      <rY>0</rY>
-      <rZ>0</rZ>
-    </LoadStripPose>
-    <UnloadStripPose>
-      <X>0</X>
-      <Y>0</Y>
-      <Z>0</Z>
-      <rX>0</rX>
-      <rY>0</rY>
-      <rZ>0</rZ>
-    </UnloadStripPose>
-  </Rotator2>
   <Magazine mode="Production" id="XHD" revision="2" rev-date="2024-08-23T10:52:40.101581+01:00">
     <SlotCount>20</SlotCount>
     <BottomLastDistance>11.6</BottomLastDistance>
@@ -3875,7 +3560,6 @@
                 <Height>1</Height>
               </SearchArea>
               <PositionTolerance>2</PositionTolerance>
-              <PositionToleranceVertical>2</PositionToleranceVertical>
               <ScalingTolerance>0</ScalingTolerance>
               <MinimumScorePercentage>75</MinimumScorePercentage>
               <UseMapHoles>true</UseMapHoles>
@@ -4012,7 +3696,6 @@
                 <Height>1</Height>
               </SearchArea>
               <PositionTolerance>2</PositionTolerance>
-              <PositionToleranceVertical>2</PositionToleranceVertical>
               <ScalingTolerance>0</ScalingTolerance>
               <MinimumScorePercentage>75</MinimumScorePercentage>
               <UseMapHoles>true</UseMapHoles>
@@ -4196,10 +3879,6 @@
     </Elevator1>
     <ShowEmptyOffloadDeckAssist>false</ShowEmptyOffloadDeckAssist>
     <PickMagazineSequence>MagazineWaitForGripper</PickMagazineSequence>
-    <FreescaleRFIDReader>
-      <Enabled>false</Enabled>
-      <ReadTimeout>5000</ReadTimeout>
-    </FreescaleRFIDReader>
   </SlottedMagazineOffloader>
   <SMEMA>
     <UnloadStrip>
@@ -4220,404 +3899,25 @@
       <rZ>0</rZ>
     </StripPose>
   </SMEMA>
-  <SmemaBuffer>
-    <UnloadStrip>
-      <StripUnloadPosition>0</StripUnloadPosition>
-    </UnloadStrip>
-    <WalkingBeamTrack>
-      <CheckSensor1>true</CheckSensor1>
-      <CheckSensor2>true</CheckSensor2>
-      <CheckSensor3>true</CheckSensor3>
-      <CheckSensor4>true</CheckSensor4>
-    </WalkingBeamTrack>
-    <StripPose>
-      <X>0</X>
-      <Y>0</Y>
-      <Z>0</Z>
-      <rX>0</rX>
-      <rY>0</rY>
-      <rZ>0</rZ>
-    </StripPose>
-  </SmemaBuffer>
-  <StripHandler1 xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <StripHandler1>
     <VerifyMarking>false</VerifyMarking>
     <ScanStripId>false</ScanStripId>
     <CheckOnlyDotCode>false</CheckOnlyDotCode>
     <EnableInspections>false</EnableInspections>
-    <OutputOrientation>OutputOrientationTopDown</OutputOrientation>
+    <OutputOrientation>OutputOrientationTopUp</OutputOrientation>
     <TransportGripper>
       <PickOnEdge>true</PickOnEdge>
-      <TransportSpeedPercentage>80</TransportSpeedPercentage>
-      <PushSpeedPercentage>50</PushSpeedPercentage>
-      <OutfeedSpeedPercentage>30</OutfeedSpeedPercentage>
+      <TransportSpeedPercentage>20</TransportSpeedPercentage>
+      <PushSpeedPercentage>20</PushSpeedPercentage>
       <PushForceControlCurrentMode>Normal</PushForceControlCurrentMode>
-      <GripperWidthHomeToLeft>25</GripperWidthHomeToLeft>
-      <GripperWidthHomeToRight>95</GripperWidthHomeToRight>
-      <EnablePushStrip>true</EnablePushStrip>
     </TransportGripper>
     <Alignment>
-      <SpeedPercentage>10</SpeedPercentage>
+      <SpeedPercentage>20</SpeedPercentage>
       <AlignBeforeInspect>true</AlignBeforeInspect>
     </Alignment>
     <Flipper>
-      <SpeedPercentage>20</SpeedPercentage>
+      <SpeedPercentage>100</SpeedPercentage>
     </Flipper>
-    <RejectBehaviour>
-      <RejectBehaviourConfiguration>
-        <RejectBehaviour>Assist</RejectBehaviour>
-        <Id>PreAlignmentInspection</Id>
-        <Name>Pre Alignment</Name>
-        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
-      </RejectBehaviourConfiguration>
-      <RejectBehaviourConfiguration>
-        <RejectBehaviour>Assist</RejectBehaviour>
-        <Id>OrientationCheckInspection</Id>
-        <Name>Orientation Check</Name>
-        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
-      </RejectBehaviourConfiguration>
-      <RejectBehaviourConfiguration>
-        <RejectBehaviour>Assist</RejectBehaviour>
-        <Id>StripIdentificationInspection</Id>
-        <Name>Strip Identification</Name>
-        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
-      </RejectBehaviourConfiguration>
-      <RejectBehaviourConfiguration>
-        <RejectBehaviour>Assist</RejectBehaviour>
-        <Id>CaptureObjectsInspection</Id>
-        <Name>Capture Objects</Name>
-        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
-      </RejectBehaviourConfiguration>
-      <RejectBehaviourConfiguration>
-        <RejectBehaviour>Assist</RejectBehaviour>
-        <Id>PackageSizeInspection</Id>
-        <Name>Package Size</Name>
-        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
-      </RejectBehaviourConfiguration>
-      <RejectBehaviourConfiguration>
-        <RejectBehaviour>Assist</RejectBehaviour>
-        <Id>MarkInspection</Id>
-        <Name>Mark</Name>
-        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
-      </RejectBehaviourConfiguration>
-      <RejectBehaviourConfiguration>
-        <RejectBehaviour>Assist</RejectBehaviour>
-        <Id>RejectMarkerInspection</Id>
-        <Name>Reject Marker</Name>
-        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
-      </RejectBehaviourConfiguration>
-      <RejectBehaviourConfiguration>
-        <RejectBehaviour>Assist</RejectBehaviour>
-        <Id>LeadInspection</Id>
-        <Name>Lead</Name>
-        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
-      </RejectBehaviourConfiguration>
-      <RejectBehaviourConfiguration>
-        <RejectBehaviour>Assist</RejectBehaviour>
-        <Id>StripIdProcess</Id>
-        <Name>Read strip id code</Name>
-        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
-      </RejectBehaviourConfiguration>
-    </RejectBehaviour>
-    <MarkInspectionSettings>
-      <Enabled>false</Enabled>
-      <MarkInspectionSettings xmlns="Besi.Vision.Inspections.MarkInspection">
-        <Name />
-        <AcquirementSettingsList>
-          <AcquirementSettings>
-            <ShutterTime>10</ShutterTime>
-            <Gain>0</Gain>
-            <RequiredImageMode>MONO</RequiredImageMode>
-            <LightSettings />
-          </AcquirementSettings>
-        </AcquirementSettingsList>
-        <AcquirementSettings>
-          <ShutterTime>10</ShutterTime>
-          <Gain>0</Gain>
-          <RequiredImageMode>MONO</RequiredImageMode>
-          <LightSettings />
-        </AcquirementSettings>
-        <IsEnabled>
-          <Name />
-          <Unit />
-          <Description />
-          <Range>
-            <Min>false</Min>
-            <Max>false</Max>
-          </Range>
-          <Value>false</Value>
-        </IsEnabled>
-        <UseRawImage>false</UseRawImage>
-        <PreProcessorSettings />
-        <SkipAdvancedOverlays>false</SkipAdvancedOverlays>
-        <ProcessSettings>
-          <DataMatrixProcessSettings>
-            <BlockIndex>
-              <Name />
-              <Unit>#</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>255</Max>
-              </Range>
-              <Value>0</Value>
-            </BlockIndex>
-            <Text>
-              <Name />
-              <Unit />
-              <Description />
-              <Range />
-              <Value>ABCDE</Value>
-            </Text>
-            <SearchAreaX>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </SearchAreaX>
-            <SearchAreaY>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </SearchAreaY>
-            <SearchAreaWidth>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>3</Value>
-            </SearchAreaWidth>
-            <SearchAreaHeight>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>3</Value>
-            </SearchAreaHeight>
-            <IsEnabled>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>true</Value>
-            </IsEnabled>
-          </DataMatrixProcessSettings>
-          <VerifyTextShapeProcessSettings />
-          <RejectMarkerProcessSettings>
-            <AnchorPointX>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </AnchorPointX>
-            <AnchorPointY>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </AnchorPointY>
-            <AnchorPointPhi>
-              <Name />
-              <Unit>deg</Unit>
-              <Description />
-              <Range>
-                <Min>-180</Min>
-                <Max>180</Max>
-              </Range>
-              <Value>0</Value>
-            </AnchorPointPhi>
-            <SearchTolerance>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>0.5</Value>
-            </SearchTolerance>
-            <ContentAlignmentValue>MiddleCenter</ContentAlignmentValue>
-            <FontName>
-              <Name />
-              <Unit />
-              <Description />
-              <Range />
-              <Value>Arial</Value>
-            </FontName>
-            <FontWeight>
-              <Name />
-              <Unit>#</Unit>
-              <Description />
-              <Range>
-                <Min>100</Min>
-                <Max>800</Max>
-              </Range>
-              <Value>400</Value>
-            </FontWeight>
-            <CharHeight>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>1</Value>
-            </CharHeight>
-            <CharWidth>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>0.8</Value>
-            </CharWidth>
-            <CharPitch>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>0.8</Value>
-            </CharPitch>
-            <MinimumContrast>
-              <Name />
-              <Unit>%</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>15</Value>
-            </MinimumContrast>
-            <AllowedTextDeformation>
-              <Name />
-              <Unit>%</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>10</Value>
-            </AllowedTextDeformation>
-            <Text>
-              <Name />
-              <Unit />
-              <Description />
-              <Range />
-              <Value>XX</Value>
-            </Text>
-            <IsEnabled>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>true</Value>
-            </IsEnabled>
-          </RejectMarkerProcessSettings>
-          <OCRFindTextOnly>false</OCRFindTextOnly>
-        </ProcessSettings>
-        <ValidationSettings>
-          <DataMatrixValidationSettings>
-            <BlockIndex>
-              <Name />
-              <Unit>#</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>255</Max>
-              </Range>
-              <Value>0</Value>
-            </BlockIndex>
-            <SkipContentCheck>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>false</Value>
-            </SkipContentCheck>
-          </DataMatrixValidationSettings>
-          <VerifyTextShapeValidationSettings />
-          <VerifyRejectMarking>
-            <MarkerIndicatesDefect>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>true</Value>
-            </MarkerIndicatesDefect>
-            <MinimumScore>
-              <Name />
-              <Unit>%</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>80</Value>
-            </MinimumScore>
-          </VerifyRejectMarking>
-          <MaximumIncorrectMarkingsAllowed>
-            <Name />
-            <Unit>%</Unit>
-            <Description />
-            <Range>
-              <Min>0</Min>
-              <Max>100</Max>
-            </Range>
-            <Value>0</Value>
-          </MaximumIncorrectMarkingsAllowed>
-        </ValidationSettings>
-      </MarkInspectionSettings>
-      <MaxDevicesWithWrongCharactersPercentage>
-        <Name />
-        <Unit>%</Unit>
-        <Description />
-        <Range>
-          <Min>0</Min>
-          <Max>20</Max>
-        </Range>
-        <Value>0</Value>
-      </MaxDevicesWithWrongCharactersPercentage>
-    </MarkInspectionSettings>
   </StripHandler1>
   <StripHandler2>
     <VerifyMarking>false</VerifyMarking>
@@ -4629,11 +3929,7 @@
       <PickOnEdge>true</PickOnEdge>
       <TransportSpeedPercentage>100</TransportSpeedPercentage>
       <PushSpeedPercentage>100</PushSpeedPercentage>
-      <OutfeedSpeedPercentage>30</OutfeedSpeedPercentage>
       <PushForceControlCurrentMode>Normal</PushForceControlCurrentMode>
-      <GripperWidthHomeToLeft>25</GripperWidthHomeToLeft>
-      <GripperWidthHomeToRight>95</GripperWidthHomeToRight>
-      <EnablePushStrip>true</EnablePushStrip>
     </TransportGripper>
     <Alignment>
       <SpeedPercentage>100</SpeedPercentage>
@@ -4642,307 +3938,6 @@
     <Flipper>
       <SpeedPercentage>100</SpeedPercentage>
     </Flipper>
-    <RejectBehaviour />
-    <MarkInspectionSettings>
-      <Enabled>false</Enabled>
-      <MarkInspectionSettings xmlns="Besi.Vision.Inspections.MarkInspection">
-        <Name />
-        <AcquirementSettingsList>
-          <AcquirementSettings>
-            <ShutterTime>10</ShutterTime>
-            <Gain>0</Gain>
-            <RequiredImageMode>MONO</RequiredImageMode>
-            <LightSettings />
-          </AcquirementSettings>
-        </AcquirementSettingsList>
-        <AcquirementSettings>
-          <ShutterTime>10</ShutterTime>
-          <Gain>0</Gain>
-          <RequiredImageMode>MONO</RequiredImageMode>
-          <LightSettings />
-        </AcquirementSettings>
-        <IsEnabled>
-          <Name />
-          <Unit />
-          <Description />
-          <Range>
-            <Min>false</Min>
-            <Max>false</Max>
-          </Range>
-          <Value>false</Value>
-        </IsEnabled>
-        <UseRawImage>false</UseRawImage>
-        <PreProcessorSettings />
-        <SkipAdvancedOverlays>false</SkipAdvancedOverlays>
-        <ProcessSettings>
-          <DataMatrixProcessSettings>
-            <BlockIndex>
-              <Name />
-              <Unit>#</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>255</Max>
-              </Range>
-              <Value>0</Value>
-            </BlockIndex>
-            <Text>
-              <Name />
-              <Unit />
-              <Description />
-              <Range />
-              <Value>ABCDE</Value>
-            </Text>
-            <SearchAreaX>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </SearchAreaX>
-            <SearchAreaY>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </SearchAreaY>
-            <SearchAreaWidth>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>3</Value>
-            </SearchAreaWidth>
-            <SearchAreaHeight>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>3</Value>
-            </SearchAreaHeight>
-            <IsEnabled>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>true</Value>
-            </IsEnabled>
-          </DataMatrixProcessSettings>
-          <VerifyTextShapeProcessSettings />
-          <RejectMarkerProcessSettings>
-            <AnchorPointX>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </AnchorPointX>
-            <AnchorPointY>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </AnchorPointY>
-            <AnchorPointPhi>
-              <Name />
-              <Unit>deg</Unit>
-              <Description />
-              <Range>
-                <Min>-180</Min>
-                <Max>180</Max>
-              </Range>
-              <Value>0</Value>
-            </AnchorPointPhi>
-            <SearchTolerance>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>0.5</Value>
-            </SearchTolerance>
-            <ContentAlignmentValue>MiddleCenter</ContentAlignmentValue>
-            <FontName>
-              <Name />
-              <Unit />
-              <Description />
-              <Range />
-              <Value>Arial</Value>
-            </FontName>
-            <FontWeight>
-              <Name />
-              <Unit>#</Unit>
-              <Description />
-              <Range>
-                <Min>100</Min>
-                <Max>800</Max>
-              </Range>
-              <Value>400</Value>
-            </FontWeight>
-            <CharHeight>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>1</Value>
-            </CharHeight>
-            <CharWidth>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>0.8</Value>
-            </CharWidth>
-            <CharPitch>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>0.8</Value>
-            </CharPitch>
-            <MinimumContrast>
-              <Name />
-              <Unit>%</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>15</Value>
-            </MinimumContrast>
-            <AllowedTextDeformation>
-              <Name />
-              <Unit>%</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>10</Value>
-            </AllowedTextDeformation>
-            <Text>
-              <Name />
-              <Unit />
-              <Description />
-              <Range />
-              <Value>XX</Value>
-            </Text>
-            <IsEnabled>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>true</Value>
-            </IsEnabled>
-          </RejectMarkerProcessSettings>
-          <OCRFindTextOnly>false</OCRFindTextOnly>
-        </ProcessSettings>
-        <ValidationSettings>
-          <DataMatrixValidationSettings>
-            <BlockIndex>
-              <Name />
-              <Unit>#</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>255</Max>
-              </Range>
-              <Value>0</Value>
-            </BlockIndex>
-            <SkipContentCheck>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>false</Value>
-            </SkipContentCheck>
-          </DataMatrixValidationSettings>
-          <VerifyTextShapeValidationSettings />
-          <VerifyRejectMarking>
-            <MarkerIndicatesDefect>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>true</Value>
-            </MarkerIndicatesDefect>
-            <MinimumScore>
-              <Name />
-              <Unit>%</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>80</Value>
-            </MinimumScore>
-          </VerifyRejectMarking>
-          <MaximumIncorrectMarkingsAllowed>
-            <Name />
-            <Unit>%</Unit>
-            <Description />
-            <Range>
-              <Min>0</Min>
-              <Max>100</Max>
-            </Range>
-            <Value>0</Value>
-          </MaximumIncorrectMarkingsAllowed>
-        </ValidationSettings>
-      </MarkInspectionSettings>
-      <MaxDevicesWithWrongCharactersPercentage>
-        <Name />
-        <Unit>%</Unit>
-        <Description />
-        <Range>
-          <Min>0</Min>
-          <Max>20</Max>
-        </Range>
-        <Value>0</Value>
-      </MaxDevicesWithWrongCharactersPercentage>
-    </MarkInspectionSettings>
   </StripHandler2>
   <StripHandler3>
     <VerifyMarking>false</VerifyMarking>
@@ -4954,11 +3949,7 @@
       <PickOnEdge>true</PickOnEdge>
       <TransportSpeedPercentage>100</TransportSpeedPercentage>
       <PushSpeedPercentage>100</PushSpeedPercentage>
-      <OutfeedSpeedPercentage>30</OutfeedSpeedPercentage>
       <PushForceControlCurrentMode>Normal</PushForceControlCurrentMode>
-      <GripperWidthHomeToLeft>25</GripperWidthHomeToLeft>
-      <GripperWidthHomeToRight>95</GripperWidthHomeToRight>
-      <EnablePushStrip>true</EnablePushStrip>
     </TransportGripper>
     <Alignment>
       <SpeedPercentage>100</SpeedPercentage>
@@ -4967,307 +3958,6 @@
     <Flipper>
       <SpeedPercentage>100</SpeedPercentage>
     </Flipper>
-    <RejectBehaviour />
-    <MarkInspectionSettings>
-      <Enabled>false</Enabled>
-      <MarkInspectionSettings xmlns="Besi.Vision.Inspections.MarkInspection">
-        <Name />
-        <AcquirementSettingsList>
-          <AcquirementSettings>
-            <ShutterTime>10</ShutterTime>
-            <Gain>0</Gain>
-            <RequiredImageMode>MONO</RequiredImageMode>
-            <LightSettings />
-          </AcquirementSettings>
-        </AcquirementSettingsList>
-        <AcquirementSettings>
-          <ShutterTime>10</ShutterTime>
-          <Gain>0</Gain>
-          <RequiredImageMode>MONO</RequiredImageMode>
-          <LightSettings />
-        </AcquirementSettings>
-        <IsEnabled>
-          <Name />
-          <Unit />
-          <Description />
-          <Range>
-            <Min>false</Min>
-            <Max>false</Max>
-          </Range>
-          <Value>false</Value>
-        </IsEnabled>
-        <UseRawImage>false</UseRawImage>
-        <PreProcessorSettings />
-        <SkipAdvancedOverlays>false</SkipAdvancedOverlays>
-        <ProcessSettings>
-          <DataMatrixProcessSettings>
-            <BlockIndex>
-              <Name />
-              <Unit>#</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>255</Max>
-              </Range>
-              <Value>0</Value>
-            </BlockIndex>
-            <Text>
-              <Name />
-              <Unit />
-              <Description />
-              <Range />
-              <Value>ABCDE</Value>
-            </Text>
-            <SearchAreaX>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </SearchAreaX>
-            <SearchAreaY>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </SearchAreaY>
-            <SearchAreaWidth>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>3</Value>
-            </SearchAreaWidth>
-            <SearchAreaHeight>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>3</Value>
-            </SearchAreaHeight>
-            <IsEnabled>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>true</Value>
-            </IsEnabled>
-          </DataMatrixProcessSettings>
-          <VerifyTextShapeProcessSettings />
-          <RejectMarkerProcessSettings>
-            <AnchorPointX>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </AnchorPointX>
-            <AnchorPointY>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </AnchorPointY>
-            <AnchorPointPhi>
-              <Name />
-              <Unit>deg</Unit>
-              <Description />
-              <Range>
-                <Min>-180</Min>
-                <Max>180</Max>
-              </Range>
-              <Value>0</Value>
-            </AnchorPointPhi>
-            <SearchTolerance>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>0.5</Value>
-            </SearchTolerance>
-            <ContentAlignmentValue>MiddleCenter</ContentAlignmentValue>
-            <FontName>
-              <Name />
-              <Unit />
-              <Description />
-              <Range />
-              <Value>Arial</Value>
-            </FontName>
-            <FontWeight>
-              <Name />
-              <Unit>#</Unit>
-              <Description />
-              <Range>
-                <Min>100</Min>
-                <Max>800</Max>
-              </Range>
-              <Value>400</Value>
-            </FontWeight>
-            <CharHeight>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>1</Value>
-            </CharHeight>
-            <CharWidth>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>0.8</Value>
-            </CharWidth>
-            <CharPitch>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>0.8</Value>
-            </CharPitch>
-            <MinimumContrast>
-              <Name />
-              <Unit>%</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>15</Value>
-            </MinimumContrast>
-            <AllowedTextDeformation>
-              <Name />
-              <Unit>%</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>10</Value>
-            </AllowedTextDeformation>
-            <Text>
-              <Name />
-              <Unit />
-              <Description />
-              <Range />
-              <Value>XX</Value>
-            </Text>
-            <IsEnabled>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>true</Value>
-            </IsEnabled>
-          </RejectMarkerProcessSettings>
-          <OCRFindTextOnly>false</OCRFindTextOnly>
-        </ProcessSettings>
-        <ValidationSettings>
-          <DataMatrixValidationSettings>
-            <BlockIndex>
-              <Name />
-              <Unit>#</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>255</Max>
-              </Range>
-              <Value>0</Value>
-            </BlockIndex>
-            <SkipContentCheck>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>false</Value>
-            </SkipContentCheck>
-          </DataMatrixValidationSettings>
-          <VerifyTextShapeValidationSettings />
-          <VerifyRejectMarking>
-            <MarkerIndicatesDefect>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>true</Value>
-            </MarkerIndicatesDefect>
-            <MinimumScore>
-              <Name />
-              <Unit>%</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>80</Value>
-            </MinimumScore>
-          </VerifyRejectMarking>
-          <MaximumIncorrectMarkingsAllowed>
-            <Name />
-            <Unit>%</Unit>
-            <Description />
-            <Range>
-              <Min>0</Min>
-              <Max>100</Max>
-            </Range>
-            <Value>0</Value>
-          </MaximumIncorrectMarkingsAllowed>
-        </ValidationSettings>
-      </MarkInspectionSettings>
-      <MaxDevicesWithWrongCharactersPercentage>
-        <Name />
-        <Unit>%</Unit>
-        <Description />
-        <Range>
-          <Min>0</Min>
-          <Max>20</Max>
-        </Range>
-        <Value>0</Value>
-      </MaxDevicesWithWrongCharactersPercentage>
-    </MarkInspectionSettings>
   </StripHandler3>
   <StripHandler4>
     <VerifyMarking>false</VerifyMarking>
@@ -5279,11 +3969,7 @@
       <PickOnEdge>true</PickOnEdge>
       <TransportSpeedPercentage>100</TransportSpeedPercentage>
       <PushSpeedPercentage>100</PushSpeedPercentage>
-      <OutfeedSpeedPercentage>30</OutfeedSpeedPercentage>
       <PushForceControlCurrentMode>Normal</PushForceControlCurrentMode>
-      <GripperWidthHomeToLeft>25</GripperWidthHomeToLeft>
-      <GripperWidthHomeToRight>95</GripperWidthHomeToRight>
-      <EnablePushStrip>true</EnablePushStrip>
     </TransportGripper>
     <Alignment>
       <SpeedPercentage>100</SpeedPercentage>
@@ -5292,317 +3978,6 @@
     <Flipper>
       <SpeedPercentage>100</SpeedPercentage>
     </Flipper>
-    <RejectBehaviour />
-    <MarkInspectionSettings>
-      <Enabled>false</Enabled>
-      <MarkInspectionSettings xmlns="Besi.Vision.Inspections.MarkInspection">
-        <Name />
-        <AcquirementSettingsList>
-          <AcquirementSettings>
-            <ShutterTime>10</ShutterTime>
-            <Gain>0</Gain>
-            <RequiredImageMode>MONO</RequiredImageMode>
-            <LightSettings />
-          </AcquirementSettings>
-        </AcquirementSettingsList>
-        <AcquirementSettings>
-          <ShutterTime>10</ShutterTime>
-          <Gain>0</Gain>
-          <RequiredImageMode>MONO</RequiredImageMode>
-          <LightSettings />
-        </AcquirementSettings>
-        <IsEnabled>
-          <Name />
-          <Unit />
-          <Description />
-          <Range>
-            <Min>false</Min>
-            <Max>false</Max>
-          </Range>
-          <Value>false</Value>
-        </IsEnabled>
-        <UseRawImage>false</UseRawImage>
-        <PreProcessorSettings />
-        <SkipAdvancedOverlays>false</SkipAdvancedOverlays>
-        <ProcessSettings>
-          <DataMatrixProcessSettings>
-            <BlockIndex>
-              <Name />
-              <Unit>#</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>255</Max>
-              </Range>
-              <Value>0</Value>
-            </BlockIndex>
-            <Text>
-              <Name />
-              <Unit />
-              <Description />
-              <Range />
-              <Value>ABCDE</Value>
-            </Text>
-            <SearchAreaX>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </SearchAreaX>
-            <SearchAreaY>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </SearchAreaY>
-            <SearchAreaWidth>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>3</Value>
-            </SearchAreaWidth>
-            <SearchAreaHeight>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>3</Value>
-            </SearchAreaHeight>
-            <IsEnabled>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>true</Value>
-            </IsEnabled>
-          </DataMatrixProcessSettings>
-          <VerifyTextShapeProcessSettings />
-          <RejectMarkerProcessSettings>
-            <AnchorPointX>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </AnchorPointX>
-            <AnchorPointY>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>-1000</Min>
-                <Max>1000</Max>
-              </Range>
-              <Value>0</Value>
-            </AnchorPointY>
-            <AnchorPointPhi>
-              <Name />
-              <Unit>deg</Unit>
-              <Description />
-              <Range>
-                <Min>-180</Min>
-                <Max>180</Max>
-              </Range>
-              <Value>0</Value>
-            </AnchorPointPhi>
-            <SearchTolerance>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>0.5</Value>
-            </SearchTolerance>
-            <ContentAlignmentValue>MiddleCenter</ContentAlignmentValue>
-            <FontName>
-              <Name />
-              <Unit />
-              <Description />
-              <Range />
-              <Value>Arial</Value>
-            </FontName>
-            <FontWeight>
-              <Name />
-              <Unit>#</Unit>
-              <Description />
-              <Range>
-                <Min>100</Min>
-                <Max>800</Max>
-              </Range>
-              <Value>400</Value>
-            </FontWeight>
-            <CharHeight>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>1</Value>
-            </CharHeight>
-            <CharWidth>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>0.8</Value>
-            </CharWidth>
-            <CharPitch>
-              <Name />
-              <Unit>mm</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>0.8</Value>
-            </CharPitch>
-            <MinimumContrast>
-              <Name />
-              <Unit>%</Unit>
-              <Description />
-              <Range>
-                <Min>0.1</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>15</Value>
-            </MinimumContrast>
-            <AllowedTextDeformation>
-              <Name />
-              <Unit>%</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>10</Value>
-            </AllowedTextDeformation>
-            <Text>
-              <Name />
-              <Unit />
-              <Description />
-              <Range />
-              <Value>XX</Value>
-            </Text>
-            <IsEnabled>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>true</Value>
-            </IsEnabled>
-          </RejectMarkerProcessSettings>
-          <OCRFindTextOnly>false</OCRFindTextOnly>
-        </ProcessSettings>
-        <ValidationSettings>
-          <DataMatrixValidationSettings>
-            <BlockIndex>
-              <Name />
-              <Unit>#</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>255</Max>
-              </Range>
-              <Value>0</Value>
-            </BlockIndex>
-            <SkipContentCheck>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>false</Value>
-            </SkipContentCheck>
-          </DataMatrixValidationSettings>
-          <VerifyTextShapeValidationSettings />
-          <VerifyRejectMarking>
-            <MarkerIndicatesDefect>
-              <Name />
-              <Unit />
-              <Description />
-              <Range>
-                <Min>false</Min>
-                <Max>false</Max>
-              </Range>
-              <Value>true</Value>
-            </MarkerIndicatesDefect>
-            <MinimumScore>
-              <Name />
-              <Unit>%</Unit>
-              <Description />
-              <Range>
-                <Min>0</Min>
-                <Max>100</Max>
-              </Range>
-              <Value>80</Value>
-            </MinimumScore>
-          </VerifyRejectMarking>
-          <MaximumIncorrectMarkingsAllowed>
-            <Name />
-            <Unit>%</Unit>
-            <Description />
-            <Range>
-              <Min>0</Min>
-              <Max>100</Max>
-            </Range>
-            <Value>0</Value>
-          </MaximumIncorrectMarkingsAllowed>
-        </ValidationSettings>
-      </MarkInspectionSettings>
-      <MaxDevicesWithWrongCharactersPercentage>
-        <Name />
-        <Unit>%</Unit>
-        <Description />
-        <Range>
-          <Min>0</Min>
-          <Max>20</Max>
-        </Range>
-        <Value>0</Value>
-      </MaxDevicesWithWrongCharactersPercentage>
-    </MarkInspectionSettings>
   </StripHandler4>
-  <SlottedMagazineFrontLoader>
-    <ProductRecipeSettings>
-      <ReadMagazineCode>false</ReadMagazineCode>
-    </ProductRecipeSettings>
-  </SlottedMagazineFrontLoader>
-  <SlottedMagazineFrontOffloader>
-    <ProductRecipeSettings>
-      <ReadMagazineCode>false</ReadMagazineCode>
-    </ProductRecipeSettings>
-  </SlottedMagazineFrontOffloader>
   <DriveConfiguration />
 </Product>

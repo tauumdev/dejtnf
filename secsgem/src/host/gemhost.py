@@ -106,10 +106,11 @@ class SecsGemHost(secsgem.gem.GemHostHandler):
 
     def _on_state_wait_cra(self, _):
         super()._on_state_wait_cra(_)
+        state = self.communication_state.current.name
         print("On wait cra - Communication state: ",
               self.communication_state.current.name)
         self.mqtt_client.client.publish(
-            f"equipments/status/communication_state/{self.equipment_name}", self.communication_state.current.name)
+            f"equipments/status/communication_state/{self.equipment_name}", state, retain=True)
 
     def _on_state_communicating(self, _):
         super()._on_state_communicating(_)
@@ -118,7 +119,7 @@ class SecsGemHost(secsgem.gem.GemHostHandler):
               state)
 
         self.mqtt_client.client.publish(
-            f"equipments/status/communication_state/{self.equipment_name}", state)
+            f"equipments/status/communication_state/{self.equipment_name}", state, retain=True)
         if state == "COMMUNICATING":
             # initial subscribe lot control
             threading.Timer(
@@ -126,10 +127,11 @@ class SecsGemHost(secsgem.gem.GemHostHandler):
 
     def on_connection_closed(self, _):
         super().on_connection_closed(_)
+        state = self.communication_state.current.name
         print("On closed - Communication state: ",
               self.communication_state.current.name)
         self.mqtt_client.client.publish(
-            f"equipments/status/communication_state/{self.equipment_name}", self.communication_state.current.name)
+            f"equipments/status/communication_state/{self.equipment_name}", state, retain=True)
 
     def on_s01f14(self, handle, message):
         logger.info("received s01f14: %s", self.equipment_name)

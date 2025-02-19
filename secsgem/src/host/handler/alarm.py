@@ -29,9 +29,6 @@ class HandlerAlarm:
             5, 2)(ACKC5.ACCEPTED), message.header.system)
         decode = self.gemhost.settings.streams_functions.decode(message)
 
-        # self.gemhost.mqtt_client.client.publish(
-        #     f"equipments/status/alarm/{self.gemhost.equipment_name}", f"ALID: {decode.ALID.get()} ALCD: {decode.ALCD.get()} ALTX: {decode.ALTX.get()}")
-
         alid = decode.ALID.get()
         alcd = decode.ALCD.get()
         altx = decode.ALTX.get().strip()

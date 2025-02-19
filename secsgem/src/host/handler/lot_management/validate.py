@@ -27,7 +27,7 @@ class ValidateLot:
         lot_info = LotInformation(self.lot_id)
         if not lot_info.lot_data:
             # print("Lot data not found")
-            return "Lot data not found"
+            return lot_info.message
         get_field = lot_info.get_field_value(
             ["LOT PARAMETERS", "SASSYPACKAGE", "LOT_STATUS", "ON_OPERATION", "OPERATION_CODE"])
 
@@ -44,6 +44,7 @@ class ValidateLot:
 
         if lot_parameters != self.lot_id:
             # print("Lot ID mismatch")
+            print(lot_parameters, self.lot_id)
             return "Lot ID mismatch"
 
         if not package_code:
@@ -63,7 +64,8 @@ class ValidateLot:
 
         # validate option lot status
         if equipment_config.data_with_selection_code.options.use_lot_hold:
-            if lot_status != "RUN":
+            # if lot_status != "RUN":
+            if lot_status in ["HOLD", "HELD"]:
                 # print("Lot is on hold")
                 return "Lot is on hold"
 

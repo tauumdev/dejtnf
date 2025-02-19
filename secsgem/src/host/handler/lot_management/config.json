@@ -46,9 +46,9 @@
                         "recipe_name": "64L_TQFP_10x10",
                         "product_name": " 64L TQFP 10x10",
                         "options": {
-                            "use_operation_code": true,
-                            "use_on_operation": true,
-                            "use_lot_hold": true
+                            "use_operation_code": false,
+                            "use_on_operation": false,
+                            "use_lot_hold": false
                         }
                     }
                 ]

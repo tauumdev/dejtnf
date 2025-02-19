@@ -1,5 +1,7 @@
 from cmd import Cmd
 import json
+import shlex
+
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.host.gemhost import SecsGemHost
@@ -353,7 +355,9 @@ class ControlCli(Cmd):
             print("Invalid arguments")
             print("Usage: pp_delete <pp_id>")
             return
-        ppids = [int(p) for p in arg.split(",")]
+
+        ppids = [p for p in arg.split(",")]
+
         print(self.gem_host.secs_control.pp_delete(ppids))
 
     def do_pp_select(self, arg: str):
@@ -366,3 +370,66 @@ class ControlCli(Cmd):
             print("Usage: pp_select <pp_id>")
             return
         print(self.gem_host.secs_control.pp_select(arg))
+
+    # remote command
+    def do_send_remote_command(self, arg: str):
+        """
+        Send remote command
+        Usage: send_remote_command <rcmd> <cpname1> <cpval1> [<cpname2> <cpval2> ...]
+        Sample: send_remote_command PP-SELECT PPName1 SOIC PPName2 LQFP
+                send_remote_command STOP
+                send_remote_command PP-SELECT "PPName1 SOIC" "PPName2 LQFP"
+        """
+        args = shlex.split(arg)
+        if len(args) < 1:
+            print("Invalid arguments")
+            print(
+                "Usage: send_remote_command <rcmd> <cpname1> <cpval1> [<cpname2> <cpval2> ...]")
+            return
+
+        rcmd = args[0]
+        cp_pairs = []
+
+        if len(args) > 1:
+            for i in range(1, len(args), 2):
+                if i + 1 < len(args):
+                    cpname = args[i]
+                    cpval = args[i + 1]
+                    cp_pairs.append({"CPNAME": cpname, "CPVAL": cpval})
+                else:
+                    print("Invalid arguments: cpname without cpval")
+                    return
+
+        print(self.gem_host.secs_control.send_remote_command(rcmd, cp_pairs))
+
+    def do_send_enhanched_remote_command(self, arg: str):
+        """
+        Send enhanced remote command
+        Usage: send_enhanched_remote_command <objspec> <rcmd> <cpname1> <cepval1> [<cpname2> <cepval2> ...]
+        Sample: send_enhanched_remote_command OBJ-1 PP-SELECT PPName1 SOIC PPName2 LQFP
+        """
+        args = shlex.split(arg)
+        if len(args) < 3:
+            print("Invalid arguments")
+            print(
+                "Usage: send_enhanched_remote_command <objspec> <rcmd> <cpname1> <cepval1> [<cpname2> <cepval2> ...]")
+            return
+
+        objspec = args[0]
+        rcmd = args[1]
+        cp_pairs = []
+
+        if len(args) > 2:
+            for i in range(2, len(args), 2):
+                if i + 1 < len(args):
+                    cpname = args[i]
+                    cepval = args[i + 1]
+                    cp_pairs.append({"CPNAME": cpname, "CEPVAL": cepval})
+                else:
+                    print("Invalid arguments: cpname without cepval")
+                    return
+
+        # result = self.send_enhanched_remote_command(objspec, rcmd, cp_pairs)
+        result = self.gem_host.secs_control.send_enhanched_remote_command(
+            objspec, rcmd, cp_pairs)
+        print(result)

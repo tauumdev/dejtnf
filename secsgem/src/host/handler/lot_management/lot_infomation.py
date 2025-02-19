@@ -17,6 +17,8 @@ class LotInformation:
 
     def __init__(self, lot_id: str):
         self.lot_id = lot_id
+        self.status = False
+        self.message = None
         self.lot_data = None
         self.field_by_name = {}
         self.field_by_desc = {}
@@ -30,8 +32,9 @@ class LotInformation:
         try:
             self.lot_data = lot_info_api.get_lot_info([self.lot_id])
             if self.lot_data and isinstance(self.lot_data, list):
-                status = self.lot_data[0].get("Status", False)
-                if not status:
+                self.status = self.lot_data[0].get("Status", False)
+                self.message = self.lot_data[0].get("Message", None)
+                if not self.status:
                     logger.error(
                         "Failed to retrieve Lot Information for %s", self.lot_id)
                     self.lot_data = None
@@ -51,8 +54,8 @@ class LotInformation:
         Args:
             field_names: Single field name or list of field names
         """
-        if not self.lot_data:
-            return {"status": False, "message": "Data not loaded", "data": None}
+        if not self.status:
+            return {"status": False, "message": self.message, "data": None}
 
         field_names = [field_names] if isinstance(
             field_names, str) else field_names
@@ -67,8 +70,8 @@ class LotInformation:
         Args:
             descriptions: Single description or list of descriptions
         """
-        if not self.lot_data:
-            return {"status": False, "message": "Data not loaded", "data": None}
+        if not self.status:
+            return {"status": False, "message": self.message, "data": None}
 
         descriptions = [descriptions] if isinstance(
             descriptions, str) else descriptions
