@@ -83,7 +83,7 @@ class EquipmentConfig:
                     product_name=data["product_name"],
                     options=options
                 )
-                logger.info(self.data_with_selection_code)
+                # logger.info(self.data_with_selection_code)
 
     def _generate_selection_code(self, selection_rules: str) -> str:
         """Create selection code based on selection rules"""

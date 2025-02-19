@@ -101,13 +101,25 @@ class HandlerEvent:
 
         if is_recipe_request:
 
-            print(f"{self.gem_host.equipment_name} request recipe with lot: {lot_id}")
+            # print(f"{self.gem_host.equipment_name} request recipe with lot: {lot_id}")
+            logger.info("Request recipe for lot: %s, %s",
+                        lot_id, self.gem_host.equipment_name)
             recipe = validate_lot.get_recipe_by_lot()
             if isinstance(recipe, dict):
                 # Send recipe to equipment
                 recipe_name = recipe.get("recipe_name")
-                print("Recipe found: ", recipe_name)
-                print("Continue to send recipe")
+                # print("Recipe found: ", recipe_name)
+                logger.info("Recipe found: %s, for %s",
+                            recipe_name, self.gem_host.equipment_name)
+
+                if self.gem_host.equipment_model == "FCL":
+                    # self.gem_host.secs_control.pp_select(recipe_name)
+                    threading.Timer(0.5, self.gem_host.secs_control.pp_select, args=(
+                        recipe_name,)).start()
+
+                elif self.gem_host.equipment_model == "FCLX":
+                    # check lot active
+                    print("Check lot active for FCLX")
                 return
 
             # Recipe not found

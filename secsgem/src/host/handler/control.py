@@ -723,7 +723,7 @@ class SecsControl(Cmd):
         logger.info("Receive PPID: %s, PPBODY: %s from: %s",
                     ppid, ppbody, self.gem_host.equipment_name)
         if not ppid or not ppbody:
-            print("PPID or PPBODY is empty")
+            logger.warning("PPID or PPBODY is empty")
             return
 
         self._store_recipe(ppid, ppbody)
@@ -749,7 +749,12 @@ class SecsControl(Cmd):
 
             response_code = self.gem_host.settings.streams_functions.decode(
                 response).get()
+            logger.info("PP Delete PPID: %s on %s", ppids,
+                        self.gem_host.equipment_name)
+            logger.info("PP Delete HCACK: %s",
+                        ackc7.get(response_code, f"Unknown code: {response_code}"))
             return ackc7.get(response_code, f"Unknown code: {response_code}")
+        logger.warning("PP Delete No response")
         return "No response"
 
     def pp_send(self, ppid: str):
@@ -776,40 +781,41 @@ class SecsControl(Cmd):
                      6: "Initiated for asynchronous completion", 7: "Storage limit error"}
             response_code = self.gem_host.settings.streams_functions.decode(
                 response).get()
+            logger.info("PP Send PPID: %s to %s", ppid,
+                        self.gem_host.equipment_name)
+            logger.info("PP Send HCACK: %s",
+                        ackc7.get(response_code, f"Unknown code: {response_code}"))
             return ackc7.get(response_code, f"Unknown code: {response_code}")
+        logger.warning("PP Send No response")
         return "No response"
 
     def pp_select(self, ppid: str):
         """
-        Process Program Select 
+        Process Program Select
         :param ppid: Process Program ID
         """
         if not self.gem_host.is_online:
             logger.warning("PP Select Equipment %s is not online",
                            self.gem_host.equipment_name)
-            print("Equipment is not online")
             return "Equipment is not online"
 
-        rcmd_model = {
-            "FCL": {"RCMD": "PP_SELECT", "PARAMS": [
-                {"CPNAME": "PPName", "CPVAL": ppid}]},
-            "FCLX": {"RCMD": "PP-SELECT", "PARAMS": [
-                {"CPNAME": "PPName", "CPVAL": ppid}]},
-        }
+        rcmd = {"RCMD": "PP-SELECT", "PARAMS": [
+            {"CPNAME": "PPName", "CPVAL": ppid}]}
 
-        rcmd = rcmd_model.get(self.gem_host.equipment_model)
-        if rcmd is None:
-            return f"RCMD is not define for {self.gem_host.equipment_model}"
         response = self.gem_host.send_and_waitfor_response(
             self.gem_host.stream_function(2, 41)(rcmd)
         )
         if isinstance(response, secsgem.hsms.HsmsMessage):
             s2f42_decode = self.gem_host.settings.streams_functions.decode(
                 response)
-
             hcack = {0: "OK", 1: "Invalid Command", 2: "Cannot Do Now", 3: "Parameter Error",
                      4: "Initiated for Asynchronous Completion", 5: "Rejected, Already in Desired Condition", 6: "Invalid Object"}
+            logger.info("PP Select PPID: %s on %s", ppid,
+                        self.gem_host.equipment_name)
+            logger.info("PP Select HCACK: %s", hcack.get(
+                s2f42_decode.HCACK.get(), "Unknown code"))
             return (f"HCACK: {hcack.get(s2f42_decode.HCACK.get(), 'Unknown code')}")
+        logger.warning("PP Select No response")
         return "No response"
 
     # # remote command
@@ -832,8 +838,13 @@ class SecsControl(Cmd):
 
                 hcack = {0: "OK", 1: "Invalid Command", 2: "Cannot Do Now", 3: "Parameter Error",
                          4: "Initiated for Asynchronous Completion", 5: "Rejected, Already in Desired Condition", 6: "Invalid Object"}
+                logger.info("Send RCMD: %s to %s", rcmd,
+                            self.gem_host.equipment_name)
+                logger.info("RCMD HCACK: %s",
+                            hcack.get(s2f42_decode.HCACK.get(), "Unknown code"))
                 return (f"HCACK: {hcack.get(s2f42_decode.HCACK.get(), 'Unknown code')}")
-        return "RCMD is empty"
+        logger.warning("No response")
+        return "No response"
 
     def send_enhanched_remote_command(self, objspec: str, rcmd: str, params: list[str]):
         """
@@ -855,5 +866,10 @@ class SecsControl(Cmd):
 
                 hcack = {0: "OK", 1: "Invalid Command", 2: "Cannot Do Now", 3: "Parameter Error",
                          4: "Initiated for Asynchronous Completion", 5: "Rejected, Already in Desired Condition", 6: "Invalid Object"}
+                logger.info("Send RCMD: %s to %s", rcmd,
+                            self.gem_host.equipment_name)
+                logger.info("RCMD HCACK: %s",
+                            hcack.get(s2f50_decode.HCACK.get(), "Unknown code"))
                 return (f"HCACK: {hcack.get(s2f50_decode.HCACK.get(), 'Unknown code')}")
-        return "RCMD is empty"
+        logger.warning("No response")
+        return "No response"
