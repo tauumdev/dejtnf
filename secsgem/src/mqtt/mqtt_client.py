@@ -27,7 +27,9 @@ class MqttClient:
         self.client.username_pw_set(
             MqttClient.mqtt_username, MqttClient.mqtt_password)
         self.client.on_connect = self.on_connect
-        self.client.on_message = HandlerMessage(self).on_message
+        # self.client.on_message = HandlerMessage(self).on_message
+        self.handler_message = HandlerMessage(self)
+        self.client.on_message = self.handler_message.on_message
         self.client.on_disconnect = self.on_disconnect
 
         if MQTT_ENABLE:
@@ -42,10 +44,12 @@ class MqttClient:
         if rc == 0:
             logger.info("Connected to MQTT broker.")
             print("Connected to MQTT broker.")
+
             for topic in MQTT_SUBSCRIBE_TOPIC:
                 self.client.subscribe(topic)
                 logger.info("Subscribed to topic: %s", topic)
                 print(f"Subscribed to topic: {topic}")
+
         else:
             logger.error("Connection failed with result code %s", rc)
             print(f"Connection failed with result code {rc}")

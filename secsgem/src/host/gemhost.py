@@ -75,8 +75,14 @@ class SecsGemHost(secsgem.gem.GemHostHandler):
         self.register_stream_function(9, 9, self.s09f9)
         self.register_stream_function(9, 11, self.s09f11)
 
-        self.register_stream_function(5, 1, HandlerAlarm(self).receive_alarm)
-        self.register_stream_function(6, 11, HandlerEvent(self).receive_event)
+        self.handler_alarm = HandlerAlarm(self)
+        self.register_stream_function(5, 1, self.handler_alarm.receive_alarm)
+        # self.register_stream_function(5, 1, HandlerAlarm(self).receive_alarm)
+
+        self.handler_event = HandlerEvent(self)
+        # self.register_stream_function(6, 11, self.handler_event.receive_event)
+        # # self.register_stream_function(6, 11, HandlerEvent(self).receive_event)
+
         self.secs_control = SecsControl(self)
         self.register_stream_function(7, 3, self.secs_control.pp_recive)
 
@@ -132,6 +138,13 @@ class SecsGemHost(secsgem.gem.GemHostHandler):
               self.communication_state.current.name)
         self.mqtt_client.client.publish(
             f"equipments/status/communication_state/{self.equipment_name}", state, retain=True)
+
+    def _on_s06f11(self, handler, message):
+        handler.send_response(self.stream_function(
+            6, 12)(ACKC6.ACCEPTED), message.header.system)
+
+        threading.Timer(0.1, self.handler_event.receive_event,
+                        args=(handler, message)).start()
 
     def on_s01f14(self, handle, message):
         logger.info("received s01f14: %s", self.equipment_name)

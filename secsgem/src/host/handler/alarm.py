@@ -20,6 +20,17 @@ class HandlerAlarm:
 
     def __init__(self, gemhost: "SecsGemHost"):
         self.gemhost = gemhost
+        # self.pending_alarms = set()
+
+    def alarms_list(self):
+        """
+        Get alarms list
+        """
+        vid_al = {"FCL": 24, "FCLX": 2}
+        alids = self.gemhost.secs_control.select_equipment_status_request(
+            vid_al.get(self.gemhost.equipment_model))
+        # print(alids)
+        return alids
 
     def receive_alarm(self, handler: secsgem.secs.SecsHandler, message: secsgem.common.Message):
         """
@@ -36,6 +47,18 @@ class HandlerAlarm:
         topic = f"equipments/status/alarm/{self.gemhost.equipment_name}/{alid}"
         if alcd == 0:
             self.gemhost.mqtt_client.client.publish(topic, None, retain=True)
+            # self.pending_alarms.remove(alid)
         else:
             self.gemhost.mqtt_client.client.publish(
                 topic, altx, retain=True)
+            # self.pending_alarms.add(alid)
+
+    # def clear_pending_alarms(self):
+    #     """
+    #     Clear pending alarms
+    #     """
+    #     logger.info("Clearing pending alarms")
+    #     for alid in self.pending_alarms:
+    #         topic = f"equipments/status/alarm/{self.gemhost.equipment_name}/{alid}"
+    #         self.gemhost.mqtt_client.client.publish(topic, None, retain=True)
+    #     self.pending_alarms.clear()

@@ -37,8 +37,6 @@ class HandlerEvent:
             if rpt:
                 rptid = rpt.RPTID.get()
                 values = rpt.V.get()
-                # print(f"RPTID: {rptid}")
-                # print(f"Values: {values}")
 
                 if rptid == 1000:
                     self._req_validate_lot(values)
@@ -73,8 +71,8 @@ class HandlerEvent:
                 return None, False
             return lot_id.upper(), False
 
-        if values and len(values) == 5:
-            lot_id, ppid, PlannedLots, NumberOfActiveLots, ActiveLots = values
+        if values and len(values) == 4:
+            lot_id, ppid, PlannedLots, ActiveLots = values
             if not lot_id:
                 print("Lot ID is required")
                 return
@@ -85,62 +83,93 @@ class HandlerEvent:
                 return
         else:
             print("Invalid number of values")
-            threading.Timer(0.5, self._reject_lot, args=(
-                lot_id, "Invalid number of values")).start()
             return
 
         lot_id, is_recipe_request = process_lot_id(lot_id)
+
         if lot_id is None:
-            print("Invalid request")
-            threading.Timer(0.5, self._reject_lot, args=(
-                lot_id, "Invalid request")).start()
+            # print("Invalid request")
+            logger.error("Request validate lot invalid request : %s, %s", lot_id,
+                         self.gem_host.equipment_name)
+
+            self._reject_lot(lot_id, "Invalid request")
             return
 
         # Define validate_lot object
         validate_lot = ValidateLot(self.gem_host.equipment_name, ppid, lot_id)
+        # Define result of validate_lot
+        result = validate_lot.validate()
 
         if is_recipe_request:
-
-            # print(f"{self.gem_host.equipment_name} request recipe with lot: {lot_id}")
-            logger.info("Request recipe for lot: %s, %s",
+            # Equipment request recipe for lot
+            logger.info("Equipment request recipe for lot: %s, %s",
                         lot_id, self.gem_host.equipment_name)
             recipe = validate_lot.get_recipe_by_lot()
             if isinstance(recipe, dict):
                 # Send recipe to equipment
                 recipe_name = recipe.get("recipe_name")
-                # print("Recipe found: ", recipe_name)
-                logger.info("Recipe found: %s, for %s",
-                            recipe_name, self.gem_host.equipment_name)
 
                 if self.gem_host.equipment_model == "FCL":
-                    # self.gem_host.secs_control.pp_select(recipe_name)
-                    threading.Timer(0.5, self.gem_host.secs_control.pp_select, args=(
-                        recipe_name,)).start()
+                    self.gem_host.secs_control.pp_select(recipe_name)
 
                 elif self.gem_host.equipment_model == "FCLX":
-                    # check lot active
-                    print("Check lot active for FCLX")
+                    # check equipment status
+                    if ActiveLots:
+                        self._reject_lot(lot_id, "Lot is active on equipment")
+                        return
+
+                    self._process_send_recipe(recipe_name, lot_id)
                 return
 
             # Recipe not found
             print(recipe)
-            threading.Timer(0.5, self._reject_lot, args=(
-                lot_id, "Recipe not found")).start()
+            self._reject_lot(lot_id, "Recipe not found")
             return
 
         # Validate lot
-        result = validate_lot.validate()
         if isinstance(result, str):
             print("Reject lot", result)
-            threading.Timer(0.5, self._reject_lot, args=(
-                lot_id, result)).start()
+            self._reject_lot(lot_id, result)
         else:
             # Accept lot
             # Check if machine is FCLX is ready to accept lot before accepting
-            print("Accept lot")
+            print("Process accept lot")
+
+            if self.gem_host.equipment_model == "FCLX":
+                if PlannedLots or ActiveLots:
+                    self._reject_lot(
+                        lot_id, "Equipment is not ready to accept lot")
+                    return
             print(result)
-            threading.Timer(0.5, self._accept_lot, args=(
-                lot_id, result.product_name, result.recipe_name)).start()
+            self._accept_lot(lot_id)
+
+    def _process_send_recipe(self, recipe_name: str, lot_id: str):
+        # send recipe to equipment
+        response_send_recipe = self.gem_host.secs_control.pp_send(
+            recipe_name)
+        if response_send_recipe != "Accepted":
+            logger.error("Send recipe failed: %s, %s, %s",
+                         lot_id, response_send_recipe, self.gem_host.equipment_name)
+            self._reject_lot(lot_id, response_send_recipe)
+            return
+        # select recipe
+        response_select_recipe = self.gem_host.secs_control.pp_select(
+            recipe_name)
+        if response_select_recipe != "OK":
+            logger.error("Select recipe failed: %s, %s, %s",
+                         lot_id, response_select_recipe, self.gem_host.equipment_name)
+            self._reject_lot(lot_id, response_select_recipe)
+            return
+        # delete old recipe
+        response_delete_recipe = self.gem_host.secs_control.pp_delete(
+            recipe_name)
+        if response_delete_recipe != "Accepted":
+            logger.error("Delete recipe failed: %s, %s, %s",
+                         lot_id, response_delete_recipe, self.gem_host.equipment_name)
+            self._reject_lot(lot_id, response_delete_recipe)
+            return
+        # add lot
+        self._accept_lot(lot_id)
 
     def _reject_lot(self, lot_id: str, reason: str):
         """
@@ -153,7 +182,7 @@ class HandlerEvent:
         elif self.gem_host.equipment_model == "FCLX":
             self.gem_host.secs_control.reject_lot_fclx(lot_id, reason)
 
-    def _accept_lot(self, lot_id: str, product_name: str, recipe_name: str):
+    def _accept_lot(self, lot_id: str):
         """
         Accept lot event
         """

@@ -2,6 +2,7 @@ from cmd import Cmd
 import json
 import logging
 import os
+import time
 import secsgem.common
 import secsgem.gem
 import secsgem.hsms
@@ -9,7 +10,7 @@ import secsgem.secs
 from secsgem.secs.data_items import ACKC7
 from typing import TYPE_CHECKING
 
-from config.status_variable_define import CONTROL_STATE_VID, PROCESS_STATE_CHANG_EVENT, SUBSCRIBE_LOT_CONTROL, VID_PP_NAME
+from config.status_variable_define import CONTROL_STATE_VID, PROCESS_STATE_CHANG_EVENT, SUBSCRIBE_LOT_CONTROL, VID_ALARM_SET, VID_PP_NAME
 from config.app_config import RECIPE_DIR
 
 if TYPE_CHECKING:
@@ -46,6 +47,34 @@ class SecsControl(Cmd):
 
         self.get_process_state()
         self.get_process_program()
+
+        self._sync_alarms_on_mqtt()
+
+    # check alarm status on mqtt
+    def _sync_alarms_on_mqtt(self):
+        """
+        Sync alarms status on mqtt
+        """
+        # subscribe alarm topic to get exist alarms
+        alarm_topic = f"equipments/status/alarm/{self.gem_host.equipment_name}/#"
+        self.gem_host.mqtt_client.client.subscribe(alarm_topic)
+
+        # wait for exist alarms
+        time.sleep(0.3)
+
+        self.gem_host.mqtt_client.client.unsubscribe(alarm_topic)
+
+        exist_alids = self.gem_host.mqtt_client.handler_message.exist_alids.get(
+            self.gem_host.equipment_name, [])
+        if exist_alids:
+            vid_model = VID_ALARM_SET
+            equipment_alids = self.select_equipment_status_request(
+                [vid_model.get(self.gem_host.equipment_model)]).get()[0]
+            remove = [x for x in exist_alids if x not in equipment_alids]
+            for alid in remove:
+                topic = f"equipments/status/alarm/{self.gem_host.equipment_name}/{alid}"
+                self.gem_host.mqtt_client.client.publish(
+                    topic, None, retain=True)
 
     # communication control
     def enable_equipment(self):
@@ -818,7 +847,7 @@ class SecsControl(Cmd):
         logger.warning("PP Select No response")
         return "No response"
 
-    # # remote command
+    # remote command
 
     def send_remote_command(self, rcmd: str, params: list[str]):
         """
@@ -872,4 +901,41 @@ class SecsControl(Cmd):
                             hcack.get(s2f50_decode.HCACK.get(), "Unknown code"))
                 return (f"HCACK: {hcack.get(s2f50_decode.HCACK.get(), 'Unknown code')}")
         logger.warning("No response")
+        return "No response"
+
+    # alarm management
+    def alarms_list(self, alid: list[int]):
+        """
+        S5F5 List alarms
+        """
+        if not self.gem_host.is_online:
+            logger.warning("List Alarm Equipment %s is not online",
+                           self.gem_host.equipment_name)
+            print("Equipment is not online")
+            return "Equipment is not online"
+
+        response = self.gem_host.send_and_waitfor_response(
+            self.gem_host.stream_function(5, 5)(alid)
+        )
+        if isinstance(response, secsgem.hsms.HsmsMessage):
+            return self.gem_host.settings.streams_functions.decode(
+                response)
+        return "No response"
+
+    def alarms_enable_list(self):
+        """
+        S5F7 List enable alarms
+        """
+        if not self.gem_host.is_online:
+            logger.warning("List Enable Alarm Equipment %s is not online",
+                           self.gem_host.equipment_name)
+            print("Equipment is not online")
+            return "Equipment is not online"
+
+        response = self.gem_host.send_and_waitfor_response(
+            self.gem_host.stream_function(5, 7)()
+        )
+        if isinstance(response, secsgem.hsms.HsmsMessage):
+            return self.gem_host.settings.streams_functions.decode(
+                response)
         return "No response"

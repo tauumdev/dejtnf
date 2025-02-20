@@ -36,7 +36,7 @@ class LotInformation:
                 self.message = self.lot_data[0].get("Message", None)
                 if not self.status:
                     logger.error(
-                        "Failed to retrieve Lot Information for %s", self.lot_id)
+                        "Failed to retrieve Lot:%s, Information: %s", self.message, self.message)
                     self.lot_data = None
                     return
                 output_info = self.lot_data[0].get("OutputLotInfo", [])

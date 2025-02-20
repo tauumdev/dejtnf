@@ -171,8 +171,8 @@ class ControlCli(Cmd):
                2: "busy", 3: "one or more values out of range"}
         response_code = self.gem_host.set_ec(ceid, value)
         print(eac[response_code])
-    # event and report
 
+    # event and report
     def do_enable_disable_event(self, arg: str):
         """
         S2F37	Enable/Disable Event Report
@@ -433,3 +433,21 @@ class ControlCli(Cmd):
         result = self.gem_host.secs_control.send_enhanched_remote_command(
             objspec, rcmd, cp_pairs)
         print(result)
+
+    # alarm management
+    def do_alarms_list(self, arg: str):
+        """
+        List alarms S7F5
+        Usage: alarms_list <alarm_id>
+        Sample: alarms_list 1,2,3 or alarms_list
+        """
+        # alarm_id as list can be empty
+        alarm_ids = [int(a) for a in arg.split(",")] if arg else []
+        print(self.gem_host.secs_control.alarms_list(alarm_ids))
+
+    def do_alarms_enable_list(self, _):
+        """
+        List enable alarms S7F7
+        Usage: alarms_enable_list
+        """
+        print(self.gem_host.secs_control.alarms_enable_list())

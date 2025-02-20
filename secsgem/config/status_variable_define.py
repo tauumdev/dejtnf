@@ -7,6 +7,7 @@ Description: Configuration file for FCL & FCLX equipment models
 VID_CONTROL_STATE = {"FCL": 28, "FCLX": 21, "STI": 28}
 VID_MODEL = {"FCL": 32, "FCLX": 24, "STI": 32}
 VID_PP_NAME = {"FCL": 33, "FCLX": 7, "STI": 33}
+VID_ALARM_SET = {"FCL": 24, "FCLX": 2}
 
 CONTROL_STATE_VID = {
     "FCL": {"VID": 28, "STATE": {
@@ -71,9 +72,8 @@ SUBSCRIBE_LOT_CONTROL = {
         {"CEID": 2000, "DVS": [38], "REPORT_ID": 1004}
     ],
     "FCLX": [
-        # subscribe request validate lot 3081 lot id, 7 ppid 2001 PlannedLots 2022 NumberOfActiveLots 2023 ActiveLots
-        {"CEID": 58, "DVS": [3081, 7, 2001,
-                             2022, 2023], "REPORT_ID": 1000},
+        # subscribe request validate lot 3081 lot id, 7 ppid 2001 PlannedLots 2023 ActiveLots
+        {"CEID": 58, "DVS": [3081, 7, 2001, 2023], "REPORT_ID": 1000},
         # subscribe lot open 3082 lot id, 7 ppid
         {"CEID": 40, "DVS": [3026, 7], "REPORT_ID": 1001},
         # subscribe lot close 3083 lot id, 7 ppid

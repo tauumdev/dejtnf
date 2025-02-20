@@ -1,5 +1,7 @@
-x = ["A", "B", ["C", "D"], 0, ["E", "F"]]
-print(len(x))
+PlannedLots = ["Lot1", "Lot2"]
+ActiveLots = []
 
-a, b, = x
-print(a, b)
+if PlannedLots or ActiveLots:
+    print("Equipment is not ready to accept lot")
+else:
+    print("Process accept lot")
