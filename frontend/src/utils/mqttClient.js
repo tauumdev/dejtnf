@@ -79,9 +79,9 @@ export const subscribe = (topic, callback) => {
                 console.log(`Subscribed to ${topic}`);
                 // Send test message to confirm subscription
 
-                let hello_topic = "website/Connection";
-                let hello_payload = "hello from website";
-                client.publish(hello_topic, hello_payload);
+                // let hello_topic = "website/Connection";
+                // let hello_payload = "hello from website";
+                // client.publish(hello_topic, hello_payload);
 
             },
             onFailure: (error) => {

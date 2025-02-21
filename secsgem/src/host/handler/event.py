@@ -315,7 +315,6 @@ class HandlerEvent:
             return
 
         if is_recipe_request:
-
             validate_lot = self._handle_recipe_request(
                 lot_id, ppid, active_lots, request_lot_id)
 
