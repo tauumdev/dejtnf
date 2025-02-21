@@ -1,13 +1,13 @@
-<Product xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" mode="Production" id="XHD" revision="10" rev-date="2025-02-13T15:17:49.8103242+07:00" d1p1:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:d1p1="xmlns">
+<Product xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" mode="Production" id="XHD" revision="18" rev-date="2025-02-21T10:27:41.6990295+07:00" d1p1:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:d1p1="xmlns">
   <IsQualified>false</IsQualified>
-  <LotControl mode="Production" revision="0">
-    <Scenario>Automatic</Scenario>
+  <LotControl xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" mode="Production" revision="0">
+    <Scenario>SingleMagazine</Scenario>
     <OffloadInitialStrips>false</OffloadInitialStrips>
     <PlannedLotScenarioCountMagazines>false</PlannedLotScenarioCountMagazines>
-    <CloseLotOnNoMoreMagazines>false</CloseLotOnNoMoreMagazines>
-    <RunEmptyOnNoMoreMagazines>false</RunEmptyOnNoMoreMagazines>
+    <CloseLotOnNoMoreMagazines>true</CloseLotOnNoMoreMagazines>
+    <RunEmptyOnNoMoreMagazines>true</RunEmptyOnNoMoreMagazines>
     <RunEmptyMode>RunEmptyMagazine</RunEmptyMode>
-    <ValidateLotOnHost>false</ValidateLotOnHost>
+    <ValidateLotOnHost>true</ValidateLotOnHost>
     <ValidateStripOnHost>false</ValidateStripOnHost>
     <ValidateTrayOnHost>false</ValidateTrayOnHost>
     <ValidateMagazineOnHost>false</ValidateMagazineOnHost>
@@ -16,7 +16,7 @@
     <ValidateStripDataOnHost>false</ValidateStripDataOnHost>
     <InitialStripsEnabled>true</InitialStripsEnabled>
     <NumberOfInitialStrips>0</NumberOfInitialStrips>
-    <ConfirmLotEnd>false</ConfirmLotEnd>
+    <ConfirmLotEnd>true</ConfirmLotEnd>
     <BatchProcessingEnabled>false</BatchProcessingEnabled>
     <NumberOfBatchStrips>0</NumberOfBatchStrips>
   </LotControl>
@@ -2131,7 +2131,7 @@
     <BottomOffset>2.5</BottomOffset>
     <BottomToCodeCenterZ>0</BottomToCodeCenterZ>
   </Magazine>
-  <Strip mode="Production" id="XHD" revision="81" rev-date="2025-02-14T20:34:11.348847+07:00">
+  <Strip mode="Production" id="XHD" revision="86" rev-date="2025-02-20T16:38:57.1890107+07:00">
     <TopSide>
       <PreScratchLine>
         <Present>false</Present>
@@ -2141,8 +2141,8 @@
     </TopSide>
     <ProductType>2</ProductType>
     <Board>
-      <SizeX>299.6</SizeX>
-      <SizeY>100</SizeY>
+      <SizeX>269.6</SizeX>
+      <SizeY>83</SizeY>
       <SizeZ>1</SizeZ>
       <Orientation>0</Orientation>
     </Board>
@@ -2163,7 +2163,7 @@
         <Y>0</Y>
       </Offset>
       <Count>
-        <X>9</X>
+        <X>18</X>
         <Y>1</Y>
       </Count>
       <Pitch>
@@ -2184,17 +2184,17 @@
     <Device>
       <Count>
         <X>2</X>
-        <Y>7</Y>
+        <Y>12</Y>
       </Count>
       <Size>
-        <X>10.25</X>
-        <Y>7.52</Y>
+        <X>5</X>
+        <Y>3.8</Y>
       </Size>
       <Pitch>
         <X>12.25</X>
         <Y>12.25</Y>
       </Pitch>
-      <Orientation>2</Orientation>
+      <Orientation>1</Orientation>
       <BottomMold>
         <IsDefined>0</IsDefined>
         <SizeX>0</SizeX>
@@ -3625,7 +3625,7 @@
       <rZ>0</rZ>
     </StripPose>
   </SmemaBuffer>
-  <StripHandler1>
+  <StripHandler1 xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <VerifyMarking>false</VerifyMarking>
     <ScanStripId>false</ScanStripId>
     <CheckOnlyDotCode>false</CheckOnlyDotCode>
@@ -3648,7 +3648,62 @@
     <Flipper>
       <SpeedPercentage>100</SpeedPercentage>
     </Flipper>
-    <RejectBehaviour />
+    <RejectBehaviour>
+      <RejectBehaviourConfiguration>
+        <RejectBehaviour>Assist</RejectBehaviour>
+        <Id>PreAlignmentInspection</Id>
+        <Name>Pre Alignment</Name>
+        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
+      </RejectBehaviourConfiguration>
+      <RejectBehaviourConfiguration>
+        <RejectBehaviour>Assist</RejectBehaviour>
+        <Id>OrientationCheckInspection</Id>
+        <Name>Orientation Check</Name>
+        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
+      </RejectBehaviourConfiguration>
+      <RejectBehaviourConfiguration>
+        <RejectBehaviour>Assist</RejectBehaviour>
+        <Id>StripIdentificationInspection</Id>
+        <Name>Strip Identification</Name>
+        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
+      </RejectBehaviourConfiguration>
+      <RejectBehaviourConfiguration>
+        <RejectBehaviour>Assist</RejectBehaviour>
+        <Id>CaptureObjectsInspection</Id>
+        <Name>Capture Objects</Name>
+        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
+      </RejectBehaviourConfiguration>
+      <RejectBehaviourConfiguration>
+        <RejectBehaviour>Assist</RejectBehaviour>
+        <Id>PackageSizeInspection</Id>
+        <Name>Package Size</Name>
+        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
+      </RejectBehaviourConfiguration>
+      <RejectBehaviourConfiguration>
+        <RejectBehaviour>Assist</RejectBehaviour>
+        <Id>MarkInspection</Id>
+        <Name>Mark</Name>
+        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
+      </RejectBehaviourConfiguration>
+      <RejectBehaviourConfiguration>
+        <RejectBehaviour>Assist</RejectBehaviour>
+        <Id>RejectMarkerInspection</Id>
+        <Name>Reject Marker</Name>
+        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
+      </RejectBehaviourConfiguration>
+      <RejectBehaviourConfiguration>
+        <RejectBehaviour>Assist</RejectBehaviour>
+        <Id>LeadInspection</Id>
+        <Name>Lead</Name>
+        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
+      </RejectBehaviourConfiguration>
+      <RejectBehaviourConfiguration>
+        <RejectBehaviour>Assist</RejectBehaviour>
+        <Id>StripIdProcess</Id>
+        <Name>Read strip id code</Name>
+        <MaxSuccessiveRejects>0</MaxSuccessiveRejects>
+      </RejectBehaviourConfiguration>
+    </RejectBehaviour>
     <MarkInspectionSettings>
       <Enabled>false</Enabled>
       <MarkInspectionSettings xmlns="Besi.Vision.Inspections.MarkInspection">

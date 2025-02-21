@@ -11,7 +11,7 @@ from secsgem.secs.data_items import ACKC7
 from typing import TYPE_CHECKING
 
 from config.status_variable_define import CONTROL_STATE_VID, PROCESS_STATE_CHANG_EVENT, SUBSCRIBE_LOT_CONTROL, VID_ALARM_SET, VID_PP_NAME
-from config.app_config import RECIPE_DIR
+from config.app_config import MQTT_ENABLE, RECIPE_DIR
 
 if TYPE_CHECKING:
     # from src.mqtt.mqtt_client import MqttClient
@@ -55,6 +55,8 @@ class SecsControl(Cmd):
         """
         Sync alarms status on mqtt
         """
+        if not MQTT_ENABLE:
+            return
         # subscribe alarm topic to get exist alarms
         alarm_topic = f"equipments/status/alarm/{self.gem_host.equipment_name}/#"
         self.gem_host.mqtt_client.client.subscribe(alarm_topic)
@@ -74,7 +76,40 @@ class SecsControl(Cmd):
             for alid in remove:
                 topic = f"equipments/status/alarm/{self.gem_host.equipment_name}/{alid}"
                 self.gem_host.mqtt_client.client.publish(
-                    topic, None, retain=True)
+                    topic, None, qos=2, retain=True)
+
+    def remove_mqtt_retain_message(self):
+        """
+        Remove alarm on mqtt
+        """
+        if not MQTT_ENABLE:
+            return
+
+        topic = f"equipments/status/alarm/{self.gem_host.equipment_name}/#"
+        self.gem_host.mqtt_client.client.subscribe(topic)
+
+        time.sleep(0.3)
+
+        self.gem_host.mqtt_client.client.unsubscribe(topic)
+
+        exist_alids = self.gem_host.mqtt_client.handler_message.exist_alids.get(
+            self.gem_host.equipment_name, [])
+        if exist_alids:
+            for alid in exist_alids:
+                topic = f"equipments/status/alarm/{self.gem_host.equipment_name}/{alid}"
+                self.gem_host.mqtt_client.client.publish(
+                    topic, None, qos=2, retain=True)
+
+        self.gem_host.mqtt_client.client.publish(
+            f"equipments/status/process_state/{self.gem_host.equipment_name}", None, qos=2, retain=True)
+        self.gem_host.mqtt_client.client.publish(
+            f"equipments/status/control_state/{self.gem_host.equipment_name}", None, qos=2, retain=True)
+        self.gem_host.mqtt_client.client.publish(
+            f"equipments/status/process_program/{self.gem_host.equipment_name}", None, qos=2, retain=True)
+        self.gem_host.mqtt_client.client.publish(
+            f"equipments/status/active_lot/{self.gem_host.equipment_name}", None, qos=2, retain=True)
+        self.gem_host.mqtt_client.client.publish(
+            f"equipments/status/secs_message/{self.gem_host.equipment_name}", None, qos=2, retain=True)
 
     # communication control
     def enable_equipment(self):
@@ -191,7 +226,7 @@ class SecsControl(Cmd):
                               for state_dict in state if response[0] in state_dict)
             self.gem_host.process_state = state_name
             self.gem_host.mqtt_client.client.publish(
-                f"equipments/status/process_state/{self.gem_host.equipment_name}", self.gem_host.process_state)
+                f"equipments/status/process_state/{self.gem_host.equipment_name}", self.gem_host.process_state, qos=2, retain=True)
             return state_name
         return "Failed to get process state"
 
@@ -225,7 +260,7 @@ class SecsControl(Cmd):
             state_name = state.get(response[0], "Unknown")
             self.gem_host.control_state = state_name
             self.gem_host.mqtt_client.client.publish(
-                f"equipments/status/control_state/{self.gem_host.equipment_name}", self.gem_host.control_state)
+                f"equipments/status/control_state/{self.gem_host.equipment_name}", self.gem_host.control_state, qos=2, retain=True)
             return state_name
 
         return response
@@ -249,7 +284,7 @@ class SecsControl(Cmd):
             response = response.get()
             self.gem_host.process_program = response[0]
             self.gem_host.mqtt_client.client.publish(
-                f"equipments/status/process_program/{self.gem_host.equipment_name}", self.gem_host.process_program)
+                f"equipments/status/process_program/{self.gem_host.equipment_name}", self.gem_host.process_program, qos=2, retain=True)
             return response[0]
         return response
 
@@ -688,14 +723,25 @@ class SecsControl(Cmd):
         pp_body = self._get_recipe(ppid)
         if pp_body is None:
             return f"Recipe {ppid} not found"
+        pp_length = secsgem.secs.variables.U8(len(pp_body))
 
         response = self.gem_host.send_and_waitfor_response(
             self.gem_host.stream_function(7, 1)(
-                {"PPID": ppid, "LENGTH": len(pp_body)})
+                {"PPID": ppid, "LENGTH": pp_length})
         )
+        # 0 - Ok
+        # 1 - already have
+        # 2 - no space
+        # 3 - invalid PPID
+        # 4 - busy, try later
+        # 5 - will not accept
+        # 6 - other error
+        ppgnt = {0: "Ok", 1: "Already have", 2: "No space", 3: "Invalid PPID",
+                 4: "Busy, try later", 5: "Will not accept", 6: "Other error"}
         if isinstance(response, secsgem.hsms.HsmsMessage):
-            return self.gem_host.settings.streams_functions.decode(
-                response)
+            response = self.gem_host.settings.streams_functions.decode(
+                response).get()
+            return ppgnt.get(response, f"Unknown code: {response}")
         return "No response"
 
     def pp_load_grant(self, handler: secsgem.secs.SecsHandler, message: secsgem.common.Message):
@@ -737,6 +783,7 @@ class SecsControl(Cmd):
                 return "PPID or PPBODY is empty"
 
             self._store_recipe(ppid_, ppbody)
+            return "PP Request success"
         return "No response"
 
     def pp_recive(self, handler: secsgem.secs.SecsHandler, message: secsgem.common.Message):
@@ -749,8 +796,8 @@ class SecsControl(Cmd):
 
         ppid = decode.PPID.get()
         ppbody = decode.PPBODY.get()
-        logger.info("Receive PPID: %s, PPBODY: %s from: %s",
-                    ppid, ppbody, self.gem_host.equipment_name)
+        logger.info("Receive PPID: %s, from: %s",
+                    ppid, self.gem_host.equipment_name)
         if not ppid or not ppbody:
             logger.warning("PPID or PPBODY is empty")
             return
@@ -843,7 +890,7 @@ class SecsControl(Cmd):
                         self.gem_host.equipment_name)
             logger.info("PP Select HCACK: %s", hcack.get(
                 s2f42_decode.HCACK.get(), "Unknown code"))
-            return (f"HCACK: {hcack.get(s2f42_decode.HCACK.get(), 'Unknown code')}")
+            return hcack.get(s2f42_decode.HCACK.get(), 'Unknown code')
         logger.warning("PP Select No response")
         return "No response"
 
@@ -857,7 +904,6 @@ class SecsControl(Cmd):
         """
         if rcmd:
             secs_cmd = {"RCMD": rcmd, "PARAMS": params}
-            print(secs_cmd)
             s2f42 = self.gem_host.send_and_waitfor_response(
                 self.gem_host.stream_function(2, 41)(secs_cmd))
 
@@ -885,7 +931,6 @@ class SecsControl(Cmd):
             # secs_cmd = {"RCMD": rcmd, "PARAMS": params}
             secs_cmd = {"DATAID": 0, "OBJSPEC": objspec, "RCMD": rcmd,
                         "PARAMS": params}
-            print(secs_cmd)
             s2f50 = self.gem_host.send_and_waitfor_response(
                 self.gem_host.stream_function(2, 49)(secs_cmd))
 
@@ -913,10 +958,13 @@ class SecsControl(Cmd):
                            self.gem_host.equipment_name)
             print("Equipment is not online")
             return "Equipment is not online"
+        # secsgem.secs.variables.U4(0)
+        alid_U4 = [secsgem.secs.variables.U8(i) for i in alid]
 
         response = self.gem_host.send_and_waitfor_response(
-            self.gem_host.stream_function(5, 5)(alid)
+            self.gem_host.stream_function(5, 5)(alid_U4)
         )
+
         if isinstance(response, secsgem.hsms.HsmsMessage):
             return self.gem_host.settings.streams_functions.decode(
                 response)

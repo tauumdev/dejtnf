@@ -2594,7 +2594,7 @@
     <BottomOffset>2.5</BottomOffset>
     <BottomToCodeCenterZ>0</BottomToCodeCenterZ>
   </Magazine>
-  <Strip mode="Production" id="XHD" revision="100" rev-date="2025-02-21T16:48:04.3647273+07:00">
+  <Strip mode="Production" id="XHD" revision="84" rev-date="2025-02-19T12:13:43.9665176+07:00">
     <TopSide>
       <PreScratchLine>
         <Present>false</Present>
@@ -2604,8 +2604,8 @@
     </TopSide>
     <ProductType>2</ProductType>
     <Board>
-      <SizeX>299.6</SizeX>
-      <SizeY>100</SizeY>
+      <SizeX>269.6</SizeX>
+      <SizeY>83</SizeY>
       <SizeZ>1</SizeZ>
       <Orientation>0</Orientation>
     </Board>
@@ -2626,7 +2626,7 @@
         <Y>0</Y>
       </Offset>
       <Count>
-        <X>9</X>
+        <X>18</X>
         <Y>1</Y>
       </Count>
       <Pitch>
@@ -2647,17 +2647,17 @@
     <Device>
       <Count>
         <X>2</X>
-        <Y>7</Y>
+        <Y>12</Y>
       </Count>
       <Size>
-        <X>10.25</X>
-        <Y>7.52</Y>
+        <X>5</X>
+        <Y>3.8</Y>
       </Size>
       <Pitch>
         <X>12.25</X>
         <Y>12.25</Y>
       </Pitch>
-      <Orientation>2</Orientation>
+      <Orientation>1</Orientation>
       <BottomMold>
         <IsDefined>0</IsDefined>
         <SizeX>0</SizeX>

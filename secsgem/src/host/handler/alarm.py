@@ -46,11 +46,12 @@ class HandlerAlarm:
 
         topic = f"equipments/status/alarm/{self.gemhost.equipment_name}/{alid}"
         if alcd == 0:
-            self.gemhost.mqtt_client.client.publish(topic, None, retain=True)
+            self.gemhost.mqtt_client.client.publish(
+                topic, None, qos=2, retain=True)
             # self.pending_alarms.remove(alid)
         else:
             self.gemhost.mqtt_client.client.publish(
-                topic, altx, retain=True)
+                topic, altx, qos=2, retain=True)
             # self.pending_alarms.add(alid)
 
     # def clear_pending_alarms(self):

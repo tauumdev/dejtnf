@@ -94,7 +94,7 @@ class ValidateLot:
         )
         return result
 
-    def get_recipe_by_lot(self):
+    def get_recipe_by_lotid(self):
         """Get recipe name"""
         lot_info = LotInformation(self.lot_id)
         if not lot_info.lot_data:

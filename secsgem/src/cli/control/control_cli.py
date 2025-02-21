@@ -342,7 +342,8 @@ class ControlCli(Cmd):
             print("Invalid arguments")
             print("Usage: pp_request <pp_id>")
             return
-        print(self.gem_host.secs_control.pp_request(arg))
+
+        self.gem_host.secs_control.pp_request(arg)
 
     def do_pp_delete(self, arg: str):
         """

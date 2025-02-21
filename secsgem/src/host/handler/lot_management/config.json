@@ -54,5 +54,29 @@
                 ]
             }
         ]
+    },
+    {
+        "equipment_name": "TNF-70",
+        "config": [
+            {
+                "package8digit": "SOICW16U",
+                "selection_code": "1000",
+                "data_with_selection_code": [
+                    {
+                        "package_selection_code": "SOICW16U",
+                        "operation_code": "TNF",
+                        "on_operation": "TNF",
+                        "validate_type": "recipe",
+                        "recipe_name": "SOICW 16L 7x18",
+                        "product_name": "SOICW 16L 7x18",
+                        "options": {
+                            "use_operation_code": true,
+                            "use_on_operation": true,
+                            "use_lot_hold": true
+                        }
+                    }
+                ]
+            }
+        ]
     }
 ]

@@ -116,7 +116,7 @@ class SecsGemHost(secsgem.gem.GemHostHandler):
         print("On wait cra - Communication state: ",
               self.communication_state.current.name)
         self.mqtt_client.client.publish(
-            f"equipments/status/communication_state/{self.equipment_name}", state, retain=True)
+            f"equipments/status/communication_state/{self.equipment_name}", state, qos=2, retain=True)
 
     def _on_state_communicating(self, _):
         super()._on_state_communicating(_)
@@ -125,7 +125,7 @@ class SecsGemHost(secsgem.gem.GemHostHandler):
               state)
 
         self.mqtt_client.client.publish(
-            f"equipments/status/communication_state/{self.equipment_name}", state, retain=True)
+            f"equipments/status/communication_state/{self.equipment_name}", state, qos=2, retain=True)
         if state == "COMMUNICATING":
             # initial subscribe lot control
             threading.Timer(
@@ -137,7 +137,10 @@ class SecsGemHost(secsgem.gem.GemHostHandler):
         print("On closed - Communication state: ",
               self.communication_state.current.name)
         self.mqtt_client.client.publish(
-            f"equipments/status/communication_state/{self.equipment_name}", state, retain=True)
+            f"equipments/status/communication_state/{self.equipment_name}", state, qos=2, retain=True)
+
+        # remove mqtt retained message
+        self.secs_control.remove_mqtt_retain_message()
 
     def _on_s06f11(self, handler, message):
         handler.send_response(self.stream_function(

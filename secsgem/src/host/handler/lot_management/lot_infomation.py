@@ -46,7 +46,8 @@ class LotInformation:
                         self.field_by_desc[field["Description"]] = field
 
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"Error: {str(e)}")
+            # print(f"Error: {str(e)}")
+            logger.error("Failed to load Lot Information: %s", str(e))
 
     def get_field_value(self, field_names: Union[str, List[str]]) -> Dict:
         """
