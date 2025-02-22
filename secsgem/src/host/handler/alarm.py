@@ -44,7 +44,7 @@ class HandlerAlarm:
         alcd = decode.ALCD.get()
         altx = decode.ALTX.get().strip()
 
-        topic = f"equipments/status/alarm/{self.gemhost.equipment_name}/{alid}"
+        topic = f"equipments/status/alarm_state/{self.gemhost.equipment_name}/{alid}"
         if alcd == 0:
             self.gemhost.mqtt_client.client.publish(
                 topic, None, qos=2, retain=True)

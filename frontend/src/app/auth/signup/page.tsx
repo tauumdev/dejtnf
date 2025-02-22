@@ -1,64 +1,132 @@
-import * as React from 'react';
-import Sheet from '@mui/joy/Sheet';
-import Typography from '@mui/joy/Typography';
-import FormControl from '@mui/joy/FormControl';
-import FormLabel from '@mui/joy/FormLabel';
-import Input from '@mui/joy/Input';
-import Button from '@mui/joy/Button';
-import Link from '@mui/joy/Link';
+"use client";
+import React, { useState } from 'react';
+import {
+    Container,
+    Paper,
+    Typography,
+    TextField,
+    Button,
+    Link,
+    Box
+} from '@mui/material';
+import { useRouter } from 'next/navigation';
 
 export default function SignUp() {
+    const [name, setName] = useState('');
+    const [en, setEn] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
+    const router = useRouter();
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+        setMessage('');
+
+        try {
+            const response = await fetch('http://localhost:3000/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name,
+                    en,
+                    email,
+                    password
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                console.log(errData.errors.msg);
+                throw new Error(errData.errors.msg || 'Signup failed');
+                // throw new Error(errData.error || 'Signup failed');
+            }
+
+            const data = await response.json();
+            setMessage('Signup successful! Please check your email for confirmation.');
+            router.push('/auth/signin');
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <Sheet
-            sx={{
-                display: 'flex',
-                flexFlow: 'row nowrap',
-                justifyContent: 'center',
-                alignItems: 'center',
-                minHeight: '100vh',
-            }}
-        >
-            <Sheet
-                sx={{
-                    width: 300,
-                    mx: 'auto',
-                    my: 4,
-                    py: 3,
-                    px: 2,
+        <Container maxWidth="sm" sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh'
+        }}>
+            <Paper sx={{ padding: 4, width: '100%' }}>
+                <Typography variant="h4" component="h1" gutterBottom align="center">
+                    Welcome 👋
+                </Typography>
+                <Typography variant="body1" align="center" gutterBottom>
+                    Sign up for an account.
+                </Typography>
+                {error && (
+                    <Typography color="error" align="center">
+                        {error}
+                    </Typography>
+                )}
+                {message && (
+                    <Typography color="success.main" align="center">
+                        {message}
+                    </Typography>
+                )}
+                <Box component="form" onSubmit={handleSubmit} noValidate sx={{
+                    mt: 2,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 2,
-                    borderRadius: 'sm',
-                    boxShadow: 'md',
-                }}
-                variant="outlined"
-            >
-                <div>
-                    <Typography level="h4" component="h1">
-                        <strong>Welcome 👋</strong>
+                    gap: 2
+                }}>
+                    <TextField
+                        label="Name"
+                        variant="outlined"
+                        fullWidth
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                    />
+                    <TextField
+                        label="En"
+                        variant="outlined"
+                        fullWidth
+                        value={en}
+                        onChange={(e) => setEn(e.target.value)}
+                    />
+                    <TextField
+                        label="Email"
+                        type="email"
+                        variant="outlined"
+                        fullWidth
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
+                    <TextField
+                        label="Password"
+                        type="password"
+                        variant="outlined"
+                        fullWidth
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <Button type="submit" variant="contained" disabled={loading} fullWidth>
+                        {loading ? 'Creating account...' : 'Create account'}
+                    </Button>
+                </Box>
+                <Box sx={{ mt: 2, textAlign: 'center' }}>
+                    <Typography variant="body2">
+                        Already have an account? <Link href="/auth/signin">Log in</Link>
                     </Typography>
-                    <Typography level="body-sm">Sign up for an account.</Typography>
-                </div>
-                <FormControl>
-                    <FormLabel>Email</FormLabel>
-                    <Input name="email" type="email" placeholder="johndoe@email.com" />
-                </FormControl>
-                <FormControl>
-                    <FormLabel>Password</FormLabel>
-                    <Input name="password" type="password" placeholder="password" />
-                </FormControl>
-
-                <Button sx={{ mt: 1 }}>Create account</Button>
-                <Typography
-                    endDecorator={<Link href="/">Log in</Link>}
-                    sx={{
-                        fontSize: 'sm',
-                        alignSelf: 'center',
-                    }}
-                >
-                    Already have an account?
-                </Typography>
-            </Sheet>
-        </Sheet>
+                </Box>
+            </Paper>
+        </Container>
     );
 }

@@ -8,6 +8,7 @@ const { buildErrObject } = require('../../../middleware/utils')
  */
 const createItemInDb = ({
   name = '',
+  en = '',
   email = '',
   password = '',
   role = '',
@@ -18,6 +19,7 @@ const createItemInDb = ({
   return new Promise((resolve, reject) => {
     const user = new User({
       name,
+      en,
       email,
       password,
       role,

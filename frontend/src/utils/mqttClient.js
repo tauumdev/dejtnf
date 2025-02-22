@@ -1,5 +1,5 @@
-// import { Client, Message as PahoMessage } from 'paho-mqtt';
-import { Client } from 'paho-mqtt';
+import { Client, Message as PahoMessage } from 'paho-mqtt';
+
 const MQTT_CONFIG = {
     host: process.env.NEXT_PUBLIC_MQTT_HOST || 'localhost',
     port: parseInt(process.env.NEXT_PUBLIC_MQTT_PORT) || 8081, // Changed to typical MQTT-WS port
@@ -40,9 +40,23 @@ const connect = (onConnect, onError) => {
     }
 };
 
+export const disconnectMqtt = () => {
+    if (client && client.isConnected()) {
+        try {
+            client.disconnect(); // Gracefully disconnect from the broker
+            console.log('Disconnected from MQTT broker');
+        } catch (error) {
+            console.error('Error while disconnecting:', error);
+        } finally {
+            client = null; // Clear the client object
+            clearTimeout(reconnectTimer); // Stop any pending reconnection attempts
+        }
+    } else {
+        console.warn('MQTT client is not connected or already disconnected');
+    }
+};
 export const connectMqtt = (onConnect, onError, onMessage) => {
     if (!client) {
-        // Create WebSocket URL with correct format
         client = new Client(
             MQTT_CONFIG.host,
             Number(MQTT_CONFIG.port),
@@ -63,6 +77,7 @@ export const connectMqtt = (onConnect, onError, onMessage) => {
         };
 
         client.onMessageArrived = (message) => {
+            console.log(`Message received on topic: ${message.destinationName}, payload: ${message.payloadString}`);
             if (onMessage) onMessage(message.payloadString, message.destinationName);
         };
 
@@ -77,12 +92,6 @@ export const subscribe = (topic, callback) => {
             qos: 0,
             onSuccess: () => {
                 console.log(`Subscribed to ${topic}`);
-                // Send test message to confirm subscription
-
-                // let hello_topic = "website/Connection";
-                // let hello_payload = "hello from website";
-                // client.publish(hello_topic, hello_payload);
-
             },
             onFailure: (error) => {
                 console.error(`Subscribe failed: ${error.errorMessage}`);
@@ -96,7 +105,9 @@ export const subscribe = (topic, callback) => {
 export const publish = (topic, payload) => {
     if (client && client.isConnected()) {
         try {
-            client.send(topic, payload, 0, false);
+            const message = new PahoMessage(payload);
+            message.destinationName = topic;
+            client.send(message);
             console.log('Message sent:', { topic, payload });
         } catch (error) {
             console.error('Failed to send message:', error);
@@ -121,4 +132,5 @@ export const unsubscribe = (topic) => {
         console.warn('MQTT client not connected');
     }
 };
+
 export default client;

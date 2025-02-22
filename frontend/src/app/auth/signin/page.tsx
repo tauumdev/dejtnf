@@ -1,12 +1,15 @@
+// "use client";
 import * as React from 'react';
 import { SignInPage, type AuthProvider } from '@toolpad/core/SignInPage';
 import { AuthError } from 'next-auth';
 import { providerMap, signIn } from '../../../auth';
+import Link from 'next/link';
 
 export default function SignIn() {
   return (
     <SignInPage
       providers={providerMap}
+
       signIn={async (provider: AuthProvider, formData: FormData, callbackUrl?: string) => {
         'use server';
         try {

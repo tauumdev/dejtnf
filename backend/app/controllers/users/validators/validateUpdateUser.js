@@ -12,6 +12,8 @@ const validateUpdateUser = [
     .not()
     .isEmpty()
     .withMessage('IS_EMPTY'),
+  check('en')
+    .exists(),
   check('email')
     .exists()
     .withMessage('MISSING')

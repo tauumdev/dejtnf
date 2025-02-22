@@ -9,6 +9,10 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    en: {
+      type: String,
+      required: true
+    },
     email: {
       type: String,
       validate: {

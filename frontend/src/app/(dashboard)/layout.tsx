@@ -3,6 +3,7 @@ import * as React from 'react';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { PageContainer } from '@toolpad/core/PageContainer';
 import CustomSidebarAccount, { SidebarAccountOverride } from '../../components/SidebarAccout';
+import { MqttProvider } from '../../context/MqttContext';
 
 export default async function DashboardPagesLayout(props: { children: React.ReactNode }) {
   return (
@@ -13,7 +14,9 @@ export default async function DashboardPagesLayout(props: { children: React.Reac
         sidebarFooter: CustomSidebarAccount
       }}
     >
-      <PageContainer>{props.children}</PageContainer>
+      <MqttProvider>
+        <PageContainer>{props.children}</PageContainer>
+      </MqttProvider>
     </DashboardLayout>
   );
 }

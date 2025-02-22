@@ -10,6 +10,7 @@ import type { Navigation } from '@toolpad/core/AppProvider';
 import { SessionProvider, signIn, signOut } from 'next-auth/react';
 import { auth } from '../auth';
 import theme from '../theme';
+import Description from '@mui/icons-material/Description';
 
 const NAVIGATION: Navigation = [
   // {
@@ -29,6 +30,28 @@ const NAVIGATION: Navigation = [
     segment: 'equipment',
     title: 'Equipments',
     icon: <LayersIcon />,
+    children: [
+      {
+        segment: 'monitor',
+        title: 'Monitor',
+        icon: <DescriptionIcon />,
+      },
+      {
+        segment: 'config',
+        title: 'Config',
+        icon: <DescriptionIcon />,
+      },
+      {
+        segment: 'control',
+        title: 'Control',
+        icon: <DescriptionIcon />,
+      },
+    ]
+  },
+  {
+    segment: 'secsgem',
+    title: 'SecsGem',
+    icon: <Description />,
     children: [
       {
         segment: 'monitor',

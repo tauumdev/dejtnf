@@ -36,12 +36,24 @@ export default function Home() {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
 
   useEffect(() => {
-    const client = connectMqtt(
+    interface Message {
+      topic: string;
+      payload: string;
+      isResponse?: boolean;
+      timestamp?: string;
+    }
+
+    interface MqttClient {
+      isConnected: () => boolean;
+      disconnect: () => void;
+    }
+
+    const client: MqttClient = connectMqtt(
       () => {
         setConnectionStatus('connected');
-        subscribe('equipments/status/#', (msg, receivedTopic) => {
+        subscribe('equipments/status/#', (msg: string, receivedTopic: string) => {
           // Handle as secondary message
-          setSecondaryMessages(prev => {
+          setSecondaryMessages((prev: Message[]) => {
             const newMessages = [
               { topic: receivedTopic, payload: msg },
               ...prev
@@ -51,10 +63,10 @@ export default function Home() {
         });
       },
       () => setConnectionStatus('error'),
-      (message, receivedTopic) => {
+      (message: string, receivedTopic: string) => {
         // Check if this is a response message
         if (receivedTopic.includes('/response')) {
-          setPrimaryMessages(prev => {
+          setPrimaryMessages((prev: Message[]) => {
             const newMessages = [
               {
                 topic: receivedTopic,
@@ -68,7 +80,7 @@ export default function Home() {
             return newMessages.slice(0, 30); // Keep first 30 messages
           });
         } else {
-          setSecondaryMessages(prev => {
+          setSecondaryMessages((prev: Message[]) => {
             const newMessages = [
               { topic: receivedTopic, payload: message },
               ...prev
