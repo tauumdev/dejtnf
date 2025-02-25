@@ -18,12 +18,17 @@ import {
 } from '@mui/material';
 import { keyframes } from '@mui/material/styles';
 
+type AlarmState = {
+    alid: string;
+    altext: string;
+};
+
 type EquipmentStatus = {
     communicationState: string;
     processProgram: string;
     controlState: string;
     processState: string;
-    alarmState: string[]; // Array of alarms
+    alarmState: AlarmState[]; // Now an array of AlarmState objects
 };
 
 // Define a blinking animation for the alarm indicator
@@ -55,15 +60,21 @@ function EquipmentStatusCard({ equipmentName }: { equipmentName: string }) {
         const subscriptions = topics.map((item) => {
             const callback = (msg: string, topic: string) => {
                 if (item.key === 'alarmState') {
+                    // Extract alarm id from topic
                     const prefix = `equipments/status/alarm_state/${equipmentName}/`;
                     if (topic.startsWith(prefix)) {
-                        const trimmedMsg = msg.trim();
-                        if (trimmedMsg) {
-                            console.log(`Alarm received for ${equipmentName}: ${trimmedMsg}`);
-                            // Append the alarm message if not already present
+                        const alid = topic.split('/').pop() || '';
+                        const altext = msg.trim();
+                        if (altext === '') {
+                            setStatus((prev) => ({
+                                ...prev,
+                                alarmState: prev.alarmState.filter((alarm) => alarm.alid !== alid)
+                            }));
+                        } else {
                             setStatus((prev) => {
-                                if (!prev.alarmState.includes(trimmedMsg)) {
-                                    return { ...prev, alarmState: [...prev.alarmState, trimmedMsg] };
+                                // Only add alarm if not already present
+                                if (!prev.alarmState.some((alarm) => alarm.alid === alid)) {
+                                    return { ...prev, alarmState: [...prev.alarmState, { alid, altext }] };
                                 }
                                 return prev;
                             });
@@ -90,7 +101,7 @@ function EquipmentStatusCard({ equipmentName }: { equipmentName: string }) {
     return (
         <Card sx={{ mb: 3, boxShadow: 3, position: 'relative' }}>
             <CardContent>
-                {/* Header with equipment name and alarm indicator */}
+                {/* Header with equipment name and flashing alarm indicator */}
                 <Box sx={{ position: 'relative', mb: 2 }}>
                     <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
                         {equipmentName}
@@ -125,19 +136,26 @@ function EquipmentStatusCard({ equipmentName }: { equipmentName: string }) {
                         <strong>Process:</strong> {status.processState}
                     </Typography>
                     <Box>
-                        <Typography variant="body1" sx={{ mb: 1 }}>
+                        {/* <Typography variant="body1" sx={{ mb: 1 }}>
                             <strong>Alarms:</strong>
-                        </Typography>
+                        </Typography> */}
                         {status.alarmState.length > 0 ? (
                             <Stack direction="row" spacing={1} flexWrap="wrap">
                                 {status.alarmState.map((alarm, index) => (
-                                    <Chip key={index} label={alarm} variant="outlined" color="error" sx={{ mb: 1 }} />
+                                    <Chip
+                                        key={index}
+                                        label={`${alarm.alid}: ${alarm.altext}`}
+                                        variant="outlined"
+                                        color="error"
+                                        sx={{ mb: 1 }}
+                                    />
                                 ))}
                             </Stack>
                         ) : (
-                            <Typography variant="body2" color="text.secondary">
-                                No Alarm
-                            </Typography>
+                            // <Typography variant="body2" color="text.secondary">
+                            //     No Alarm
+                            // </Typography>
+                            <Chip label="No Alarm" color="success" />
                         )}
                     </Box>
                 </Stack>

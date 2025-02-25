@@ -17,6 +17,24 @@
                             "use_operation_code": true,
                             "use_on_operation": true,
                             "use_lot_hold": true
+                        },
+                        "tool_id": {
+                            "tool_1": [
+                                "0001",
+                                "0002"
+                            ],
+                            "tool_2": [
+                                "0003"
+                            ],
+                            "tool_3": [
+                                "0004",
+                                "0005"
+                            ],
+                            "tool_4": [
+                                "0006",
+                                "0007",
+                                "0008"
+                            ]
                         }
                     },
                     {
@@ -30,6 +48,24 @@
                             "use_operation_code": true,
                             "use_on_operation": true,
                             "use_lot_hold": true
+                        },
+                        "tool_id": {
+                            "tool_1": [
+                                "0001",
+                                "0002"
+                            ],
+                            "tool_2": [
+                                "0003"
+                            ],
+                            "tool_3": [
+                                "0004",
+                                "0005"
+                            ],
+                            "tool_4": [
+                                "0006",
+                                "0007",
+                                "0008"
+                            ]
                         }
                     }
                 ]
@@ -49,6 +85,24 @@
                             "use_operation_code": false,
                             "use_on_operation": false,
                             "use_lot_hold": false
+                        },
+                        "tool_id": {
+                            "tool_1": [
+                                "0001",
+                                "0002"
+                            ],
+                            "tool_2": [
+                                "0003"
+                            ],
+                            "tool_3": [
+                                "0004",
+                                "0005"
+                            ],
+                            "tool_4": [
+                                "0006",
+                                "0007",
+                                "0008"
+                            ]
                         }
                     }
                 ]
@@ -73,6 +127,24 @@
                             "use_operation_code": true,
                             "use_on_operation": true,
                             "use_lot_hold": true
+                        },
+                        "tool_id": {
+                            "tool_1": [
+                                "0001",
+                                "0002"
+                            ],
+                            "tool_2": [
+                                "0003"
+                            ],
+                            "tool_3": [
+                                "0004",
+                                "0005"
+                            ],
+                            "tool_4": [
+                                "0006",
+                                "0007",
+                                "0008"
+                            ]
                         }
                     }
                 ]

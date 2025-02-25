@@ -67,7 +67,14 @@ app.use(express.static('public'))
 app.set('views', path.join(__dirname, 'views'))
 app.engine('html', require('ejs').renderFile)
 app.set('view engine', 'html')
-app.use(require('./app/routes'))
+
+// Mount your API routes under the /api path
+const apiRoutes = require('./app/routes/api');
+app.use('/api', apiRoutes);
+
+// Mount the remaining routes (this will be your app’s default routes)
+app.use(require('./app/routes'));
+
 app.listen(app.get('port'))
 
 // Init MongoDB

@@ -902,6 +902,10 @@ class SecsControl(Cmd):
         :param rcmd: Remote command
         :param params: list of command parameters
         """
+        if not self.gem_host.is_online:
+            logger.warning("Remote Command Equipment %s is not online",
+                           self.gem_host.equipment_name)
+            return self.gem_host.equipment_name + " is not online"
         if rcmd:
             secs_cmd = {"RCMD": rcmd, "PARAMS": params}
             s2f42 = self.gem_host.send_and_waitfor_response(
@@ -927,6 +931,10 @@ class SecsControl(Cmd):
         :param rcmd: Remote command
         :param params: list of command parameters
         """
+        if not self.gem_host.is_online:
+            logger.warning("Remote Command Equipment %s is not online",
+                           self.gem_host.equipment_name)
+            return self.gem_host.equipment_name + " is not online"
         if rcmd:
             # secs_cmd = {"RCMD": rcmd, "PARAMS": params}
             secs_cmd = {"DATAID": 0, "OBJSPEC": objspec, "RCMD": rcmd,
