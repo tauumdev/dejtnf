@@ -13,8 +13,6 @@ const { lotValidateConfigExistExcludingItself } = require('./helpers')
 const updateLotValidateConfig = async (req, res) => {
     try {
         req = matchedData(req);
-        console.log("receive request:", req);
-
         const id = await isIDGood(req.id);
         const doesLotValidateConfigExistExcludingItself = await lotValidateConfigExistExcludingItself(id, req.equipment_name)
         if (!doesLotValidateConfigExistExcludingItself) {
