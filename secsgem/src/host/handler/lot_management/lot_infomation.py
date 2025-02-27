@@ -1,10 +1,12 @@
 import json
 import logging
+import os
 from typing import Dict, List, Optional, Union
 from urllib.parse import quote, urlencode
 
 import requests
-
+from dotenv import load_dotenv
+# from config.app_config import
 logger = logging.getLogger("app_logger")
 
 
@@ -22,11 +24,57 @@ class LotInformation:
         self.lot_data = None
         self.field_by_name = {}
         self.field_by_desc = {}
-        self._load_data_api()
+        self._load_data_from_api()
 
-    def _load_data_api(self):
+    def _load_data_from_api(self):
         """
         Load Lot Information data from API
+        """
+        # API_SERVER = localhost
+        # API_PORT = 3000
+        # API_ENDPOINT = api
+
+        load_dotenv()
+        api_server = os.getenv("API_SERVER")
+        api_port = os.getenv("API_PORT")
+        api_endpoint = os.getenv("API_ENDPOINT")
+
+        try:
+            # create url
+            api_url = f"http://{api_server}:{api_port}/{api_endpoint}/lotinfo/{self.lot_id}"
+            # print(api_url)
+            response = requests.get(
+                api_url,
+                timeout=10,
+                headers={'Accept': 'application/json'}
+            )
+            response.raise_for_status()
+
+            # Validate response format
+            self.lot_data = response.json()
+
+            if self.lot_data and isinstance(self.lot_data, dict):
+                self.status = self.lot_data.get("Status", False)
+                self.message = self.lot_data.get("Message", None)
+                if not self.status:
+                    logger.error(
+                        "Failed to retrieve Lot:%s, Information: %s", self.message, self.message)
+                    self.lot_data = None
+                    return
+                output_info = self.lot_data.get("OutputLotInfo", [])
+                for field in output_info:
+                    self.field_by_name[field["FieldName"]] = field["Value"]
+                    if "Description" in field:
+                        self.field_by_desc[field["Description"]] = field
+            else:
+                logger.error("Failed to load Lot Information: %s",)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            # print(f"Error: {str(e)}")
+            logger.error("Failed to load Lot Information: %s", str(e))
+
+    def _load_data_from_file(self):
+        """
+        Load Lot Information data from file
         """
         lot_info_api = self._LotInfoAPI()
         try:

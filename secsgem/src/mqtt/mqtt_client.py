@@ -65,3 +65,46 @@ class MqttClient:
         else:
             logger.info("Disconnected from MQTT broker")
             print("Disconnected from MQTT broker")
+
+    def publish(self, topic: str, payload: str, qos: int = 0, retain: bool = False):
+        """
+        Publish a message to a specific MQTT topic.
+        Args:
+            topic (str): The topic to publish to.
+            payload (str): The message payload.
+            qos (int): Quality of Service level (0, 1, or 2).
+            retain (bool): Whether to retain the message on the broker.
+        """
+        try:
+            result = self.client.publish(
+                topic, payload, qos=qos, retain=retain)
+            if result.rc == mqtt.MQTT_ERR_SUCCESS:
+                logger.info("Published to %s: %s", topic, payload)
+                print(f"Published to {topic}: {payload}")
+            else:
+                logger.error(
+                    "Failed to publish to %s. Error code: %s", topic, result.rc)
+                print(f"Failed to publish to {topic}. Error code: {result.rc}")
+        except Exception as e:
+            logger.error("Error publishing to %s: %s", topic, str(e))
+            print(f"Error publishing to {topic}: {str(e)}")
+
+    def subscribe(self, topic: str, qos: int = 0):
+        """
+        Subscribe to a specific MQTT topic.
+        Args:
+            topic (str): The topic to subscribe to.
+            qos (int): Quality of Service level (0, 1, or 2).
+        """
+        try:
+            result, mid = self.client.subscribe(topic, qos=qos)
+            if result == mqtt.MQTT_ERR_SUCCESS:
+                logger.info("Subscribed to %s with QoS %s", topic, qos)
+                print(f"Subscribed to {topic} with QoS {qos}")
+            else:
+                logger.error(
+                    "Failed to subscribe to %s. Error code: %s", topic, result)
+                print(f"Failed to subscribe to {topic}. Error code: {result}")
+        except Exception as e:
+            logger.error("Error subscribing to %s: %s", topic, str(e))
+            print(f"Error subscribing to {topic}: {str(e)}")

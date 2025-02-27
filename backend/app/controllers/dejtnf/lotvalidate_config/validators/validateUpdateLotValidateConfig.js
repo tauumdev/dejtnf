@@ -92,7 +92,7 @@ const validateUpdateLotValidateConfig = [
     body('config.*.data_with_selection_code.*.options.use_lot_hold')
         .exists().withMessage('MISSING_USE_LOT_HOLD')
         .isBoolean().withMessage('USE_LOT_HOLD_MUST_BE_A_BOOLEAN'),
-    body('config.*.data_with_selection_code.*.tool_id')
+    body('config.*.data_with_selection_code.*.allow_tool_id')
         .exists().withMessage('MISSING_TOOL_ID')
         .isObject().withMessage('TOOL_ID_MUST_BE_AN_OBJECT'),
     (req, res, next) => {

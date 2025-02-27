@@ -23,6 +23,4 @@ const updateLotValidateConfig = async (req, res) => {
     }
 }
 
-
-
 module.exports = { updateLotValidateConfig }

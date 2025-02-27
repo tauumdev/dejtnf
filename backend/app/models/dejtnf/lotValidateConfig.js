@@ -92,11 +92,11 @@ const mongoosePaginate = require('mongoose-paginate-v2')
 // const validator = require('validator')
 
 // Tool Schema
-const ToolSchema = new mongoose.Schema({
-    tool_1: { type: [String], default: [] },
-    tool_2: { type: [String], default: [] },
-    tool_3: { type: [String], default: [] },
-    tool_4: { type: [String], default: [] },
+const ToolIdSchema = new mongoose.Schema({
+    position_1: { type: [String], default: [] },
+    position_2: { type: [String], default: [] },
+    position_3: { type: [String], default: [] },
+    position_4: { type: [String], default: [] },
 }, { _id: false });
 
 // Data With Selection Code Schema
@@ -112,7 +112,7 @@ const DataWithSelectionCodeSchema = new mongoose.Schema({
         use_on_operation: { type: Boolean, required: true, default: false },
         use_lot_hold: { type: Boolean, required: true, default: false },
     },
-    tool_id: ToolSchema,
+    allow_tool_id: ToolIdSchema,
 }, { _id: false });
 
 // Config Schema

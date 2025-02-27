@@ -12,14 +12,6 @@ logger = logging.getLogger("app_logger")
 
 
 @dataclass
-class AllowToolId:
-    position_1: List[str]
-    position_2: List[str]
-    position_3: List[str]
-    position_4: List[str]
-
-
-@dataclass
 class Options:
     use_operation_code: bool
     use_on_operation: bool
@@ -35,7 +27,6 @@ class DataWithSelectionCode:
     recipe_name: str
     product_name: str
     options: Options
-    allow_tool_id: AllowToolId
 
 
 @dataclass
@@ -68,7 +59,8 @@ class EquipmentConfig:
         api_endpoint = os.getenv("API_ENDPOINT")
 
         # create url
-        api_url = f"http://{api_server}:{api_port}/{api_endpoint}//validate/configs?filter={self.equipment_name}&fields=equipment_name"
+        # api_url = f"http://{api_server}:{api_port}/{api_endpoint}/secsgem/equipments?filter={self.equipment_name}&fields=equipment_name"
+        api_url = f"http://{api_server}:{api_port}/{api_endpoint}/secsgem/equipments?filter=TNF-666&fields=equipment_name"
 
         response = requests.get(
             api_url,
@@ -77,12 +69,12 @@ class EquipmentConfig:
         )
         response.raise_for_status()
         response_data = response.json()
+        print(response_data.get("totalDocs"))
+        print(response_data.get("docs"))
+        print(response_data)
 
         if isinstance(response_data, dict):
             if response_data.get("totalDocs") == 1:
-                docs = response_data.get("docs")
-                config = docs[0].get("config", [])
-                self._find_matching_config(config)
 
     def _load_config_from_file(self):
         """Load Equipment Configuration data from File"""
@@ -111,7 +103,6 @@ class EquipmentConfig:
         for data in config.get("data_with_selection_code", []):
             if data.get("package_selection_code") == self._generate_selection_code(config.get("selection_code")):
                 options = Options(**data["options"])
-                allow_tool_ids = AllowToolId(**data["allow_tool_id"])
                 self.data_with_selection_code = DataWithSelectionCode(
                     package_selection_code=data["package_selection_code"],
                     operation_code=data["operation_code"],
@@ -119,8 +110,7 @@ class EquipmentConfig:
                     validate_type=data["validate_type"],
                     recipe_name=data["recipe_name"],
                     product_name=data["product_name"],
-                    options=options,
-                    allow_tool_id=allow_tool_ids
+                    options=options
                 )
                 # logger.info(self.data_with_selection_code)
 
