@@ -103,6 +103,7 @@ export const getDesignTokens = (mode: PaletteMode) => {
 
   customShadows[4] =
     '0px 5px 15px rgba(9, 11, 17, 0.05), 0px 15px 35px -5px rgba(19, 23, 32, 0.05)';
+  // console.log("get MPT Theme", mode);
 
   return {
     palette: {

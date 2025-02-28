@@ -1,3 +1,4 @@
+// 'use client';
 import * as React from 'react';
 import { NextAppProvider } from '@toolpad/core/nextjs';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
@@ -62,6 +63,18 @@ const NAVIGATION: Navigation = [
         segment: 'config',
         title: 'Config',
         icon: <DescriptionIcon />,
+        children: [
+          {
+            segment: "equipment",
+            title: "equipments",
+            icon: <DescriptionIcon />,
+          },
+          {
+            segment: "validate",
+            title: "validate config",
+            icon: <DescriptionIcon />,
+          }
+        ]
       },
       {
         segment: 'control',
@@ -91,13 +104,19 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
 
   return (
     <html lang="en" data-toolpad-color-scheme="light">
-      {/* <head>
-        <script
+      <head>
+        {/* <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
+
+                  const defaultMode = typeof window !== 'undefined' ? localStorage.getItem('mui-mode') || 'dark' : 'dark';
+                  console.log('defaultMode', defaultMode);
+
                   const mode = localStorage.getItem('mui-mode');
+                  console.log('current mode', mode);
+
                   if (mode) {
                     document.documentElement.setAttribute('data-mui-color-scheme', mode);
                   }
@@ -105,8 +124,8 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
               })();
             `,
           }}
-        />
-      </head> */}
+        /> */}
+      </head>
       <body>
         <SessionProvider session={session}>
           <AppRouterCacheProvider options={{ enableCssLayer: true }}>
@@ -116,13 +135,12 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
               branding={BRANDING}
               session={session}
               authentication={AUTHENTICATION}
-
             >
               {props.children}
-
             </NextAppProvider>
           </AppRouterCacheProvider>
         </SessionProvider>
+
       </body>
     </html>
   );

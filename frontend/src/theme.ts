@@ -9,5 +9,4 @@ const theme = {
   light: lightTheme,
   dark: darkTheme,
 };
-
 export default theme;

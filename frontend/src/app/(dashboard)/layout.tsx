@@ -4,7 +4,7 @@ import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { PageContainer } from '@toolpad/core/PageContainer';
 import CustomSidebarAccount, { SidebarAccountOverride } from '../../components/SidebarAccout';
 import { MqttProvider } from '../../context/MqttContext';
-
+import { ApiProvider } from '../../context/ValidateApiContext';
 export default async function DashboardPagesLayout(props: { children: React.ReactNode }) {
   return (
     <DashboardLayout
@@ -14,9 +14,11 @@ export default async function DashboardPagesLayout(props: { children: React.Reac
         sidebarFooter: CustomSidebarAccount
       }}
     >
-      <MqttProvider>
-        <PageContainer>{props.children}</PageContainer>
-      </MqttProvider>
+      <ApiProvider>
+        <MqttProvider>
+          <PageContainer>{props.children}</PageContainer>
+        </MqttProvider>
+      </ApiProvider>
     </DashboardLayout>
   );
 }
