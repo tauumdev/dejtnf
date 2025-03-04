@@ -1,77 +1,77 @@
 import axios from "axios";
 import { EquipmentResponse, Equipment } from '../service/types';
+
 const API_HOST = process.env.REACT_APP_API_HOST || "http://localhost:3000";
 
-// interface Equipment {
-//     id?: string;
-//     name: string;
-//     type: string;
-//     status?: string;
-// }
+// Define axios instance
+const api = axios.create({
+    baseURL: `${API_HOST}/api/secsgem`,
+    headers: { 'Content-Type': 'application/json' },
+});
 
-// Get all equipments
-export const getEquipments = async (): Promise<EquipmentResponse> => {
+// Get equipments
+export const getEquipments = async (
+    filter?: string,
+    fields?: string[],
+    page: number = 1,
+    limit: number = 20,
+    sort?: string,
+    order: number = 1
+): Promise<EquipmentResponse> => {
     try {
-        const response = await axios.get(`${API_HOST}/api/secsgem/equipments`);
+        const response = await api.get('/equipments', {
+            params: {
+                filter,
+                fields: fields?.join(','),
+                page,
+                limit,
+                sort,
+                order,
+            },
+        });
         return response.data;
-    } catch (error) {
-        console.error("Get Equipments Error:", error);
+    } catch (error: any) {
+        console.error("Get Equipments Error:", error.response?.data || error.message);
         throw error;
     }
 };
 
-
-// // Get all equipments
-// export const getEquipments = async (): Promise<Equipment[]> => {
-//     try {
-//         const response = await axios.get(`${API_HOST}/api/secsgem/equipments`);
-//         return response.data;
-//     } catch (error) {
-//         console.error("Get Equipments Error:", error);
-//         throw error;
-//     }
-// };
-
-// Get equipment by ID
+// Get equipment by id
 export const getEquipment = async (id: string): Promise<Equipment> => {
     try {
-        const response = await axios.get(`${API_HOST}/api/secsgem/equipment/${id}`);
+        const response = await api.get(`/equipment/${id}`);
         return response.data;
-    } catch (error) {
-        console.error("Get Equipment by ID Error:", error);
-        throw error;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.errors?.msg || `Failed to fetch equipment with ID: ${id}`);
     }
 };
 
-// Create a new equipment
+// Create equipment 
 export const createEquipment = async (equipment: Equipment): Promise<Equipment> => {
     try {
-        const response = await axios.post(`${API_HOST}/api/secsgem/equipment`, equipment);
+        const response = await api.post('/equipment', equipment);
         return response.data;
-    } catch (error) {
-        console.error("Create Equipment Error:", error);
-        throw error;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.errors?.msg || "Failed to create equipment");
     }
 };
 
-// Update an equipment
+// Update equipment
 export const updateEquipment = async (id: string, equipment: Partial<Equipment>): Promise<Equipment> => {
     try {
-        const response = await axios.put(`${API_HOST}/api/secsgem/equipment/${id}`, equipment);
+        const response = await api.put(`/equipment/${id}`, equipment);
         return response.data;
-    } catch (error) {
-        console.error("Update Equipment Error:", error);
-        throw error;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.errors?.msg || `Failed to update equipment with ID: ${id}`);
     }
 };
 
-// Delete an equipment
+// Delete equipment
 export const deleteEquipment = async (id: string): Promise<{ success: boolean }> => {
     try {
-        const response = await axios.delete(`${API_HOST}/api/secsgem/equipment/${id}`);
+        const response = await api.delete(`/equipment/${id}`);
         return response.data;
-    } catch (error) {
-        console.error("Delete Equipment Error:", error);
-        throw error;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.errors?.msg || `Failed to delete equipment with ID: ${id}`);
     }
 };

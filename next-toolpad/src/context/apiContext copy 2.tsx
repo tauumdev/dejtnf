@@ -14,6 +14,7 @@ interface ValidateContextProps {
     getLotValidateConfigs: () => Promise<any>;
 }
 
+// In your ApiContext interface, add totalCount
 interface EquipmentContextProps {
     loading: boolean;
     list: Equipment[];
@@ -44,10 +45,37 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [totalCount, setTotalCount] = useState<number>(0); // Add this
-
     const logIn = async (user: { email: string; password: string }) => {
         return await login(user);
     };
+
+    // useEffect(() => {
+    //     get_equipments(undefined, undefined, 1, 20, 'equipment_name', 1);
+    // }, [])
+
+    const create_equipment = async (equipment: Equipment) => {
+        createEquipment(equipment)
+    }
+
+    // const get_equipments = async (
+    //     filter?: string,
+    //     fields?: string[],
+    //     page: number = 1,
+    //     limit: number = 20,
+    //     sort?: string,
+    //     order: number = 1
+    // ) => {
+    //     setLoading(true);
+    //     try {
+    //         const response: EquipmentResponse = await getEquipments(filter, fields, page, limit, sort, order);
+    //         setEquipmentList(response.docs);
+    //         return response.docs;
+    //     } catch (error) {
+    //         console.error('Error fetching equipments:', error);
+    //     } finally {
+    //         setLoading(false); // Ensure loading is always set to false
+    //     }
+    // };
 
     const get_equipments = async (
         filter?: string,
@@ -71,6 +99,35 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
     };
 
+    const get_equipment = async (id: string) => {
+        try {
+            const response: Equipment = await getEquipment(id);
+            return response;
+        } catch (error) {
+            console.error('Error fetching equipment:', error);
+            throw error;
+        }
+    };
+    const del_equipment = async (id: string) => {
+        try {
+            const response = await deleteEquipment(id);
+            return response;
+        } catch (error) {
+            console.error('Error delete equipment:', error);
+            throw error;
+        }
+    };
+
+
+    const update_equipment = async (id: string, equipment: Partial<Equipment>) => {
+        try {
+            const response: Equipment = await updateEquipment(id, equipment);
+            return response;
+        } catch (error) {
+            console.log("Error update equipment:", error);
+            throw error;
+        }
+    }
     return (
         <ApiContext.Provider
             value={{
@@ -79,12 +136,11 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 equipment: {
                     loading: loading,
                     list: equipmentList,
-                    totalCount: totalCount,
-                    create: createEquipment,
-                    get: getEquipment,
+                    create: create_equipment,
+                    get: get_equipment,
                     gets: get_equipments,
-                    delete: deleteEquipment,
-                    update: updateEquipment,
+                    delete: del_equipment,
+                    update: update_equipment,
                 },
             }}
         >

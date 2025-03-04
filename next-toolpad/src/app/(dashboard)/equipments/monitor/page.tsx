@@ -27,7 +27,7 @@ export default function EquipmentMonitor() {
     useEffect(() => {
         const fetchEquipments = async () => {
             try {
-                const response: Equipment = await equipment.get("67be88ed9393cb4ac827e3b1");
+                const response: Equipment = await equipment.get("67c2d92b8c20b6f12ae7380f");
                 setEquipment_id(response);
             } catch (error) {
                 console.error("Error fetching equipments:", error);
@@ -76,62 +76,66 @@ export default function EquipmentMonitor() {
             </Paper>
 
             <Divider sx={{ mb: 2 }} />
-            <Typography variant="h6">Add Equipment</Typography>
-            <Box component="form" sx={{ '& .MuiTextField-root': { m: 1, width: '25ch' }, border: '1px dashed grey' }} p={2}>
-                <TextField id="standard-basic-name" size='small' label="Name" variant="outlined" />
-                <TextField
-                    id="outlined-select-model"
-                    select
-                    size='small'
-                    label="Model"
-                    defaultValue="FCL"
-                >
-                    {["FCL", "FCLX"].map((option) => (
-                        <MenuItem key={option} value={option}>
-                            {option}
-                        </MenuItem>
-                    ))}
-                </TextField>
-                <TextField size='small' id="standard-basic-ip" label="IP Address" variant="outlined" />
-                <TextField size='small' id="standard-basic-port" label="Port" defaultValue={5000} variant="outlined" />
-                <TextField size='small' id="standard-basic-id" label="ID" defaultValue={0} variant="outlined" />
-                <TextField
-                    id="outlined-select-mode"
-                    select
-                    size='small'
-                    label="Mode"
-                    defaultValue="ACTIVE"
-                >
-                    {["ACTIVE", "PASSIVE"].map((option) => (
-                        <MenuItem key={option} value={option}>
-                            {option}
-                        </MenuItem>
-                    ))}
-                </TextField>
-                <TextField
-                    id="outlined-select-enable"
-                    select
-                    size='small'
-                    label="Enable"
-                    defaultValue="False"
-                >
-                    {["False", "True"].map((option) => (
-                        <MenuItem key={option} value={option}>
-                            {option}
-                        </MenuItem>
-                    ))}
-                </TextField>
-                {/* <Box sx={{ display: 'flex', mt: 2, paddingTop: 5 }}> */}
-                <Button
-                    // sx={{ p: 3 }}
-                    sx={{ display: 'block' }}
-                    variant="contained"
-                    color="primary"
-                    size='small'
-                >
-                    Add
-                </Button>
-                {/* </Box> */}
+            <Box>
+
+
+                <Typography variant="h6">Add Equipment</Typography>
+                <Box component="form" sx={{ '& .MuiTextField-root': { m: 1, width: '25ch' }, border: '1px dashed grey' }} p={2}>
+                    <TextField id="standard-basic-name" size='small' label="Name" variant="outlined" />
+                    <TextField
+                        id="outlined-select-model"
+                        select
+                        size='small'
+                        label="Model"
+                        defaultValue="FCL"
+                    >
+                        {["FCL", "FCLX"].map((option) => (
+                            <MenuItem key={option} value={option}>
+                                {option}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                    <TextField size='small' id="standard-basic-ip" label="IP Address" variant="outlined" />
+                    <TextField size='small' id="standard-basic-port" label="Port" defaultValue={5000} variant="outlined" />
+                    <TextField size='small' id="standard-basic-id" label="ID" defaultValue={0} variant="outlined" />
+                    <TextField
+                        id="outlined-select-mode"
+                        select
+                        size='small'
+                        label="Mode"
+                        defaultValue="ACTIVE"
+                    >
+                        {["ACTIVE", "PASSIVE"].map((option) => (
+                            <MenuItem key={option} value={option}>
+                                {option}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                    <TextField
+                        id="outlined-select-enable"
+                        select
+                        size='small'
+                        label="Enable"
+                        defaultValue="False"
+                    >
+                        {["False", "True"].map((option) => (
+                            <MenuItem key={option} value={option}>
+                                {option}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                    {/* <Box sx={{ display: 'flex', mt: 2, paddingTop: 5 }}> */}
+                    <Button
+                        // sx={{ p: 3 }}
+                        sx={{ display: 'block' }}
+                        variant="contained"
+                        color="primary"
+                        size='small'
+                    >
+                        Add
+                    </Button>
+                    {/* </Box> */}
+                </Box>
             </Box>
             <Divider sx={{ my: 3 }} />
 

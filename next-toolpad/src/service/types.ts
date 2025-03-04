@@ -1,8 +1,8 @@
 export interface Equipment {
     _id: string;
     address: string;
-    createdAt: string;  // ใช้ `string` เพราะเป็นรูปแบบ ISO 8601
-    updatedAt: string;
+    // createdAt: string;  // ใช้ `string` เพราะเป็นรูปแบบ ISO 8601
+    // updatedAt: string;
     enable: boolean;
     equipment_model: string;
     equipment_name: string;
