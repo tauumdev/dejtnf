@@ -1,8 +1,7 @@
 'use client';
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import { useMqtt } from '../../../../context/MqttContext';
-import { Alert, Box, Button, TextField, Typography } from '@mui/material';
-
+import { Alert, Box, Button, Divider, MenuItem, TextField, Typography, Paper, Grid, Card, CardContent } from '@mui/material';
 import { useApiContext } from '../../../../context/apiContext';
 import { Equipment } from '@/src/service/types';
 
@@ -28,10 +27,8 @@ export default function EquipmentMonitor() {
     useEffect(() => {
         const fetchEquipments = async () => {
             try {
-
-                const response: Equipment = await equipment.get("67c2e4308c20b6f12ae73854");
+                const response: Equipment = await equipment.get("67be88ed9393cb4ac827e3b1");
                 setEquipment_id(response);
-
             } catch (error) {
                 console.error("Error fetching equipments:", error);
             }
@@ -41,22 +38,17 @@ export default function EquipmentMonitor() {
     }, []);
 
     useEffect(() => {
-
         // Subscribe to status topics using the shared MQTT connection
         subscribeTopic(`equipments/status/communication_state/${selectedEquipment}`, (msg: string) => {
-            // console.log(`Received communication state: ${msg}`);
             setEquipmentStatus(prev => ({ ...prev, communicationState: msg }));
         });
         subscribeTopic(`equipments/status/control_state/${selectedEquipment}`, (msg: string) => {
-            // console.log(`Received control state: ${msg}`);
             setEquipmentStatus(prev => ({ ...prev, controlState: msg }));
         });
         subscribeTopic(`equipments/status/process_state/${selectedEquipment}`, (msg: string) => {
-            // console.log(`Received process state: ${msg}`);
             setEquipmentStatus(prev => ({ ...prev, processState: msg }));
         });
         subscribeTopic(`equipments/status/process_program/${selectedEquipment}`, (msg: string) => {
-            // console.log(`Received process program: ${msg}`);
             setEquipmentStatus(prev => ({ ...prev, processProgram: msg }));
         });
 
@@ -67,22 +59,7 @@ export default function EquipmentMonitor() {
             unsubscribeTopic(`equipments/status/process_state/${selectedEquipment}`);
             unsubscribeTopic(`equipments/status/process_program/${selectedEquipment}`);
         };
-
-    }, [selectedEquipment, subscribeTopic, unsubscribeTopic])
-
-
-    // {
-    //     "mode": "ACTIVE",
-    //     "_id": "67c2e4308c20b6f12ae73854",
-    //     "equipment_name": "TNF-64",
-    //     "equipment_model": "FCL",
-    //     "address": "192.168.226.164",
-    //     "port": 5000,
-    //     "session_id": 64,
-    //     "enable": false,
-    //     "createdAt": "2025-03-01T10:40:48.020Z",
-    //     "updatedAt": "2025-03-01T10:40:48.020Z"
-    //   }
+    }, [selectedEquipment, subscribeTopic, unsubscribeTopic]);
 
     return (
         <Box sx={{ p: 2 }}>
@@ -92,51 +69,104 @@ export default function EquipmentMonitor() {
             >
                 MQTT Connection Status: {connectionStatus}
             </Alert>
-            <Typography>{selectedEquipment}</Typography>
-            {/* <Typography>Equipment by id: 67c2e4308c20b6f12ae73854</Typography> */}
-            <pre>{JSON.stringify(equipmentStatus, null, 2)}</pre>
-            <Typography>Add Equipment</Typography>
+            <Typography variant="h6" sx={{ mb: 2 }}>Selected Equipment: {selectedEquipment}</Typography>
+            <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
+                <Typography variant="h6">Equipment Status</Typography>
+                <pre>{JSON.stringify(equipmentStatus, null, 2)}</pre>
+            </Paper>
 
-
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <TextField id="standard-basic" label="Equipment name" variant="standard" />
-
+            <Divider sx={{ mb: 2 }} />
+            <Typography variant="h6">Add Equipment</Typography>
+            <Box component="form" sx={{ '& .MuiTextField-root': { m: 1, width: '25ch' }, border: '1px dashed grey' }} p={2}>
+                <TextField id="standard-basic-name" size='small' label="Name" variant="outlined" />
+                <TextField
+                    id="outlined-select-model"
+                    select
+                    size='small'
+                    label="Model"
+                    defaultValue="FCL"
+                >
+                    {["FCL", "FCLX"].map((option) => (
+                        <MenuItem key={option} value={option}>
+                            {option}
+                        </MenuItem>
+                    ))}
+                </TextField>
+                <TextField size='small' id="standard-basic-ip" label="IP Address" variant="outlined" />
+                <TextField size='small' id="standard-basic-port" label="Port" defaultValue={5000} variant="outlined" />
+                <TextField size='small' id="standard-basic-id" label="ID" defaultValue={0} variant="outlined" />
+                <TextField
+                    id="outlined-select-mode"
+                    select
+                    size='small'
+                    label="Mode"
+                    defaultValue="ACTIVE"
+                >
+                    {["ACTIVE", "PASSIVE"].map((option) => (
+                        <MenuItem key={option} value={option}>
+                            {option}
+                        </MenuItem>
+                    ))}
+                </TextField>
+                <TextField
+                    id="outlined-select-enable"
+                    select
+                    size='small'
+                    label="Enable"
+                    defaultValue="False"
+                >
+                    {["False", "True"].map((option) => (
+                        <MenuItem key={option} value={option}>
+                            {option}
+                        </MenuItem>
+                    ))}
+                </TextField>
+                {/* <Box sx={{ display: 'flex', mt: 2, paddingTop: 5 }}> */}
                 <Button
-                    // onClick={() => setSelectedEquipment(equipment_id?.equipment_name || '')}
-                    variant="outlined"
+                    // sx={{ p: 3 }}
+                    sx={{ display: 'block' }}
+                    variant="contained"
                     color="primary"
                     size='small'
                 >
                     Add
                 </Button>
+                {/* </Box> */}
+            </Box>
+            <Divider sx={{ my: 3 }} />
+
+            <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
+                This Box renders as an HTML section element.
             </Box>
 
-            {/* {equipment.loading && <Typography>Loading...</Typography>}
- */}
-
-            <Typography>Equipment list</Typography>
-            {equipment.list.map((equipment) => (
-                <Box key={equipment._id}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <li>{equipment.equipment_name}</li>
-                        <Typography>{equipment.equipment_model}</Typography>
-                        <Typography>{equipment.address}</Typography>
-                        <Typography>{equipment.port}</Typography>
-                        <Typography>{equipment.session_id}</Typography>
-                        <Typography>{equipment.mode}</Typography>
-                        <Typography>{equipment.enable}</Typography>
-                        <Button
-                            onClick={() => setSelectedEquipment(equipment.equipment_name)}
-                            variant="outlined"
-                            color="primary"
-                            size='small'
-                        >
-                            Select
-                        </Button>
-                    </Box>
-                </Box>
-            ))}
-
+            <Typography variant="h6">Equipment List</Typography>
+            <Grid container spacing={2}>
+                {equipment.list.map((equipment) => (
+                    <Grid item xs={12} key={equipment._id}>
+                        <Card>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <Typography variant="body1">{equipment.equipment_name}</Typography>
+                                    <Typography variant="body2">{equipment.equipment_model}</Typography>
+                                    <Typography variant="body2">{equipment.address}</Typography>
+                                    <Typography variant="body2">{equipment.port}</Typography>
+                                    <Typography variant="body2">{equipment.session_id}</Typography>
+                                    <Typography variant="body2">{equipment.mode}</Typography>
+                                    <Typography variant="body2">{equipment.enable}</Typography>
+                                    <Button
+                                        onClick={() => setSelectedEquipment(equipment.equipment_name)}
+                                        variant="outlined"
+                                        color="primary"
+                                        size='small'
+                                    >
+                                        Select
+                                    </Button>
+                                </Box>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                ))}
+            </Grid>
         </Box >
-    )
+    );
 }

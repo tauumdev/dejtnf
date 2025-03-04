@@ -2,7 +2,7 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import type { Provider } from 'next-auth/providers';
 
-import { login, token } from '../../../dejtnf-api/user';
+import { login } from '../../../service/userApi';
 const providers: Provider[] = [Credentials({
 
   credentials: {
