@@ -138,7 +138,7 @@ export default function EquipmentList() {
             const response = await equipment.create(newEquipment);
             console.info("Equipment created:", response);
             refreshData();
-            setAddEquipment(fa)
+            setAddEquipment(false)
         } catch (error) {
             if (error instanceof Error) {
                 console.error("Update failed:", error.message);
@@ -178,7 +178,7 @@ export default function EquipmentList() {
             }
 
             <TableContainer component={Paper}>
-                <Table size='small'>
+                <Table>
                     <EquipmentTableHead />
                     <TableBody>
                         {equipment.list.map((eq) => (

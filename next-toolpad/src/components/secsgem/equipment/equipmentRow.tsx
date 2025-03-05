@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
     TableRow, TableCell, Typography,
-    TextField, Select, MenuItem, IconButton
+    TextField, Select, MenuItem, IconButton,
+    Stack
 } from '@mui/material';
 import { Edit, Delete, Save, Cancel } from '@mui/icons-material';
 import { Equipment } from '../../../service/types';
@@ -142,23 +143,23 @@ export const EquipmentRow = ({
             {/* Actions */}
             <TableCell>
                 {isEditing ? (
-                    <>
+                    <Stack direction="row" spacing={1} alignItems="center">
                         <IconButton color="primary" onClick={() => onSave(eq._id, editableData)}>
                             <Save />
                         </IconButton>
                         <IconButton color="secondary" onClick={onCancel}>
                             <Cancel />
                         </IconButton>
-                    </>
+                    </Stack>
                 ) : (
-                    <>
+                    <Stack direction="row" spacing={1} alignItems="center">
                         <IconButton color="primary" onClick={onEdit}>
                             <Edit />
                         </IconButton>
                         <IconButton color="error" onClick={onDeleteRequest}>
                             <Delete />
                         </IconButton>
-                    </>
+                    </Stack>
                 )}
             </TableCell>
         </TableRow>
