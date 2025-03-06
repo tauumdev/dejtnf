@@ -9,14 +9,20 @@ import {
     Stack,
     CircularProgress,
     Fade,
-    Divider
+    Divider,
+    FormControl,
+    InputLabel
 } from '@mui/material';
+
 import { Edit, Delete, Save, Cancel, Add } from '@mui/icons-material';
 import { EquipmentRow } from './equipment/equipmentRow';
 import { EquipmentTableHead } from './equipment/equipmentTableHead';
 import { DeleteDialog } from './equipment/deleteDialog';
 import { CreateEquipmentDialog } from './equipment/createEquipmentDialog';
 import EquipmentForm from './equipment/equipmentForm';
+// import { EquipmentConfigViewer } from './equipment/equipmentConfigForm';
+// import { EquipmentConfigTable } from './equipment/collapValidateForm';
+// import { NewValidateData } from './equipment/newValidatedata';
 
 interface Equipment {
     _id: string;
@@ -138,7 +144,7 @@ export default function EquipmentList() {
             const response = await equipment.create(newEquipment);
             console.info("Equipment created:", response);
             refreshData();
-            setAddEquipment(fa)
+            setAddEquipment(false)
         } catch (error) {
             if (error instanceof Error) {
                 console.error("Update failed:", error.message);
@@ -151,33 +157,36 @@ export default function EquipmentList() {
     const handleCancel = () => {
         console.log("Cancel Clicked");
         setAddEquipment(false)
-
     };
+
 
     return (
         <Box sx={{ width: '100%' }}>
-            <Toolbar sx={{ justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="h6">Equipment List</Typography>
-                {equipment.loading &&
-                    <Fade in={equipment.loading} unmountOnExit>
-                        <CircularProgress color="secondary" />
-                    </Fade>
-                }
-                <Button
-                    variant="contained"
-                    startIcon={<Add />}
-                    // onClick={() => setCreateDialogOpen(true)}
-                    onClick={() => setAddEquipment(true)}
-                >
-                    New Equipment
-                </Button>
-            </Toolbar>
-
-            {AddEquipment &&
-                <EquipmentForm initialData={newEquipment} onSave={handleSave} onCancel={handleCancel} />
-            }
 
             <TableContainer component={Paper}>
+
+                <Toolbar sx={{ justifyContent: 'space-between' }}>
+                    <Typography variant="h6">Equipment List</Typography>
+                    {equipment.loading &&
+                        <Fade in={equipment.loading} unmountOnExit>
+                            <CircularProgress color="secondary" />
+                        </Fade>
+                    }
+                    <Button
+                        size='small'
+                        variant="outlined"
+                        startIcon={<Add />}
+                        // onClick={() => setCreateDialogOpen(true)}
+                        onClick={() => setAddEquipment(true)}
+                    >
+                        New Equipment
+                    </Button>
+                </Toolbar>
+
+                {AddEquipment &&
+                    <EquipmentForm initialData={newEquipment} onSave={handleSave} onCancel={handleCancel} />
+                }
+
                 <Table size='small'>
                     <EquipmentTableHead />
                     <TableBody>
@@ -217,6 +226,7 @@ export default function EquipmentList() {
                 onClose={() => setCreateDialogOpen(false)}
                 onCreate={handleCreate}
             />
+
         </Box>
     );
 }
