@@ -9,14 +9,20 @@ import {
     Stack,
     CircularProgress,
     Fade,
-    Divider
+    Divider,
+    FormControl,
+    InputLabel
 } from '@mui/material';
+
 import { Edit, Delete, Save, Cancel, Add } from '@mui/icons-material';
 import { EquipmentRow } from './equipment/equipmentRow';
 import { EquipmentTableHead } from './equipment/equipmentTableHead';
 import { DeleteDialog } from './equipment/deleteDialog';
 import { CreateEquipmentDialog } from './equipment/createEquipmentDialog';
 import EquipmentForm from './equipment/equipmentForm';
+// import { EquipmentConfigViewer } from './equipment/equipmentConfigForm';
+// import { EquipmentConfigTable } from './equipment/collapValidateForm';
+// import { NewValidateData } from './equipment/newValidatedata';
 
 interface Equipment {
     _id: string;
@@ -138,7 +144,7 @@ export default function EquipmentList() {
             const response = await equipment.create(newEquipment);
             console.info("Equipment created:", response);
             refreshData();
-            setAddEquipment(fa)
+            setAddEquipment(false)
         } catch (error) {
             if (error instanceof Error) {
                 console.error("Update failed:", error.message);
@@ -151,27 +157,41 @@ export default function EquipmentList() {
     const handleCancel = () => {
         console.log("Cancel Clicked");
         setAddEquipment(false)
-
     };
+
 
     return (
         <Box sx={{ width: '100%' }}>
 
             <TableContainer component={Paper}>
+<<<<<<< HEAD
                 <Toolbar sx={{ justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="h6">SECS/GEM Equipments</Typography>
+=======
+
+                <Toolbar sx={{ justifyContent: 'space-between' }}>
+                    <Typography variant="h6">Equipment List</Typography>
+>>>>>>> 55d6d28a99252721990d28c71524c085cefc6961
                     {equipment.loading &&
                         <Fade in={equipment.loading} unmountOnExit>
                             <CircularProgress color="secondary" />
                         </Fade>
                     }
                     <Button
+<<<<<<< HEAD
+=======
+                        size='small'
+>>>>>>> 55d6d28a99252721990d28c71524c085cefc6961
                         variant="outlined"
                         startIcon={<Add />}
                         // onClick={() => setCreateDialogOpen(true)}
                         onClick={() => setAddEquipment(true)}
                     >
+<<<<<<< HEAD
                         EQUIPMENT
+=======
+                        New Equipment
+>>>>>>> 55d6d28a99252721990d28c71524c085cefc6961
                     </Button>
                 </Toolbar>
 
@@ -218,6 +238,7 @@ export default function EquipmentList() {
                 onClose={() => setCreateDialogOpen(false)}
                 onCreate={handleCreate}
             />
+
         </Box>
     );
 }
