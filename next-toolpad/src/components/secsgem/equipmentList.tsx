@@ -164,34 +164,20 @@ export default function EquipmentList() {
         <Box sx={{ width: '100%' }}>
 
             <TableContainer component={Paper}>
-<<<<<<< HEAD
                 <Toolbar sx={{ justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="h6">SECS/GEM Equipments</Typography>
-=======
-
-                <Toolbar sx={{ justifyContent: 'space-between' }}>
-                    <Typography variant="h6">Equipment List</Typography>
->>>>>>> 55d6d28a99252721990d28c71524c085cefc6961
                     {equipment.loading &&
                         <Fade in={equipment.loading} unmountOnExit>
                             <CircularProgress color="secondary" />
                         </Fade>
                     }
                     <Button
-<<<<<<< HEAD
-=======
-                        size='small'
->>>>>>> 55d6d28a99252721990d28c71524c085cefc6961
                         variant="outlined"
                         startIcon={<Add />}
                         // onClick={() => setCreateDialogOpen(true)}
                         onClick={() => setAddEquipment(true)}
                     >
-<<<<<<< HEAD
                         EQUIPMENT
-=======
-                        New Equipment
->>>>>>> 55d6d28a99252721990d28c71524c085cefc6961
                     </Button>
                 </Toolbar>
 
