@@ -156,28 +156,29 @@ export default function EquipmentList() {
 
     return (
         <Box sx={{ width: '100%' }}>
-            <Toolbar sx={{ justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="h6">Equipment List</Typography>
-                {equipment.loading &&
-                    <Fade in={equipment.loading} unmountOnExit>
-                        <CircularProgress color="secondary" />
-                    </Fade>
-                }
-                <Button
-                    variant="contained"
-                    startIcon={<Add />}
-                    // onClick={() => setCreateDialogOpen(true)}
-                    onClick={() => setAddEquipment(true)}
-                >
-                    New Equipment
-                </Button>
-            </Toolbar>
-
-            {AddEquipment &&
-                <EquipmentForm initialData={newEquipment} onSave={handleSave} onCancel={handleCancel} />
-            }
 
             <TableContainer component={Paper}>
+                <Toolbar sx={{ justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="h6">SECS/GEM Equipments</Typography>
+                    {equipment.loading &&
+                        <Fade in={equipment.loading} unmountOnExit>
+                            <CircularProgress color="secondary" />
+                        </Fade>
+                    }
+                    <Button
+                        variant="outlined"
+                        startIcon={<Add />}
+                        // onClick={() => setCreateDialogOpen(true)}
+                        onClick={() => setAddEquipment(true)}
+                    >
+                        EQUIPMENT
+                    </Button>
+                </Toolbar>
+
+                {AddEquipment &&
+                    <EquipmentForm initialData={newEquipment} onSave={handleSave} onCancel={handleCancel} />
+                }
+
                 <Table size='small'>
                     <EquipmentTableHead />
                     <TableBody>
