@@ -21,7 +21,7 @@ import {
     Toolbar
 } from '@mui/material';
 import { Cancel, Save, Edit, Delete, Add } from '@mui/icons-material';
-import { ValidateAllowToolId } from '../../service/types';
+import { ValidateAllowToolId } from '../../../service/types';
 
 interface AllowToolIdProps {
     initialData: ValidateAllowToolId;

@@ -18,7 +18,7 @@ import { Edit, Delete, Save, Cancel, Add } from '@mui/icons-material';
 import { EquipmentRow } from './equipment/equipmentRow';
 import { EquipmentTableHead } from './equipment/equipmentTableHead';
 import { DeleteDialog } from './equipment/deleteDialog';
-import { CreateEquipmentDialog } from './equipment/createEquipmentDialog';
+// import { CreateEquipmentDialog } from './equipment/createEquipmentDialog';
 import EquipmentForm from './equipment/equipmentForm';
 // import { EquipmentConfigViewer } from './equipment/equipmentConfigForm';
 // import { EquipmentConfigTable } from './equipment/collapValidateForm';
@@ -115,19 +115,19 @@ export default function EquipmentList() {
         }
     };
 
-    const handleCreate = async (newEquipment: Equipment) => {
-        try {
-            const response = await equipment.create(newEquipment);
-            console.info("Equipment created:", response);
-            refreshData();
-        } catch (error) {
-            if (error instanceof Error) {
-                console.error("Update failed:", error.message);
-            } else {
-                console.error("Update failed:", error);
-            }
-        }
-    };
+    // const handleCreate = async (newEquipment: Equipment) => {
+    //     try {
+    //         const response = await equipment.create(newEquipment);
+    //         console.info("Equipment created:", response);
+    //         refreshData();
+    //     } catch (error) {
+    //         if (error instanceof Error) {
+    //             console.error("Update failed:", error.message);
+    //         } else {
+    //             console.error("Update failed:", error);
+    //         }
+    //     }
+    // };
 
     const newEquipment = {
         equipment_name: "",
@@ -201,29 +201,31 @@ export default function EquipmentList() {
                         ))}
                     </TableBody>
                 </Table>
+
+                <TablePagination
+                    rowsPerPageOptions={[5, 10, 25]}
+                    component="div"
+                    count={equipment.totalCount} // Use the totalCount from context
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                />
             </TableContainer>
 
-            <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                component="div"
-                count={equipment.totalCount} // Use the totalCount from context
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-            />
+
 
             <DeleteDialog
                 open={!!deleteRowId}
                 onClose={() => setDeleteRowId(null)}
                 onConfirm={handleDelete}
             />
-
+            {/* 
             <CreateEquipmentDialog
                 open={createDialogOpen}
                 onClose={() => setCreateDialogOpen(false)}
                 onCreate={handleCreate}
-            />
+            /> */}
 
         </Box>
     );

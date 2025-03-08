@@ -6,7 +6,8 @@ import { auth } from '@/src/app/api/auth/auth';
 
 // import { useApiContext } from '@/src/context/apiContext';
 import EquipmentList from '../../../../components/secsgem/equipmentList'
-import ValidateConfig_component from '@/src/components/validate/validateConfig';
+import ValidateConfig_component from '@/src/components/secsgem/validate/validateConfig';
+import CollapValidate from '@/src/components/secsgem/validate/collapValidate';
 
 export default async function EquipmentControl() {
     const session = await auth();
@@ -25,7 +26,9 @@ export default async function EquipmentControl() {
         <div>
             <EquipmentList />
             <Divider sx={{ p: 2 }} />
-            <ValidateConfig_component />
+            {/* <ValidateConfig_component /> */}
+            <CollapValidate />
+            {/* <ValidateConfig_component /> */}
         </div>
 
     );
