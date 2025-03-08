@@ -2,22 +2,36 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { login } from '../service/userApi';
 import { getEquipment, getEquipments, createEquipment, deleteEquipment, updateEquipment } from '../service/equipmentApi';
-import { getLotValidateConfigs } from '../service/validateApi';
+import { getValidateConfigs, getValidateConfig } from '../service/validateApi';
 
-import { EquipmentResponse, Equipment } from '../service/types';
+import { EquipmentResponse, Equipment, ValidateConfigPropTypes, ValidateResponse } from '../service/types';
 
 interface UserContextProps {
     logIn: (user: { email: string; password: string }) => Promise<any>;
 }
 
 interface ValidateContextProps {
-    getLotValidateConfigs: () => Promise<any>;
+    loading: boolean;
+    list: ValidateConfigPropTypes[];
+    totalCount: number;
+    // get: (id: string) => Promise<any>;
+    gets: (
+        filter?: string,
+        fields?: string[],
+        page?: number,
+        limit?: number,
+        sort?: string,
+        order?: number
+    ) => Promise<any>;
+    // create: (data: ValidateConfig) => Promise<any>;
+    // update: (id: string, data: any) => Promise<any>;
+    // delete: (id: string) => Promise<any>;
 }
 
 interface EquipmentContextProps {
     loading: boolean;
     list: Equipment[];
-    totalCount: number; // Add this
+    totalCount: number;
     get: (id: string) => Promise<any>;
     gets: (
         filter?: string,
@@ -42,8 +56,13 @@ const ApiContext = createContext<ApiContextProps | undefined>(undefined);
 
 export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [totalCount, setTotalCount] = useState<number>(0); // Add this
+    const [loadingEquipment, setLoadingEquipment] = useState(true)
+    const [totalCountEquipment, setTotalCountEquipment] = useState<number>(0)
+
+    const [validateList, setValidateList] = useState<ValidateConfigPropTypes[]>([])
+    const [loadingValidateConfig, setLoadingValidateConfig] = useState(true)
+    const [totalCountValidateConfig, setTotalCountValidateConfig] = useState<number>(0)
+
 
     const logIn = async (user: { email: string; password: string }) => {
         return await login(user);
@@ -57,17 +76,39 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         sort?: string,
         order: number = 1
     ) => {
-        setLoading(true);
+        setLoadingEquipment(true);
         try {
             const response: EquipmentResponse = await getEquipments(filter, fields, page, limit, sort, order);
             setEquipmentList(response.docs);
-            setTotalCount(response.totalDocs); // Assuming API returns totalDocs
+            setTotalCountEquipment(response.totalDocs); // Assuming API returns totalDocs
             return response;
         } catch (error) {
             console.error('Error fetching equipments:', error);
             throw error;
         } finally {
-            setLoading(false);
+            setLoadingEquipment(false);
+        }
+    };
+
+    const get_validateConfigs = async (
+        filter?: string,
+        fields?: string[],
+        page: number = 1,
+        limit: number = 20,
+        sort?: string,
+        order: number = 1
+    ) => {
+        setLoadingValidateConfig(true);
+        try {
+            const response: ValidateResponse = await getValidateConfigs(filter, fields, page, limit, sort, order);
+            setValidateList(response.docs);
+            setTotalCountValidateConfig(response.totalDocs); // Assuming API returns totalDocs
+            return response;
+        } catch (error) {
+            console.error('Error fetching validate configs:', error);
+            throw error;
+        } finally {
+            setLoadingValidateConfig(false);
         }
     };
 
@@ -75,11 +116,16 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         <ApiContext.Provider
             value={{
                 user: { logIn },
-                validate: { getLotValidateConfigs },
+                validate: {
+                    loading: loadingValidateConfig,
+                    list: validateList,
+                    totalCount: totalCountValidateConfig,
+                    gets: get_validateConfigs
+                },
                 equipment: {
-                    loading: loading,
+                    loading: loadingEquipment,
                     list: equipmentList,
-                    totalCount: totalCount,
+                    totalCount: totalCountEquipment,
                     create: createEquipment,
                     get: getEquipment,
                     gets: get_equipments,
