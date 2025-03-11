@@ -93,12 +93,7 @@ export default function CollapValidate() {
         }
     };
 
-    const handleDelete = async (key: string) => {
-        const [_id, package8digit, package_selection_code] = key.split('-')
-        // console.log("_id: ", _id);
-        // console.log("package8digit: ", package8digit);
-        // console.log("package_selection_code: ", package_selection_code);
-
+    const handleDeleteConfig = async (_id: string, package8digit: string) => {
         const dataByEquipmentName = validate.list.find(item => item._id === _id);
 
         if (!dataByEquipmentName) {
@@ -106,62 +101,71 @@ export default function CollapValidate() {
             return;
         }
 
-        // กรณีลบ data_with_selection_code
-        if (package_selection_code) {
-            const configIndex = dataByEquipmentName.config.findIndex(
-                (config) => config.package8digit === package8digit
-            );
+        // Remove the config with the matching package8digit
+        dataByEquipmentName.config = dataByEquipmentName.config.filter(
+            (config) => config.package8digit !== package8digit
+        );
 
-            if (configIndex === -1) {
-                console.error("Config not found for package8digit:", package8digit);
-                return;
-            }
-
-            dataByEquipmentName.config[configIndex].data_with_selection_code =
-                dataByEquipmentName.config[configIndex].data_with_selection_code.filter(
-                    (data) => data.package_selection_code !== package_selection_code
-                );
-
-            // หาก data_with_selection_code กลายเป็นอาร์เรย์ว่าง ให้ลบ config นั้นออก
-            if (dataByEquipmentName.config[configIndex].data_with_selection_code.length === 0) {
-                dataByEquipmentName.config.splice(configIndex, 1);
-            }
-        }
-        // กรณีลบ config
-        else if (package8digit) {
-            dataByEquipmentName.config = dataByEquipmentName.config.filter(
-                (config) => config.package8digit !== package8digit
-            );
-        }
-
-        console.log("data after delete: ", dataByEquipmentName);
-
-        // ตรวจสอบว่า config กลายเป็นอาร์เรย์ว่างหรือไม่
+        // If no configs remain, delete the entire equipment
         if (dataByEquipmentName.config.length === 0) {
-            try {
-                await validate.delete(_id); // ลบ _id ทั้งหมด
-                await validate.gets(undefined, undefined, page + 1, rowsPerPage, sortBy, sortOrder); // Refetch ข้อมูล
-            } catch (error) {
-                console.error("Failed to delete _id:", error);
-            }
+            await validate.delete(_id);
         } else {
-            try {
-                await validate.update(_id, dataByEquipmentName); // อัปเดตข้อมูล
-                await validate.gets(undefined, undefined, page + 1, rowsPerPage, sortBy, sortOrder); // Refetch ข้อมูล
-            } catch (error) {
-                console.error("Failed to update:", error);
-            }
+            await validate.update(_id, dataByEquipmentName);
         }
 
-        // try {
-        //     await validate.delete(_id); // เรียก API เพื่อลบข้อมูล
-        //     // await validate.gets(); // Refetch ข้อมูลหลังจากลบ
-        //     await validate.gets(undefined, undefined, page + 1, rowsPerPage, sortBy, sortOrder);
-        // } catch (error) {
-        //     console.error("Failed to delete:", error);
-        // }
+        // Refetch data
+        await validate.gets(undefined, undefined, page + 1, rowsPerPage, sortBy, sortOrder);
     };
 
+    const handleDeleteDataItem = async (_id: string, package8digit: string, package_selection_code: string) => {
+        const dataByEquipmentName = validate.list.find(item => item._id === _id);
+
+        if (!dataByEquipmentName) {
+            console.error("Data not found for _id:", _id);
+            return;
+        }
+
+        // Find the config with the matching package8digit
+        const configIndex = dataByEquipmentName.config.findIndex(
+            (config) => config.package8digit === package8digit
+        );
+
+        if (configIndex === -1) {
+            console.error("Config not found for package8digit:", package8digit);
+            return;
+        }
+
+        // Remove the data_with_selection_code with the matching package_selection_code
+        dataByEquipmentName.config[configIndex].data_with_selection_code =
+            dataByEquipmentName.config[configIndex].data_with_selection_code.filter(
+                (data) => data.package_selection_code !== package_selection_code
+            );
+
+        // If no data_with_selection_code remains, remove the config
+        if (dataByEquipmentName.config[configIndex].data_with_selection_code.length === 0) {
+            dataByEquipmentName.config.splice(configIndex, 1);
+        }
+
+        // If no configs remain, delete the entire equipment
+        if (dataByEquipmentName.config.length === 0) {
+            await validate.delete(_id);
+        } else {
+            await validate.update(_id, dataByEquipmentName);
+        }
+
+        // Refetch data
+        await validate.gets(undefined, undefined, page + 1, rowsPerPage, sortBy, sortOrder);
+    };
+
+    const handleDelete = async (key: string) => {
+        const [_id, package8digit, package_selection_code] = key.split('-');
+
+        if (package_selection_code) {
+            await handleDeleteDataItem(_id, package8digit, package_selection_code);
+        } else {
+            await handleDeleteConfig(_id, package8digit);
+        }
+    };
     const cancelEditing = () => {
         setEditingKey(null); // ปิดโหมดแก้ไข
     };
@@ -171,17 +175,23 @@ export default function CollapValidate() {
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
     const [deleteLevel, setDeleteLevel] = useState<string | null>(null);
 
-    const handleOpenDialog = (key: string) => {
-        const parts = key.split('-');
-        console.log(parts);
+    // const handleOpenDialog = (key: string) => {
+    //     const parts = key.split('-');
+    //     console.log(parts);
 
-        let level = `equipment: ${"name"}`; // Default (หากไม่มี key ครบ)
-        if (parts.length === 2) {
-            level = `package8digit: ${parts[1]}`; // ลบ package8digit ทั้งหมด
-        } else if (parts.length === 3) {
-            level = `package_selection_code: ${parts[2]}`; // ลบเฉพาะ package_selection_code
-        }
+    //     let level = `equipment: ${"name"}`; // Default (หากไม่มี key ครบ)
+    //     if (parts.length === 2) {
+    //         level = `package8digit: ${parts[1]}`; // ลบ package8digit ทั้งหมด
+    //     } else if (parts.length === 3) {
+    //         level = `package_selection_code: ${parts[2]}`; // ลบเฉพาะ package_selection_code
+    //     }
 
+    //     setSelectedKey(key);
+    //     setDeleteLevel(level);
+    //     setOpenDialog(true);
+    // };
+
+    const handleOpenDialog = (key: string, level: string) => {
         setSelectedKey(key);
         setDeleteLevel(level);
         setOpenDialog(true);
@@ -238,7 +248,7 @@ export default function CollapValidate() {
                                             <TableHead>
                                                 <TableRow>
                                                     <TableCell>
-                                                        <Typography variant="body1">Package Code</Typography>
+                                                        <Typography variant="body1">Base package Code</Typography>
                                                     </TableCell>
                                                     <TableCell>
                                                         <Typography variant="body1">Selection Code</Typography>
@@ -271,7 +281,10 @@ export default function CollapValidate() {
                                                                 <TableCell>{config.selection_code}</TableCell>
 
                                                                 <TableCell>
-                                                                    <IconButton color="error" onClick={() => handleOpenDialog(configKey)}>
+                                                                    <IconButton
+                                                                        color="error"
+                                                                        onClick={() => handleOpenDialog(configKey, `all base package code: ${config.package8digit}`)}
+                                                                    >
                                                                         <Delete />
                                                                     </IconButton>
                                                                 </TableCell>
@@ -329,7 +342,10 @@ export default function CollapValidate() {
                                                                                                                                 <Edit />
                                                                                                                             </IconButton>
                                                                                                                         )}
-                                                                                                                        <IconButton color="error" onClick={() => handleOpenDialog(key)}>
+                                                                                                                        <IconButton
+                                                                                                                            color="error"
+                                                                                                                            onClick={() => handleOpenDialog(key, `validate data: ${dataItem.package_selection_code}`)}
+                                                                                                                        >
                                                                                                                             <Delete />
                                                                                                                         </IconButton>
                                                                                                                     </Stack>
@@ -387,7 +403,6 @@ export default function CollapValidate() {
                 onClose={() => setOpenDialog(false)}
                 onConfirm={handleConfirmDelete}
             />
-
 
         </Box>
     );
