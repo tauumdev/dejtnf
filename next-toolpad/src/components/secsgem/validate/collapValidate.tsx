@@ -270,7 +270,6 @@ export default function CollapValidate() {
                                                                 </TableCell>
                                                                 <TableCell>{config.selection_code}</TableCell>
 
-
                                                                 <TableCell>
                                                                     <IconButton color="error" onClick={() => handleOpenDialog(configKey)}>
                                                                         <Delete />
