@@ -2,9 +2,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { login } from '../service/userApi';
 import { getEquipment, getEquipments, createEquipment, deleteEquipment, updateEquipment } from '../service/equipmentApi';
-import { getValidateConfigs, getValidateConfig } from '../service/validateApi';
+import { getValidateConfigs, getValidateConfig, createLotValidateConfig, updateLotValidateConfig, deleteLotValidateConfig } from '../service/validateApi';
 
-import { EquipmentResponse, Equipment, ValidateConfigPropTypes, ValidateResponse } from '../service/types';
+import { EquipmentResponse, Equipment, ValidateConfigPropTypes, ValidateResponse, ConfigItem } from '../service/types';
 
 interface UserContextProps {
     logIn: (user: { email: string; password: string }) => Promise<any>;
@@ -14,7 +14,7 @@ interface ValidateContextProps {
     loading: boolean;
     list: ValidateConfigPropTypes[];
     totalCount: number;
-    // get: (id: string) => Promise<any>;
+    get: (id: string) => Promise<any>;
     gets: (
         filter?: string,
         fields?: string[],
@@ -23,9 +23,9 @@ interface ValidateContextProps {
         sort?: string,
         order?: number
     ) => Promise<any>;
-    // create: (data: ValidateConfig) => Promise<any>;
-    // update: (id: string, data: any) => Promise<any>;
-    // delete: (id: string) => Promise<any>;
+    create: (data: ConfigItem) => Promise<any>;
+    update: (id: string, data: any) => Promise<any>;
+    delete: (id: string) => Promise<any>;
 }
 
 interface EquipmentContextProps {
@@ -120,7 +120,11 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                     loading: loadingValidateConfig,
                     list: validateList,
                     totalCount: totalCountValidateConfig,
-                    gets: get_validateConfigs
+                    get: getValidateConfig,
+                    gets: get_validateConfigs,
+                    create: createLotValidateConfig,
+                    update: updateLotValidateConfig,
+                    delete: deleteLotValidateConfig
                 },
                 equipment: {
                     loading: loadingEquipment,

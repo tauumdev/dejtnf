@@ -37,7 +37,6 @@ export const getValidateConfigs = async (
 };
 
 
-
 // Get Lot Validate Config by ID
 export const getValidateConfig = async (id: string): Promise<ValidateConfigPropTypes> => {
     try {
@@ -48,29 +47,35 @@ export const getValidateConfig = async (id: string): Promise<ValidateConfigPropT
     }
 }
 
-// // Create a new Lot Validate Config record
-// export const createLotValidateConfig = async (lotValidateConfig: any) => {
-//     try {
-//         const response = await axios.post(`${API_HOST}/api/validate/config`, lotValidateConfig);
-//         return response.data;
-//     }
-//     catch (error) {
-//         console.error('Create Lot Validate Config Error:', error);
-//         return null;
-//     }
-// }
-
-// // Update a Lot Validate Config record
-// export const updateLotValidateConfig = async (id: string, lotValidateConfig: any) => {
-//     try {
-//         const response = await axios.put(`${API_HOST}/api/validate/config/${id}`, lotValidateConfig);
-//         return response.data;
-//     }
-//     catch (error) {
-//         console.error('Update Lot Validate Config Error:', error);
-//         return null;
-//     }
-// }
+// Create a new Lot Validate Config record
+export const createLotValidateConfig = async (lotValidateConfig: any): Promise<ValidateConfigPropTypes> => {
+    try {
+        const response = await api.post('/config', lotValidateConfig);
+        return response.data;
+    } catch (error: any) {
+        console.error('Create Lot Validate Config Error:', error.response?.data || error.message);
+        throw error;
+    }
+}
+// Update a Lot Validate Config record
+export const updateLotValidateConfig = async (id: string, lotValidateConfig: any): Promise<ValidateConfigPropTypes> => {
+    try {
+        const response = await api.put(`/config/${id}`, lotValidateConfig);
+        return response.data;
+    } catch (error: any) {
+        console.error('Update Lot Validate Config Error:', error.response?.data || error.message);
+        throw error;
+    }
+}
+// Delete a Lot Validate Config record
+export const deleteLotValidateConfig = async (id: string): Promise<void> => {
+    try {
+        await api.delete(`/config/${id}`);
+    } catch (error: any) {
+        console.error('Delete Lot Validate Config Error:', error.response?.data || error.message);
+        throw error;
+    }
+}
 
 // // Delete a Lot Validate Config record
 // export const deleteLotValidateConfig = async (id: string) => {
