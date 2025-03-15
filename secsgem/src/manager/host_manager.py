@@ -2,14 +2,18 @@
 import ipaddress
 import json
 import logging
+import os
+import requests
 import secsgem.hsms
 from src.host.gemhost import SecsGemHost
 from typing import TYPE_CHECKING
+from dotenv import load_dotenv
 
 if TYPE_CHECKING:
     from src.mqtt.mqtt_client import MqttClient
 
 from config.app_config import EQUIPMENTS_CONFIG_PATH
+
 
 logger = logging.getLogger("app_logger")
 
@@ -74,7 +78,54 @@ class SecsGemHostManager:
         self.gem_hosts: list[SecsGemHost] = []
         self.mqtt.client.user_data_set({"gem_hosts": self.gem_hosts})
 
-        self.load_equipments_config()
+        # self.load_equipments_config()
+        self.load_equipments()
+
+    def load_equipments(self):
+        """
+        Load equipments
+        """
+        load_dotenv()
+
+        api_server = os.getenv("API_SERVER")
+        api_port = int(os.getenv("API_PORT"))
+        api_endpoint = os.getenv("API_ENDPOINT")
+
+        # api GET localhost:3000/api/secsgem/equipments?page=1&limit=5&sort=equipment_name&order=1
+        # create url
+        api_url = f"http://{api_server}:{api_port}/{api_endpoint}/secsgem/equipments?page=1&limit=5&sort=equipment_name&order=1"
+        # print(api_url)
+        response = requests.get(
+            api_url,
+            timeout=10,
+            headers={'Accept': 'application/json'}
+        )
+        response.raise_for_status()
+
+        # Validate response format
+        equipments = response.json()
+        print(equipments)
+        # {'docs': [{'_id': '67c700fe403ebe5e10ffb567', 'mode': 'ACTIVE', 'equipment_name': 'TNF-61', 'equipment_model': 'FCL', 'address': '192.168.226.161', 'port': 5000, 'session_id': 61, 'enable': False, 'createdAt': '2025-03-04T13:32:46.731Z', 'updatedAt': '2025-03-15T05:57:19.172Z'}, {'_id': '67d4d1a0018c593bd0645f0a', 'mode': 'ACTIVE', 'equipment_name': 'TNF-62', 'equipment_model': 'FCL', 'address': '192.168.226.162', 'port': 5000, 'session_id': 62, 'enable': False, 'createdAt': '2025-03-15T01:02:24.373Z', 'updatedAt': '2025-03-15T06:01:04.762Z'}, {'_id': '67d4ece4018c593bd0645f4f', 'mode': 'PASSIVE', 'equipment_name': 'TNF-63', 'equipment_model': 'FCL', 'address': '192.168.226.163', 'port': 5000, 'session_id': 63, 'enable': False, 'createdAt': '2025-03-15T02:58:44.546Z', 'updatedAt': '2025-03-15T06:01:13.534Z'}, {'_id': '67d4ed1d018c593bd0645f54', 'mode': 'ACTIVE', 'equipment_name': 'TNF-64', 'equipment_model': 'FCL', 'address': '192.168.226.164', 'port': 5000, 'session_id': 64, 'enable': False, 'createdAt': '2025-03-15T02:59:41.444Z', 'updatedAt': '2025-03-15T04:14:44.446Z'}, {'_id': '67d51922018c593bd06460e0', 'mode': 'ACTIVE', 'equipment_name': 'TNF-65', 'equipment_model': 'FCL', 'address': '192.168.226.165', 'port': 5000, 'session_id': 65, 'enable': False, 'createdAt': '2025-03-15T06:07:30.422Z', 'updatedAt': '2025-03-15T06:14:15.597Z'}], 'totalDocs': 6, 'limit': 5, 'totalPages': 2, 'page': 1, 'pagingCounter': 1, 'hasPrevPage': False, 'hasNextPage': True, 'prevPage': None, 'nextPage': 2}
+        if isinstance(equipments, dict):
+
+            for equipment in equipments.get("docs", []):
+                setts = validate_hsms_settings(equipment)
+                if isinstance(setts, secsgem.hsms.HsmsSettings):
+                    gem_host = SecsGemHost(
+                        equipment_name=equipment["equipment_name"],
+                        equipment_model=equipment["equipment_model"],
+                        enable=True if equipment["enable"] else False,
+                        mqtt_client=self.mqtt,
+                        settings=setts
+                    )
+                    self.gem_hosts.append(gem_host)
+                    logging.info(
+                        "Equipment %s loaded successfully", equipment['equipment_name'])
+                else:
+                    logging.error(
+                        "Equipment %s failed to load with error: %s", equipment['equipment_name'], setts)
+                    print(
+                        f"Equipment {equipment['equipment_name']} not initialized")
 
     def load_equipments_config(self):
         """
@@ -83,6 +134,7 @@ class SecsGemHostManager:
         try:
             with open(EQUIPMENTS_CONFIG_PATH, 'r', encoding='utf-8') as f:
                 equipments = json.load(f)
+
                 for equipment in equipments.get("equipments", []):
                     setts = validate_hsms_settings(equipment)
                     if isinstance(setts, secsgem.hsms.HsmsSettings):

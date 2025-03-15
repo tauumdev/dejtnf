@@ -42,7 +42,9 @@ export const getEquipment = async (id: string): Promise<Equipment> => {
         const response = await api.get(`/equipment/${id}`);
         return response.data;
     } catch (error: any) {
-        throw new Error(error.response?.data?.errors?.msg || `Failed to fetch equipment with ID: ${id}`);
+        // throw new Error(error.response?.data?.errors?.msg || `Failed to fetch equipment with ID: ${id}`);
+        throw error;
+
     }
 };
 
@@ -52,7 +54,15 @@ export const createEquipment = async (equipment: Equipment): Promise<Equipment> 
         const response = await api.post('/equipment', equipment);
         return response.data;
     } catch (error: any) {
-        throw new Error(error.response?.data?.errors?.msg || "Failed to create equipment");
+        // console.log(error.response.data);
+        // throw error.response.data;
+
+
+        // console.log(error.response?.data?.errors?.msg || "Failed to create equipment");
+
+        // throw new Error(error.response?.data?.errors?.msg || "Failed to create equipment");
+        throw error.response?.data?.errors?.msg || "Failed to create equipment";
+
     }
 };
 
@@ -62,7 +72,9 @@ export const updateEquipment = async (id: string, equipment: Partial<Equipment>)
         const response = await api.put(`/equipment/${id}`, equipment);
         return response.data;
     } catch (error: any) {
-        throw new Error(error.response?.data?.errors?.msg || `Failed to update equipment with ID: ${id}`);
+        // throw new Error(error.response?.data?.errors?.msg || `Failed to update equipment with ID: ${id}`);
+        throw error;
+
     }
 };
 
@@ -72,6 +84,8 @@ export const deleteEquipment = async (id: string): Promise<{ success: boolean }>
         const response = await api.delete(`/equipment/${id}`);
         return response.data;
     } catch (error: any) {
-        throw new Error(error.response?.data?.errors?.msg || `Failed to delete equipment with ID: ${id}`);
+        // throw new Error(error.response?.data?.errors?.msg || `Failed to delete equipment with ID: ${id}`);
+        throw error;
+
     }
 };

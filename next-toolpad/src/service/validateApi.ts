@@ -43,7 +43,9 @@ export const getValidateConfig = async (id: string): Promise<ValidateConfigPropT
         const response = await api.get(`/config/${id}`);
         return response.data;
     } catch (error: any) {
-        throw new Error(error.response?.data?.errors?.msg || `Failed to fetch validate config with ID: ${id}`);
+        throw error;
+
+        // throw new Error(error.response?.data?.errors?.msg || `Failed to fetch validate config with ID: ${id}`);
     }
 }
 
@@ -53,7 +55,7 @@ export const createLotValidateConfig = async (lotValidateConfig: any): Promise<V
         const response = await api.post('/config', lotValidateConfig);
         return response.data;
     } catch (error: any) {
-        console.error('Create Lot Validate Config Error:', error.response?.data || error.message);
+        // console.error('Create Lot Validate Config Error:', error.response?.data || error.message);
         throw error;
     }
 }
@@ -63,7 +65,7 @@ export const updateLotValidateConfig = async (id: string, lotValidateConfig: any
         const response = await api.put(`/config/${id}`, lotValidateConfig);
         return response.data;
     } catch (error: any) {
-        console.error('Update Lot Validate Config Error:', error.response?.data || error.message);
+        // console.error('Update Lot Validate Config Error:', error.response?.data || error.message);
         throw error;
     }
 }
@@ -72,7 +74,7 @@ export const deleteLotValidateConfig = async (id: string): Promise<void> => {
     try {
         await api.delete(`/config/${id}`);
     } catch (error: any) {
-        console.error('Delete Lot Validate Config Error:', error.response?.data || error.message);
+        // console.error('Delete Lot Validate Config Error:', error.response?.data || error.message);
         throw error;
     }
 }

@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useApiContext } from '@/src/context/apiContext';
 import DataValidationForm from './CollapsibleDataItem';
 import { DeleteDialog } from './deleteDialog';
+import { DialogAddValidateDataForm } from './addValidateDataForm';
 
 export default function CollapValidate() {
     const { validate } = useApiContext();
@@ -83,11 +84,13 @@ export default function CollapValidate() {
             }
         });
 
-        // console.log("new data: ", dataByEquipmentName);
+        console.log("new edit data: ", dataByEquipmentName);
 
         try {
-            await validate.update(_id, dataByEquipmentName);
+            const responseEdit = await validate.update(_id, dataByEquipmentName);
             setEditingKey(null);
+            console.log('Edits saved successfully!', responseEdit);
+
         } catch (error) {
             console.error("Failed to save edits:", error);
         }
@@ -175,22 +178,6 @@ export default function CollapValidate() {
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
     const [deleteLevel, setDeleteLevel] = useState<string | null>(null);
 
-    // const handleOpenDialog = (key: string) => {
-    //     const parts = key.split('-');
-    //     console.log(parts);
-
-    //     let level = `equipment: ${"name"}`; // Default (หากไม่มี key ครบ)
-    //     if (parts.length === 2) {
-    //         level = `package8digit: ${parts[1]}`; // ลบ package8digit ทั้งหมด
-    //     } else if (parts.length === 3) {
-    //         level = `package_selection_code: ${parts[2]}`; // ลบเฉพาะ package_selection_code
-    //     }
-
-    //     setSelectedKey(key);
-    //     setDeleteLevel(level);
-    //     setOpenDialog(true);
-    // };
-
     const handleOpenDialog = (key: string, level: string) => {
         setSelectedKey(key);
         setDeleteLevel(level);
@@ -203,6 +190,23 @@ export default function CollapValidate() {
         }
         setOpenDialog(false); // ปิด Dialog
         setSelectedKey(null);
+    };
+
+    // add equipment
+    const [openAddEquipment, setOpenAddEquipment] = useState(false)
+
+    const openDialogAddEquipment = () => {
+        setOpenAddEquipment(true)
+        console.log('Open add dialog');
+    };
+
+    const cancelDialogAddEquipment = () => {
+        setOpenAddEquipment(false)
+    };
+
+    const saveDialogAddEquipment = (data) => {
+        setOpenAddEquipment(false)
+        console.log("data save: ", data);
     };
 
     return (
@@ -219,6 +223,8 @@ export default function CollapValidate() {
                         variant="outlined"
                         startIcon={<Add />}
                         sx={{ width: 150 }}
+                        // onClick={openDialogAddEquipment}
+                        onClick={openDialogAddEquipment}
                     >
                         equipment
                     </Button>
@@ -245,25 +251,28 @@ export default function CollapValidate() {
                                 <TableCell>
                                     <Box>
                                         <Table size="small">
+
                                             <TableHead>
                                                 <TableRow>
                                                     <TableCell>
-                                                        <Typography variant="body1">Base package Code</Typography>
+                                                        <Typography variant="body1">First Package Code 8 Digit</Typography>
                                                     </TableCell>
                                                     <TableCell>
                                                         <Typography variant="body1">Selection Code</Typography>
                                                     </TableCell>
                                                     <TableCell align="right">
-                                                        <Button startIcon={<Add />}>package</Button>
+                                                        <Button startIcon={<Add />}>PACKAGE</Button>
                                                     </TableCell>
                                                 </TableRow>
                                             </TableHead>
+
                                             <TableBody>
                                                 {data.config.map((config, configIndex) => {
                                                     const configKey = `${data._id}-${config.package8digit}`;
                                                     const isConfigExpanded = expanded.package === configKey;
                                                     return (
                                                         <React.Fragment key={configIndex}>
+
                                                             {/* Level 1: Config */}
                                                             <TableRow>
                                                                 <TableCell sx={{ width: 300 }}>
@@ -288,7 +297,6 @@ export default function CollapValidate() {
                                                                         <Delete />
                                                                     </IconButton>
                                                                 </TableCell>
-
                                                             </TableRow>
 
                                                             {/* Level 2: Data with Selection Code */}
@@ -310,7 +318,7 @@ export default function CollapValidate() {
                                                                                             <TableRow >
                                                                                                 <TableCell >
                                                                                                     <Box sx={{ display: 'block', overflow: 'auto' }}>
-                                                                                                        {/* <Box sx={{ display: 'flex', alignItems: 'center' }}> */}
+
                                                                                                         <Button size='small' variant="text"
                                                                                                             color='inherit'
                                                                                                             startIcon={isDataItemExpanded ? <ExpandLess /> : <ExpandMore />}
@@ -350,8 +358,8 @@ export default function CollapValidate() {
                                                                                                                         </IconButton>
                                                                                                                     </Stack>
                                                                                                                 </Box>
-                                                                                                                {/* dataitem */}
 
+                                                                                                                {/* From data validate */}
                                                                                                                 <DataValidationForm
                                                                                                                     dataItem={dataItem}
                                                                                                                     editedData={editedData}
@@ -404,6 +412,11 @@ export default function CollapValidate() {
                 onConfirm={handleConfirmDelete}
             />
 
+            <DialogAddValidateDataForm
+                open={openAddEquipment}
+                handleClose={cancelDialogAddEquipment}
+                onSave={saveDialogAddEquipment}
+            />
         </Box>
     );
 }

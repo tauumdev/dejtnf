@@ -1,26 +1,21 @@
-import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, Box, Typography } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material';
 
 export const DeleteDialog = ({
-    level,
     open,
     onClose,
-    onConfirm
-
+    onConfirm,
+    message
 }: {
-    level: string;
     open: boolean;
     onClose: () => void;
     onConfirm: () => void;
+    message?: string;
 }) => (
     <Dialog open={open} onClose={onClose}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
             <DialogContentText>
-                <Box sx={{ display: 'block' }}>
-                    <Typography>Are you sure you want to delete</Typography>
-                    <Typography variant='body1'>{level} ?</Typography>
-                    <Typography>This action cannot be undone.</Typography>
-                </Box>
+                {message || 'Are you sure you want to delete this item?'}
             </DialogContentText>
         </DialogContent>
         <DialogActions>

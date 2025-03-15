@@ -1,5 +1,5 @@
 // DataValidationForm.tsx
-import { Box, TextField, FormControlLabel, Checkbox, Typography, Grid } from '@mui/material';
+import { Box, TextField, FormControlLabel, Checkbox, Typography, Grid, MenuItem } from '@mui/material';
 import React, { useRef } from 'react';
 
 interface DataValidationFormProps {
@@ -28,7 +28,7 @@ const DataValidationForm: React.FC<DataValidationFormProps> = ({ dataItem, edite
             <Grid item xs={12} sm={4}>
                 <TextField
                     inputRef={inputRef}
-                    label="Package Select Code"
+                    label="Package With Selection Code"
                     value={isEditing ? editedData.package_selection_code : dataItem.package_selection_code}
                     onChange={(e) => setEditedData({ ...editedData, package_selection_code: e.target.value })}
                     size="small"
@@ -37,15 +37,39 @@ const DataValidationForm: React.FC<DataValidationFormProps> = ({ dataItem, edite
                 />
             </Grid>
             <Grid item xs={12} sm={4}>
-                <TextField
+                {/* <TextField
                     inputRef={inputRef}
-                    label="Type Validate"
+                    label="Validate Type"
                     value={isEditing ? editedData.validate_type : dataItem.validate_type}
                     onChange={(e) => setEditedData({ ...editedData, validate_type: e.target.value })}
                     size="small"
                     fullWidth
                     disabled={!isEditing}
-                />
+                /> */}
+                {isEditing ?
+                    (
+                        <TextField
+                            select
+                            size='small'
+                            fullWidth
+                            label="Validate Type"
+                            value={editedData.validate_type}
+                            onChange={(e) => setEditedData({ ...editedData, validate_type: e.target.value })}
+                        >
+                            <MenuItem value="recipe" > Recipe </MenuItem>
+                            <MenuItem value="tool_id" > Tool Id </MenuItem>
+
+                        </TextField>
+                    ) : (
+                        <TextField
+                            label="Validate Type"
+                            value={isEditing ? editedData.validate_type : dataItem.validate_type}
+                            size="small"
+                            fullWidth
+                            disabled={!isEditing}
+                        />
+                    )
+                }
             </Grid>
 
             {/* แถวที่ 2 */}

@@ -9,14 +9,24 @@ import {
     Stack,
     CircularProgress,
     Fade,
-    Divider
+    Divider,
+    FormControl,
+    InputLabel
 } from '@mui/material';
+
 import { Edit, Delete, Save, Cancel, Add } from '@mui/icons-material';
-import { EquipmentRow } from './equipment/equipmentRow';
-import { EquipmentTableHead } from './equipment/equipmentTableHead';
-import { DeleteDialog } from './equipment/deleteDialog';
-import { CreateEquipmentDialog } from './equipment/createEquipmentDialog';
-import EquipmentForm from './equipment/equipmentForm';
+import EquipmentForm from './equipmentForm';
+import { EquipmentTableHead } from './equipmentTableHead';
+import { EquipmentRow } from './equipmentRow';
+import { DeleteDialog } from './deleteDialog';
+// import { EquipmentRow } from './equipment/equipmentRow';
+// import { EquipmentTableHead } from './equipment/equipmentTableHead';
+// import { DeleteDialog } from './equipment/deleteDialog';
+// import { CreateEquipmentDialog } from './equipment/createEquipmentDialog';
+// import EquipmentForm from './equipment/equipmentForm';
+// import { EquipmentConfigViewer } from './equipment/equipmentConfigForm';
+// import { EquipmentConfigTable } from './equipment/collapValidateForm';
+// import { NewValidateData } from './equipment/newValidatedata';
 
 interface Equipment {
     _id: string;
@@ -109,19 +119,19 @@ export default function EquipmentList() {
         }
     };
 
-    const handleCreate = async (newEquipment: Equipment) => {
-        try {
-            const response = await equipment.create(newEquipment);
-            console.info("Equipment created:", response);
-            refreshData();
-        } catch (error) {
-            if (error instanceof Error) {
-                console.error("Update failed:", error.message);
-            } else {
-                console.error("Update failed:", error);
-            }
-        }
-    };
+    // const handleCreate = async (newEquipment: Equipment) => {
+    //     try {
+    //         const response = await equipment.create(newEquipment);
+    //         console.info("Equipment created:", response);
+    //         refreshData();
+    //     } catch (error) {
+    //         if (error instanceof Error) {
+    //             console.error("Update failed:", error.message);
+    //         } else {
+    //             console.error("Update failed:", error);
+    //         }
+    //     }
+    // };
 
     const newEquipment = {
         equipment_name: "",
@@ -151,34 +161,35 @@ export default function EquipmentList() {
     const handleCancel = () => {
         console.log("Cancel Clicked");
         setAddEquipment(false)
-
     };
+
 
     return (
         <Box sx={{ width: '100%' }}>
-            <Toolbar sx={{ justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="h6">Equipment List</Typography>
-                {equipment.loading &&
-                    <Fade in={equipment.loading} unmountOnExit>
-                        <CircularProgress color="secondary" />
-                    </Fade>
-                }
-                <Button
-                    variant="contained"
-                    startIcon={<Add />}
-                    // onClick={() => setCreateDialogOpen(true)}
-                    onClick={() => setAddEquipment(true)}
-                >
-                    New Equipment
-                </Button>
-            </Toolbar>
-
-            {AddEquipment &&
-                <EquipmentForm initialData={newEquipment} onSave={handleSave} onCancel={handleCancel} />
-            }
 
             <TableContainer component={Paper}>
-                <Table>
+                <Toolbar sx={{ justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="h6">SECS/GEM Equipments</Typography>
+                    {equipment.loading &&
+                        <Fade in={equipment.loading} unmountOnExit>
+                            <CircularProgress color="secondary" />
+                        </Fade>
+                    }
+                    <Button
+                        variant="outlined"
+                        startIcon={<Add />}
+                        // onClick={() => setCreateDialogOpen(true)}
+                        onClick={() => setAddEquipment(true)}
+                    >
+                        EQUIPMENT
+                    </Button>
+                </Toolbar>
+
+                {AddEquipment &&
+                    <EquipmentForm initialData={newEquipment} onSave={handleSave} onCancel={handleCancel} />
+                }
+
+                <Table size='small'>
                     <EquipmentTableHead />
                     <TableBody>
                         {equipment.list.map((eq) => (
@@ -194,29 +205,30 @@ export default function EquipmentList() {
                         ))}
                     </TableBody>
                 </Table>
-            </TableContainer>
 
-            <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                component="div"
-                count={equipment.totalCount} // Use the totalCount from context
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-            />
+                <TablePagination
+                    rowsPerPageOptions={[5, 10, 25]}
+                    component="div"
+                    count={equipment.totalCount} // Use the totalCount from context
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                />
+            </TableContainer>
 
             <DeleteDialog
                 open={!!deleteRowId}
                 onClose={() => setDeleteRowId(null)}
                 onConfirm={handleDelete}
             />
-
+            {/* 
             <CreateEquipmentDialog
                 open={createDialogOpen}
                 onClose={() => setCreateDialogOpen(false)}
                 onCreate={handleCreate}
-            />
+            /> */}
+
         </Box>
     );
 }
