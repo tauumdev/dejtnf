@@ -15,7 +15,6 @@ export default function CollapValidate() {
     const [sortOrder, setSortOrder] = useState(1);
 
 
-
     useEffect(() => {
         validate.gets(undefined, undefined, page + 1, rowsPerPage, sortBy, sortOrder);
     }, [page, rowsPerPage, sortBy, sortOrder]);

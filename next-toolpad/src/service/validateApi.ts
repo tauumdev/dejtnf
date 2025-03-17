@@ -52,6 +52,8 @@ export const getValidateConfig = async (id: string): Promise<ValidateConfigPropT
 // Create a new Lot Validate Config record
 export const createLotValidateConfig = async (lotValidateConfig: any): Promise<ValidateConfigPropTypes> => {
     try {
+        console.log(lotValidateConfig);
+
         const response = await api.post('/config', lotValidateConfig);
         return response.data;
     } catch (error: any) {

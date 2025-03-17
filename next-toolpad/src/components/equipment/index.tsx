@@ -6,6 +6,7 @@ import { useApiContext } from '@/src/context/apiContext';
 import { Add, Cancel, Delete, Edit, Key, Save } from '@mui/icons-material';
 import { DeleteDialog } from './deleteDialog';
 
+// Define interfaces for User and Equipment
 interface User {
     name: string;
     email: string;
@@ -37,6 +38,7 @@ interface EditableTextFieldProps {
     children?: React.ReactNode;
 }
 
+// Component for editable text field
 const EditableTextField: React.FC<EditableTextFieldProps> = ({
     label,
     value,
@@ -65,26 +67,28 @@ const EditableTextField: React.FC<EditableTextFieldProps> = ({
     );
 };
 
+// Main component for SECS/GEM Equipments
 function SecsGemEquipments(props: SecsGemEquipmentProps) {
     const { user } = props;
     const { equipment } = useApiContext();
 
+    // State variables for pagination, sorting, and editing
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [sortBy, setSortBy] = useState('equipment_name');
-    const [sortOrder, setSortOrder] = useState(1);
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
     const [isEditing, setIsEditing] = useState(false)
     const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
 
     const [isAddNew, setIsAddNew] = useState(false)
 
-    // snackbar
+    // State variables for Snackbar
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' | 'info' | 'warning'>('success');
     const [snackbarMessage, setSnackbarMessage] = useState('');
 
-    // dialog delete
+    // State variables for Delete Dialog
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deleteEquipment, setDeleteEquipment] = useState<{ id: string, equipment_name: string }>({
         id: '',
@@ -92,11 +96,13 @@ function SecsGemEquipments(props: SecsGemEquipmentProps) {
     })
     const [deleteDialogMessage, setDeleteDialogMessage] = useState<string>('Are you sure you want to delete this item?')
 
+    // Fetch equipment data on component mount or when pagination/sorting changes
     useEffect(() => {
-        equipment.gets(undefined, undefined, page + 1, rowsPerPage, sortBy, sortOrder)
+        equipment.gets(undefined, undefined, page + 1, rowsPerPage, sortBy, sortOrder === 'asc' ? 1 : -1)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, rowsPerPage, sortBy, sortOrder])
 
+    // Function to refresh data
     const refreshData = () => {
         equipment.gets(
             undefined,
@@ -104,23 +110,26 @@ function SecsGemEquipments(props: SecsGemEquipmentProps) {
             page + 1,
             rowsPerPage,
             sortBy,
-            sortOrder
+            sortOrder === 'asc' ? 1 : -1
         ).catch(error => {
             console.error("Refresh data error:", error);
         });
     };
 
+    // Handle page change
     const handleChangePage = (_: unknown, newPage: number) => {
         setPage(newPage);
     };
 
+    // Handle rows per page change
     const handleChangeRowsPerPage = (e: React.ChangeEvent<HTMLInputElement>) => {
         setRowsPerPage(parseInt(e.target.value, 10));
         setPage(0);
     };
 
+    // Handle errors from API requests
     const handleError = (error: any, defaultMessage: string): string => {
-        console.log(error); // Log the error for debugging
+        // console.log(error); // Log the error for debugging
 
         // Handle array of errors (e.g., validation errors)
         if (Array.isArray(error)) {
@@ -156,6 +165,7 @@ function SecsGemEquipments(props: SecsGemEquipmentProps) {
         return defaultMessage;
     };
 
+    // Refs for add new equipment form fields
     const addRefs = {
         name: useRef<HTMLInputElement>(null),
         model: useRef<HTMLInputElement>(null),
@@ -166,6 +176,7 @@ function SecsGemEquipments(props: SecsGemEquipmentProps) {
         enable: useRef<HTMLInputElement>(null),
     }
 
+    // Refs for edit equipment form fields
     const editRefs = {
         name: useRef<HTMLInputElement>(null),
         model: useRef<HTMLInputElement>(null),
@@ -176,6 +187,7 @@ function SecsGemEquipments(props: SecsGemEquipmentProps) {
         enable: useRef<HTMLInputElement>(null),
     }
 
+    // Function to handle API requests with success and error handling
     const handleApiRequest = async (requestFn: () => Promise<any>, successMessage: string, errorMessage: string) => {
         try {
             const response = await requestFn();
@@ -193,8 +205,17 @@ function SecsGemEquipments(props: SecsGemEquipmentProps) {
         }
     };
 
+    // Function to save new equipment
     const handleSaveNewEquipment = async () => {
-        const equipmentData = {
+
+        if (!addRefs.name.current?.value || !addRefs.model.current?.value) {
+            setSnackbarSeverity('error');
+            setSnackbarMessage('Please fill in all required fields.');
+            setOpenSnackbar(true);
+            return;
+        }
+
+        const equipmentData: Equipment = {
             _id: '', // Provide a default or generated ID
             equipment_name: addRefs.name.current?.value || '',
             equipment_model: addRefs.model.current?.value as 'FCL' | 'FCLX',
@@ -202,7 +223,7 @@ function SecsGemEquipments(props: SecsGemEquipmentProps) {
             port: parseInt(addRefs.port.current?.value || '0', 10),
             session_id: parseInt(addRefs.id.current?.value || '0', 10),
             mode: addRefs.mode.current?.value as 'ACTIVE' | 'PASSIVE',
-            enable: addRefs.enable.current?.value === 'false',
+            enable: addRefs.enable.current?.value === 'true',
         };
 
         await handleApiRequest(
@@ -214,18 +235,24 @@ function SecsGemEquipments(props: SecsGemEquipmentProps) {
 
     };
 
-    // handle delete
+    // Function to handle delete request
     const handleDeleteRequest = (id: string, equipment_name: string) => {
         setDeleteEquipment({ id, equipment_name });
         setDeleteDialogMessage(`Are you sure you want to delete ${equipment_name}?`);
         setDeleteDialogOpen(true);
     };
 
+    // Function to handle delete confirmation
     const handleDelete = async () => {
+        if (!deleteEquipment.id) {
+            setSnackbarSeverity('error');
+            setSnackbarMessage('No equipment selected for deletion.');
+            setOpenSnackbar(true);
+            return;
+        }
         if (deleteEquipment.id) {
             try {
                 const response = await equipment.delete(deleteEquipment.id);
-                console.info("Response delete:", response);
                 setSnackbarSeverity('success');
                 setSnackbarMessage(`${deleteEquipment.equipment_name}  ${response.msg}`);
                 setOpenSnackbar(true);
@@ -242,6 +269,8 @@ function SecsGemEquipments(props: SecsGemEquipmentProps) {
         }
     };
 
+
+    // Function to update equipment
     const handleUpdateEquipment = async () => {
         const equipmentUpdateData = {
             _id: editingEquipment?._id || '', // Provide a default or generated ID
@@ -263,22 +292,19 @@ function SecsGemEquipments(props: SecsGemEquipmentProps) {
 
     };
 
-    if (equipment.loading) {
-        return (
-            <Backdrop
-                sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
-                open={equipment.loading}
-            //   onClick={handleClose}
-            >
-                <CircularProgress color="inherit" />
-            </Backdrop>
-        )
+    // Show loading spinner if data is being fetched
+    // if (equipment.loading) {
+    //     return (
+    //         <Backdrop
+    //             sx={(theme) => ({ color: '#fff', zIndex: theme.zIndex.drawer + 1 })}
+    //             open={equipment.loading}
+    //         >
+    //             <CircularProgress color="inherit" />
+    //         </Backdrop>
+    //     )
+    // }
 
-        //  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        //     <CircularProgress color="secondary" />
-        // </Box>
-    }
-
+    // Main render
     return (
         <div>
             <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
@@ -289,6 +315,13 @@ function SecsGemEquipments(props: SecsGemEquipmentProps) {
                                 <Fragment>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <Typography variant="h6">SECS/GEM Equipments</Typography>
+
+                                        {equipment.loading &&
+                                            <Fade in={equipment.loading} unmountOnExit>
+                                                <CircularProgress size='small' color="secondary" />
+                                            </Fade>
+                                        }
+
                                         {user.role === 'admin' &&
                                             <Button
                                                 size='small'
@@ -408,11 +441,8 @@ function SecsGemEquipments(props: SecsGemEquipmentProps) {
                     <TableBody>
                         {equipment.list.map((eq) => (
                             <TableRow key={eq._id}>
-
                                 <TableCell sx={{ pr: 0 }}>
-                                    {/* <EditableTextField label="Name" value={eq.equipment_name} editing={isEditing && editingEquipment?._id === eq._id} inputRef={editRefs.name} /> */}
                                     <EditableTextField label="Name" value={eq.equipment_name} editing={isEditing && editingEquipment?._id === eq._id} inputRef={editRefs.name} />
-                                    {/* <TextField inputRef={editRefs[eq._id]?.name} value={eq.equipment_name}></TextField> */}
                                 </TableCell>
                                 <TableCell sx={{ pr: 0 }}>
                                     <EditableTextField label="Model" value={eq.equipment_model} editing={isEditing && editingEquipment?._id === eq._id} inputRef={editRefs.model} select >
@@ -472,7 +502,7 @@ function SecsGemEquipments(props: SecsGemEquipmentProps) {
                 <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
                     component="div"
-                    count={equipment.totalCount}
+                    count={equipment.totalCount || 0}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}
@@ -496,6 +526,7 @@ function SecsGemEquipments(props: SecsGemEquipmentProps) {
     )
 }
 
+// Prop types validation
 SecsGemEquipments.propTypes = {
     user: PropTypes.shape({
         name: PropTypes.string.isRequired,

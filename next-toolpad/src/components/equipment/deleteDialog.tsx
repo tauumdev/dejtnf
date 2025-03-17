@@ -19,10 +19,10 @@ export const DeleteDialog = ({
             </DialogContentText>
         </DialogContent>
         <DialogActions>
-            <Button onClick={onClose} color="secondary">
+            <Button onClick={onClose} variant='outlined' >
                 Cancel
             </Button>
-            <Button onClick={onConfirm} color="error" autoFocus>
+            <Button onClick={onConfirm} variant='contained' color="error" autoFocus>
                 Delete
             </Button>
         </DialogActions>
