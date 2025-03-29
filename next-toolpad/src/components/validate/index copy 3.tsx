@@ -60,6 +60,13 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
     const [editKeys, setEditKeys] = useState<Set<string>>(new Set())
     const [expandedAccordions, setExpandedAccordions] = useState<Set<string>>(new Set())
 
+    // เพิ่ม State สำหรับเก็บข้อมูลที่กำลังแก้ไข
+    const [editContext, setEditContext] = useState<{
+        package8digit: string;
+        package_selection_code: string;
+    } | null>(null);
+
+
     const [snackbar, setSnackbar] = useState<{
         open: boolean
         message: string
@@ -81,10 +88,6 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
         [currentEquipment, selectionState.package8Digit]
     )
 
-    const getCurrentPackage = () => {
-        const equipment = equipmentList.find(e => e.equipment_name === selectionState.equipmentName);
-        return equipment?.config.find(c => c.package8digit === selectionState.package8Digit);
-    };
 
     const canAddNewPackage = useMemo(() => {
         const hasRequiredFields = selectionState.equipmentName &&
@@ -178,6 +181,7 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
         setEditKeys(prev => new Set([...prev, newPackage.package_selection_code]))
     }, [])
 
+
     const handleEditCancel = useCallback((id: string) => {
         setEditKeys(prev => {
             const newSet = new Set(prev)
@@ -186,114 +190,174 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
         })
     }, []);
 
-    const handleEditSave = useCallback(async (id: string, newData: DataWithSelectionCode) => {
-        console.log(id, newData.package_selection_code);
 
+    // ปรับฟังก์ชันเมื่อกด Edit
+    const handleEdit = useCallback((pkg: DataWithSelectionCode) => {
+        // หา Package ที่เป็น parent ของ Item นี้
+        const equipment = equipmentList.find(e => e.equipment_name === selectionState.equipmentName);
+        const parentPackage = equipment?.config.find(c =>
+            c.data_with_selection_code.some(d => d.package_selection_code === pkg.package_selection_code)
+        );
+
+        if (parentPackage) {
+            setEditContext({
+                package8digit: parentPackage.package8digit,
+                package_selection_code: pkg.package_selection_code
+            });
+            setEditKeys(prev => new Set([...prev, pkg.package_selection_code]));
+        }
+    }, [equipmentList, selectionState.equipmentName]);
+
+
+    // ปรับฟังก์ชัน handleEditSave
+    // const handleEditSave = useCallback(async (id: string, newData: DataWithSelectionCode) => {
+    //     console.log('Saving item with ID:', id, 'New Data:', newData);
+
+    //     try {
+    //         // Validation
+    //         if (!newData.package_selection_code.trim() || !newData.product_name.trim()) {
+    //             setSnackbar({
+    //                 open: true,
+    //                 message: 'Please fill all required fields',
+    //                 severity: 'error'
+    //             });
+    //             return;
+    //         }
+
+    //         // หา Equipment และ Config ที่เกี่ยวข้อง
+    //         const equipment = equipmentList.find(e => e.equipment_name === selectionState.equipmentName);
+    //         if (!equipment) throw new Error('Equipment not found');
+
+
+    //         // สร้าง Equipment ใหม่พร้อมข้อมูลที่อัปเดต
+    //         const updatedEquipment = {
+    //             ...equipment,
+    //             config: equipment.config.map(config => {
+    //                 // กรองเฉพาะ Config ที่เกี่ยวข้อง (ใช้จาก editContext)
+    //                 if (editContext && config.package8digit !== editContext.package8digit) {
+    //                     return config;
+    //                 }
+
+    //                 return {
+    //                     ...config,
+    //                     data_with_selection_code: config.data_with_selection_code.map(item =>
+    //                         item.package_selection_code === id ? newData : item
+    //                     )
+    //                 };
+    //             })
+
+    //         };
+    //         console.log('Updated Equipment:', updatedEquipment);
+
+
+    //         // Optimistic UI Update
+    //         setDisplayData(prev =>
+    //             prev.map(item => item.package_selection_code === id ? newData : item)
+    //         );
+
+    //         // Call API
+    //         const response = await validate.update(equipment._id!, updatedEquipment);
+
+    //         console.log('API response:', response);
+
+    //         // Update State
+    //         setEquipmentList(prev =>
+    //             prev.map(eq => eq._id === equipment._id ? response : eq)
+    //         );
+
+    //         setSnackbar({
+    //             open: true,
+    //             message: 'Saved successfully',
+    //             severity: 'success'
+    //         });
+
+    //     } catch (error) {
+    //         setSnackbar({
+    //             open: true,
+    //             message: handleError(error, 'Failed to save package'),
+    //             severity: 'error'
+    //         });
+    //     } finally {
+    //         setEditKeys(prev => {
+    //             const newSet = new Set(prev);
+    //             newSet.delete(id);
+    //             return newSet;
+    //         });
+    //         setEditContext(null);
+    //     }
+    // }, [equipmentList, selectionState.equipmentName, editContext, validate]);
+
+    const handleEditSave = useCallback(async (id: string, newData: DataWithSelectionCode) => {
         try {
             // Validation
             if (!newData.package_selection_code.trim() || !newData.product_name.trim()) {
                 throw new Error('Please fill all required fields');
             }
 
-            // Prepare updated equipment data
-            let updatedEquipment: ValidateConfig;
+            // หา Equipment ที่เกี่ยวข้อง
+            let equipment = equipmentList.find(e => e.equipment_name === selectionState.equipmentName);
+            const isNewEquipment = !equipment;
 
+            // กรณีสร้าง Equipment ใหม่
             if (isNewEquipment) {
-                // กรณีสร้าง Equipment ใหม่ทั้งหมด
-                updatedEquipment = {
+                equipment = {
                     equipment_name: selectionState.equipmentName,
                     config: [{
                         package8digit: selectionState.package8Digit,
                         selection_code: selectionState.selectionCode,
-                        data_with_selection_code: [newData] // Level 3
-                    }] // Level 2
+                        data_with_selection_code: [newData]
+                    }]
                 };
-            } else if (isNewPackage) {
-                // กรณีเพิ่ม Package ใหม่ใน Equipment ที่มีอยู่
-                updatedEquipment = {
-                    ...currentEquipment!,
+            }
+            // กรณีเพิ่ม Package ใหม่
+            else if (isNewPackage) {
+                equipment = {
+                    ...equipment,
                     config: [
-                        ...currentEquipment!.config, // Level 2 เก่า
-                        { // Level 2 ใหม่
+                        ...equipment.config,
+                        {
                             package8digit: selectionState.package8Digit,
                             selection_code: selectionState.selectionCode,
-                            data_with_selection_code: [newData] // Level 3
+                            data_with_selection_code: [newData]
                         }
                     ]
                 };
-            } else {
-                // กรณีอัปเดต Package ที่มีอยู่แล้ว
-                updatedEquipment = {
-                    ...currentEquipment!,
-                    config: currentEquipment!.config.map(config => {
-                        console.log(config.package8digit);
+            }
+            // กรณีอัปเดตข้อมูลที่มีอยู่
+            else {
+                equipment = {
+                    ...equipment,
+                    config: equipment.config.map(config => {
+                        // ใช้ editContext เพื่อหา Package ที่ถูกต้อง
+                        if (editContext && config.package8digit !== editContext.package8digit) {
+                            return config;
+                        }
 
-                        return config.package8digit === currentPackage?.package8digit
-                            ? { // Level 2 ที่ตรงกัน
-                                ...config,
-                                data_with_selection_code: config.data_with_selection_code.map(item =>
-                                    item.package_selection_code === id
-                                        ? newData // อัปเดต Level 3
-                                        : item
-                                )
-                            }
-                            : config // Level 2 อื่นที่ไม่เกี่ยวข้อง
-                    }
-
-                    )
+                        return {
+                            ...config,
+                            data_with_selection_code: config.data_with_selection_code.map(item =>
+                                item.package_selection_code === id ? newData : item
+                            )
+                        };
+                    })
                 };
-                // updatedEquipment = {
-                //     ...currentEquipment!,
-                //     config: currentEquipment!.config.map(config => {
-                //         // 1. หา Package ที่ตรงกับ package8digit ปัจจุบัน
-                //         if (config.package8digit === currentPackage?.package8digit) {
-                //             // 2. อัปเดตเฉพาะรายการใน data_with_selection_code ที่มี package_selection_code ตรงกับ id
-                //             const updatedData = config.data_with_selection_code.map(item =>
-                //                 item.package_selection_code === id ? newData : item
-                //             );
-
-                //             // 3. ถ้าไม่เจอข้อมูลที่ตรงกับ id (อาจเป็นกรณีเพิ่มใหม่ใน Package เดิม)
-                //             if (!config.data_with_selection_code.some(item => item.package_selection_code === id)) {
-                //                 console.log('Adding new data to existing package');
-
-                //                 updatedData.push(newData); // เพิ่มเข้าไปใน array
-                //             }
-
-                //             return {
-                //                 ...config,
-                //                 data_with_selection_code: updatedData
-                //             };
-                //         }
-                //         return config; // Package อื่นที่ไม่เกี่ยวข้อง
-                //     })
-                // };
             }
 
-            console.log('isNewEquipment:', isNewEquipment);
-            console.log('isNewPackage:', isNewPackage);
-            console.log('New Data:', newData);
-
-            console.log('Updated Equipment:', updatedEquipment);
-            return
-
-
-            // Optimistic UI update
+            // Optimistic UI Update
             setDisplayData(prev =>
                 prev.map(item => item.package_selection_code === id ? newData : item)
             );
 
-            // Call API to save
+            // Call API
             const response = isNewEquipment
-                ? await validate.create(updatedEquipment)
-                : await validate.update(currentEquipment!._id!, updatedEquipment);
+                ? await validate.create(equipment)
+                : await validate.update(equipment._id!, equipment);
 
-            // Update equipment list
+            // Update State
             setEquipmentList(prev =>
                 isNewEquipment
                     ? [...prev, response]
-                    : prev.map(eq =>
-                        eq._id === currentEquipment!._id ? response : eq
-                    )
+                    : prev.map(eq => eq._id === equipment!._id ? response : eq)
             );
 
             setSnackbar({
@@ -314,8 +378,9 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
                 newSet.delete(id);
                 return newSet;
             });
+            setEditContext(null);
         }
-    }, [selectionState, currentEquipment, currentPackage?.package8digit, isNewEquipment, isNewPackage, validate]);
+    }, [equipmentList, selectionState, isNewPackage, editContext, validate]);
 
     const handleEditDelete = useCallback((id: string) => {
         console.log('Deleting item with ID:', id);
@@ -429,10 +494,17 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
                                 : newSet.add(pkg.package_selection_code)
                             return newSet
                         })}
-                        onEdit={() => setEditKeys(prev => new Set([...prev, pkg.package_selection_code]))}
-                        // ... other props
+                        onEdit={() => {
+                            // เรียก handleEdit เพื่อตั้งค่า editContext ก่อน
+                            handleEdit(pkg);
+                            // แล้วจึงตั้งค่า editKeys
+                            setEditKeys(prev => new Set([...prev, pkg.package_selection_code]));
+                        }}
                         onSave={(newData) => handleEditSave(pkg.package_selection_code, newData)}
-                        onCancel={() => handleEditCancel(pkg.package_selection_code)}
+                        onCancel={() => {
+                            handleEditCancel(pkg.package_selection_code);
+                            setEditContext(null); // เคลียร์ editContext เมื่อยกเลิก
+                        }}
                         onDelete={() => handleEditDelete(pkg.package_selection_code)}
                     />
                 ))}

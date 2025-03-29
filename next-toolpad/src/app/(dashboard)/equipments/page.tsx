@@ -1,7 +1,7 @@
 import React, { use } from 'react'
 import { auth } from '../../api/auth/auth';
-import SecsGemEquipments from '@/src/components/equipment';
-import ValidateConfig from '@/src/components/validate';
+// import SecsGemEquipments from '@/src/components/equipment';
+import ValidateConfigComponent from '@/src/components/validate';
 import { Divider, Grid2 } from '@mui/material';
 
 interface User {
@@ -24,13 +24,10 @@ export default async function EquipmentPage() {
     user.role = session?.user?.role ?? 'defaultRole';
 
     return (
-
-
         <Grid2 spacing={2}>
-            <SecsGemEquipments user={user} />
-            <Divider sx={{ my: 2 }} />
-            <ValidateConfig user={user} />
+            {/* <SecsGemEquipments user={user} /> */}
+            {/* <Divider sx={{ my: 2 }} /> */}
+            <ValidateConfigComponent user={user} />
         </Grid2>
-
     )
 }

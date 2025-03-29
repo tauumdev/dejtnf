@@ -1,541 +1,717 @@
 'use client'
-import React, { useEffect, useRef, useState } from 'react'
-import PropTypes from 'prop-types'
-import { Box, Button, Checkbox, Collapse, Divider, FormControlLabel, Grid2, IconButton, MenuItem, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from '@mui/material';
-import { Add, Cancel, Delete, Edit, ExpandLess, ExpandMore, Save } from '@mui/icons-material';
-import { useApiContext } from '@/src/context/apiContext';
+import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import { Autocomplete, Button, Grid2, MenuItem, TextField } from '@mui/material'
+import { useApiContext } from '@/src/context/apiContext'
+import type { ValidateConfig, ConfigItem, DataWithSelectionCode } from './validatePropsType'
+import { v4 as uuidv4 } from 'uuid'
+import MemoizedAccordionItem from './memoizedAccordionItem'
+import { SnackbarNotify } from '../snackbar'
+import _ from 'lodash'
 
+// ==================== Type Definitions ====================
 interface User {
-    name: string;
-    email: string;
-    role: string;
+    name: string
+    email: string
+    role: string
 }
 
-function ValidateConfig(props: { user: User }) {
-    const { user } = props
-    const { validate } = useApiContext();
+interface ValidateConfigProps {
+    user: User
+}
 
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(5);
-    const [sortBy, setSortBy] = useState('equipment_name');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+type SelectionCode = "1000" | "1001" | "1010" | "1011" | "1100" | "1101" | "1110" | "1111"
 
-    const [expanded, setExpanded] = useState<{
-        id: string | null;
-        package: string | null;
-        package_selection_code: string | null;
-    }>({ id: null, package: null, package_selection_code: null });
+// ==================== Utility Functions ====================
+const handleError = (error: unknown, defaultMessage: string): string => {
+    if (Array.isArray(error)) {
+        return error.map(err => `${err.param || 'field'}: ${err.msg || 'Invalid value'}`).join(', ')
+    }
 
-    const toggleExpand = (key: string, level: 'id' | 'package' | 'package_selection_code') => {
-        console.log(key);
-        setExpanded((prev) => ({
-            ...prev,
-            [level]: prev[level] === key ? null : key, // ถ้า key เดิมถูกขยายอยู่ ให้ยุบ, ถ้ายังไม่ขยายให้ขยาย
-        }));
-    };
+    if (error instanceof Error) {
+        return error.message
+    }
 
-    // Fetch equipment data on component mount or when pagination/sorting changes
+    if (typeof error === 'string') {
+        return error
+    }
+
+    return defaultMessage
+}
+
+// ==================== Main Component ====================
+export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
+    // ==================== Context & State ====================
+    const { validate } = useApiContext()
+    const [equipmentList, setEquipmentList] = useState<ValidateConfig[]>([])
+
+    const [selectionState, setSelectionState] = useState<{
+        equipmentName: string
+        package8Digit: string
+        selectionCode: SelectionCode
+        package_selection_code: string
+    }>({
+        equipmentName: '',
+        package8Digit: '',
+        selectionCode: '1000',
+        package_selection_code: ''
+    })
+
+    const [autocompleteOptions, setAutocompleteOptions] = useState<{
+        equipment_name: string[];
+        package8digit: string[];
+        selection_code: SelectionCode[];
+        package_selection_code: string[];
+    }>({
+        equipment_name: [],
+        package8digit: [],
+        selection_code: [],
+        package_selection_code: [],
+    })
+
+    const [editKeys, setEditKeys] = useState<Set<string>>(new Set())
+    const [expandedAccordions, setExpandedAccordions] = useState<Set<string>>(new Set())
+
+    const [snackbar, setSnackbar] = useState<{
+        open: boolean
+        message: string
+        severity: 'error' | 'info' | 'success' | 'warning'
+    }>({
+        open: false,
+        message: '',
+        severity: 'info'
+    })
+
+    // ==================== Derived Values ====================
+    const currentEquipment = useMemo(
+        () => equipmentList.find(e => e.equipment_name === selectionState.equipmentName),
+        [equipmentList, selectionState.equipmentName]
+    )
+
+    const packageLength = useMemo(() => {
+        const selectedPackage = currentEquipment?.config.find(c => c.package8digit === selectionState.package8Digit);
+        if (!selectedPackage) return 0;
+        return selectedPackage ? selectedPackage.data_with_selection_code.length : 0;
+    }, [currentEquipment, selectionState.package8Digit]);
+
+    const canAddNewPackage = useMemo(() => {
+        const hasRequiredFields = selectionState.equipmentName &&
+            selectionState.package8Digit &&
+            selectionState.selectionCode
+
+        const isCode1000LimitReached = selectionState.selectionCode === '1000' &&
+            packageLength >= 1
+
+        return hasRequiredFields && !isCode1000LimitReached
+    }, [selectionState, packageLength])
+
+
+    // ==================== API Handlers ====================
+    const fetchEquipmentList = useCallback(async () => {
+        try {
+            const res = await validate.gets(undefined, undefined, 1, 100, 'equipment_name', 1)
+            setEquipmentList(res.docs || [])
+            setAutocompleteOptions({
+                equipment_name: res.docs.map((e: { equipment_name: string }) => e.equipment_name),
+                package8digit: [],
+                selection_code: [],
+                package_selection_code: []
+            })
+        } catch (error) {
+            console.error('Failed to fetch equipment list:', error)
+        }
+    }, [])
+
+    const handleSelectionChange = useCallback(
+        (type: 'equipment' | 'package' | 'code' | 'package_selection_code', value: string) => {
+            setSelectionState(prev => {
+                switch (type) {
+                    case 'equipment': {
+                        const equipmentExists = equipmentList.some(e => e.equipment_name === value);
+                        const newPackage8DigitOptions = equipmentExists
+                            ? equipmentList.find(e => e.equipment_name === value)?.config.map(c => c.package8digit) || []
+                            : [];
+
+                        setAutocompleteOptions(prev => ({
+                            ...prev,
+                            package8digit: newPackage8DigitOptions,
+                            selection_code: [],
+                            package_selection_code: []
+                        }));
+
+                        setEditKeys(new Set()) // Reset edit keys when equipment changes
+                        setExpandedAccordions(new Set()) // Reset expanded accordions when equipment changes
+                        return {
+                            ...prev,
+                            equipmentName: value,
+                            package8Digit: '',
+                            selectionCode: '1000',
+                            package_selection_code: ''
+                        };
+                    }
+                    case 'package': {
+                        const selectedPackage = currentEquipment?.config.find(c => c.package8digit === value);
+                        const newPackageSelectionCodeOptions = selectedPackage?.data_with_selection_code.map(d => d.package_selection_code) || [];
+
+                        setAutocompleteOptions(prev => ({
+                            ...prev,
+                            package_selection_code: newPackageSelectionCodeOptions,
+                        }));
+
+                        return {
+                            ...prev,
+                            package8Digit: value,
+                            selectionCode: selectedPackage?.selection_code || prev.selectionCode,
+                            package_selection_code: ''
+                        };
+                    }
+                    case 'package_selection_code': {
+                        const selectedPackage = currentEquipment?.config.find(c => c.data_with_selection_code.some(d => d.package_selection_code === value));
+                        return {
+                            ...prev,
+                            package_selection_code: value,
+                        };
+                    }
+                    case 'code': {
+                        return {
+                            ...prev,
+                            selectionCode: value as SelectionCode // Type assertion
+                        };
+                    }
+                    default:
+                        return prev;
+                }
+            });
+        },
+        [equipmentList, currentEquipment]
+    );
+
+    // const handleAddNewPackage = useCallback(() => {
+    //     const newPackage: DataWithSelectionCode = {
+    //         package_selection_code: `NewSelectionCode,${uuidv4()}`,
+    //         product_name: 'New Package',
+    //         validate_type: 'recipe',
+    //         recipe_name: '',
+    //         operation_code: '',
+    //         on_operation: '',
+    //         options: {
+    //             use_operation_code: false,
+    //             use_on_operation: false,
+    //             use_lot_hold: false
+    //         },
+    //         allow_tool_id: {
+    //             position_1: [],
+    //             position_2: [],
+    //             position_3: [],
+    //             position_4: [],
+    //         }
+    //     }
+
+    //     setDisplayData(prev => [newPackage, ...prev])
+    //     setExpandedAccordions(prev => new Set([...prev, newPackage.package_selection_code]))
+    //     setEditKeys(prev => new Set([...prev, newPackage.package_selection_code]))
+    // }, [])
+
+    // ==================== Effect Hooks ====================
+
     useEffect(() => {
-        validate.gets(undefined, undefined, page + 1, rowsPerPage, sortBy, sortOrder === 'asc' ? 1 : -1)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, rowsPerPage, sortBy, sortOrder])
+        fetchEquipmentList()
+    }, [fetchEquipmentList])
 
-    // Function to refresh data
-    const refreshData = () => {
-        validate.gets(
-            undefined,
-            undefined,
-            page + 1,
-            rowsPerPage,
-            sortBy,
-            sortOrder === 'asc' ? 1 : -1
-        ).catch(error => {
-            console.error("Refresh data error:", error);
-        });
-    };
+    const equipmentData = useMemo(() => {
+        console.log('Equipment Callback:', selectionState);
 
-    // Handle page change
-    const handleChangePage = (_: unknown, newPage: number) => {
-        setPage(newPage);
-    };
-
-    // Handle rows per page change
-    const handleChangeRowsPerPage = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(parseInt(e.target.value, 10));
-        setPage(0);
-    };
-
-    // Define state edit
-    const [editingKey, setEditingKey] = useState<string | null>(null); // เก็บ key ของรายการที่กำลังแก้ไข
-    const [useOperation, setUseOperation] = useState(true);
-    const [useOnOperation, setUseOnOperation] = useState(false);
-    const [useLotHold, setUseLotHold] = useState(false);
-
-    // const [editedData, setEditedData] = useState<any>({}); // เก็บข้อมูลที่แก้ไข
-
-    const editRefs = {
-        package_selection_code: useRef<HTMLInputElement>(null),
-        product_name: useRef<HTMLInputElement>(null),
-        recipe_name: useRef<HTMLInputElement>(null),
-        validate_type: useRef<HTMLInputElement>(null),
-        operation_code: useRef<HTMLInputElement>(null),
-        on_operation: useRef<HTMLInputElement>(null),
-        use_operation: useRef<HTMLInputElement>(null),
-        use_on_operation: useRef<HTMLInputElement>(null),
-        use_lot_hold: useRef<HTMLInputElement>(null),
-        allowId_position_1: useRef<HTMLInputElement>(null),
-        allowId_position_2: useRef<HTMLInputElement>(null),
-        allowId_position_3: useRef<HTMLInputElement>(null),
-        allowId_position_4: useRef<HTMLInputElement>(null),
-    }
-
-    // Handle edit
-    const startEditing = (key: string) => {
-        setEditingKey(key);
-        // setEditedData(data);
-
-        const [_id, package8digit, package_selection_code] = key.split(',')
-        const dataByEquipmentName = validate.list.filter(item => item._id === _id);
-        console.log("Data by equipment _id: ", dataByEquipmentName);
-
-    }
-
-    // Handle Save
-    const handleSave = async (key: string) => {
-        const [_id, package8digit, package_selection_code] = key.split(',')
-        const dataByEquipmentName = validate.list.filter(item => item._id === _id);
-        console.log("Save");
-        // console.log("saveKey", key);
-        // console.log("editingKey", editingKey);
-
-        if (!dataByEquipmentName) {
-            console.error("Data not found for _id:", _id);
-            return;
+        if (!selectionState.equipmentName || !equipmentList?.length) {
+            return null;
         }
 
-        const updateData = {
-            package8digit,
-            package_selection_code,
-            product_name: editRefs.product_name.current?.value,
-            recipe_name: editRefs.recipe_name.current?.value,
-            validate_type: editRefs.validate_type.current?.value,
-            operation_code: editRefs.operation_code.current?.value,
-            on_operation: editRefs.on_operation.current?.value,
+        // ค้นหา equipment ที่ตรงชื่อ
+        const originalEquipment = _.find(equipmentList, {
+            equipment_name: selectionState.equipmentName
+        });
+
+        if (!originalEquipment) {
+            return null;
+        }
+
+        // สร้าง deep clone ของ equipment
+        const result = _.cloneDeep(originalEquipment);
+
+        // กรอง config ถ้ามี package8Digit
+        if (selectionState.package8Digit.length === 8) {
+            result.config = _.filter(result.config, {
+                package8digit: selectionState.package8Digit
+            });
+        }
+
+        // กรอง data_with_selection_code ถ้ามี package_selection_code
+        if (selectionState.package_selection_code.length === 4) {
+            result.config = result.config
+                .map(config => ({
+                    ...config,
+                    data_with_selection_code: _.filter(
+                        config.data_with_selection_code,
+                        { package_selection_code: selectionState.package_selection_code }
+                    )
+                }))
+                .filter(config => config.data_with_selection_code.length > 0); // กรอง config ที่ว่างออก
+        }
+
+        return result;
+    }, [selectionState, equipmentList]);
+
+    const addNewData = useCallback(() => {
+        if (!selectionState.equipmentName || !selectionState.package8Digit || !selectionState.selectionCode) return;
+
+        const newData: DataWithSelectionCode = {
+            package_selection_code: `NewSelectionCode,${uuidv4()}`,
+            product_name: 'New Package',
+            validate_type: 'recipe',
+            recipe_name: '',
+            operation_code: '',
+            on_operation: '',
             options: {
-                use_operation_code: useOperation,
-                use_on_operation: useOnOperation,
-                use_lot_hold: editRefs.use_lot_hold.current?.value === 'true',
+                use_operation_code: false,
+                use_on_operation: false,
+                use_lot_hold: false
             },
             allow_tool_id: {
-                position_1: editRefs.allowId_position_1.current?.value.split(','),
-                position_2: editRefs.allowId_position_2.current?.value.split(','),
-                position_3: editRefs.allowId_position_3.current?.value.split(','),
-                position_4: editRefs.allowId_position_4.current?.value.split(','),
+                position_1: [],
+                position_2: [],
+                position_3: [],
+                position_4: [],
             }
-        }
-        console.log(updateData);
+        };
 
-        setEditingKey(null);
-        // console.log(editRefs.package_selection_code.current?.value);
-        // console.log(editRefs.product_name.current?.value);
-    }
+        // Find existing equipment
+        const existingEquipment = equipmentList.find(e => e.equipment_name === selectionState.equipmentName);
 
-    // Handle delete
-    const handleDelete = async (key: string) => {
-        const [_id, package8digit, package_selection_code] = key.split(',')
-        const dataByEquipmentName = validate.list.find(item => item._id === _id);
-        console.log("Delete");
-        // console.log("deleteKey", key);
-        // console.log("editingKey", editingKey);
+        if (!existingEquipment) {
+            console.log('create new equipment:', selectionState.equipmentName);
+            const newEquipment: ValidateConfig = {
+                _id: uuidv4(),
+                equipment_name: selectionState.equipmentName,
+                config: [{
+                    package8digit: selectionState.package8Digit,
+                    selection_code: selectionState.selectionCode,
+                    data_with_selection_code: [newData]
+                }]
+            };
 
-        if (!dataByEquipmentName) {
-            console.error("Data not found for _id:", _id);
+            setEquipmentList(prev => [...prev, newEquipment]);
+
+            // สร้าง itemKey จาก equipment ใหม่
+            const itemKey = `${newEquipment._id},${selectionState.package8Digit},${newData.package_selection_code}`;
+            setEditKeys(prev => new Set([...prev, itemKey]));
+            setExpandedAccordions(prev => new Set([...prev, itemKey]));
             return;
         }
 
-        // Find the config with the matching package8digit
-        const configIndex = dataByEquipmentName.config.findIndex(
-            (config) => config.package8digit === package8digit
-        );
+        console.log('update equipment:', selectionState.equipmentName);
 
-        if (configIndex === -1) {
-            console.error("Config not found for package8digit:", package8digit);
-            return;
-        }
+        // Find or create config item
+        const configItem = existingEquipment.config.find(c => c.package8digit === selectionState.package8Digit);
 
-        // Remove the data_with_selection_code with the matching package_selection_code
-        dataByEquipmentName.config[configIndex].data_with_selection_code =
-            dataByEquipmentName.config[configIndex].data_with_selection_code.filter(
-                (data) => data.package_selection_code !== package_selection_code
+        if (!configItem) {
+            console.log('create new configItem:', selectionState.package8Digit);
+            const updatedEquipment = {
+                ...existingEquipment,
+                config: [
+                    ...existingEquipment.config,
+                    {
+                        package8digit: selectionState.package8Digit,
+                        selection_code: selectionState.selectionCode,
+                        data_with_selection_code: [newData]
+                    }
+                ]
+            };
+
+            setEquipmentList(prev =>
+                prev.map(item =>
+                    item.equipment_name === existingEquipment.equipment_name
+                        ? updatedEquipment
+                        : item
+                )
+            );
+        } else {
+            console.log('update configItem where:', selectionState.package8Digit);
+
+            // Check for duplicates
+            const packageExists = configItem.data_with_selection_code.some(
+                d => d.package_selection_code === selectionState.package_selection_code
             );
 
-        // If no data_with_selection_code remains, remove the config
-        if (dataByEquipmentName.config[configIndex].data_with_selection_code.length === 0) {
-            dataByEquipmentName.config.splice(configIndex, 1);
+            const productExists = configItem.data_with_selection_code.some(
+                d => d.product_name === newData.product_name
+            );
+
+            if (!packageExists && !productExists) {
+                console.log('create new dataItem:', selectionState.package_selection_code);
+
+                const updatedConfig = {
+                    ...configItem,
+                    data_with_selection_code: [newData, ...configItem.data_with_selection_code]
+                };
+
+                setEquipmentList(prev =>
+                    prev.map(item =>
+                        item.equipment_name === existingEquipment.equipment_name
+                            ? {
+                                ...item,
+                                config: item.config.map(config =>
+                                    config.package8digit === configItem.package8digit
+                                        ? updatedConfig
+                                        : config
+                                ),
+                            }
+                            : item
+                    )
+                );
+            } else {
+                console.log('exist package_selection_code or product_name');
+                let message = packageExists && productExists
+                    ? `Both package_selection_code:${selectionState.package_selection_code} and product_name:${newData.product_name} already exist`
+                    : packageExists
+                        ? `package_selection_code:${selectionState.package_selection_code} already exists`
+                        : `product_name:${newData.product_name} already exists`;
+
+                setSnackbar({
+                    open: true,
+                    message,
+                    severity: 'error'
+                });
+                return;
+            }
         }
 
-        // If no configs remain, delete the entire equipment
-        if (dataByEquipmentName.config.length === 0) {
-            await validate.delete(_id);
-            // console.log('delete equipment _id:', _id);
+        // สร้าง itemKey จาก equipment ที่มีอยู่
+        const itemKey = `${existingEquipment._id},${selectionState.package8Digit},${newData.package_selection_code}`;
+        setEditKeys(prev => new Set([...prev, itemKey]));
+        setExpandedAccordions(prev => new Set([...prev, itemKey]));
+    }, [equipmentList, selectionState]);
 
-        } else {
-            await validate.update(_id, dataByEquipmentName);
-            // console.log('update equipment _id:', _id);
-            // console.log(dataByEquipmentName);
-        }
-        await validate.gets(undefined, undefined, page + 1, rowsPerPage, sortBy, sortOrder === 'asc' ? 1 : -1);
-    }
+    const handleSavePackage = useCallback((itemKey: string, updatedData: DataWithSelectionCode) => {
+        console.log('handleSavePackage:', itemKey, updatedData);
+        const [_id, package8digit, package_selection_code] = itemKey.split(',');
 
-    interface EditableTextFieldProps {
-        id?: string;
-        label: string;
-        value: string | number | boolean;
-        editing: boolean;
-        inputRef: React.RefObject<HTMLInputElement>;
-        type?: 'text' | 'number';
-        select?: boolean;
-        children?: React.ReactNode;
-    }
+        console.log(_id, package8digit, package_selection_code);
 
-    // Component for editable text field
-    const EditableTextField: React.FC<EditableTextFieldProps> = ({
-        label,
-        value,
-        editing,
-        inputRef,
-        type = 'text',
-        select = false,
-        children,
-    }) => {
-        const defaultValue = typeof value === 'boolean' ? value.toString() : value;
-        return editing ? (
-            <TextField
-                size="small"
-                label={label}
-                fullWidth
-                autoComplete="off"
-                defaultValue={defaultValue}
-                inputRef={inputRef}
-                type={type}
-                select={select}
-            >
-                {children}
-            </TextField>
-        ) : (
-            // <Typography>{typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}</Typography>
-            <TextField
-                size="small"
-                label={label}
-                fullWidth
-                autoComplete="off"
-                value={typeof value === 'boolean' ? (value ? 'Yes' : 'No') :
-                    value === 'recipe' ? 'Recipe' : value === 'tool_id' ? 'Tool ID' : value
-                }
-            />
+        console.log(updatedData);
+
+        setEquipmentList(prev =>
+            prev.map(equip =>
+                equip.equipment_name === equipmentData?.equipment_name
+                    ? {
+                        ...equip,
+                        config: equip.config.map(config =>
+                            config.package8digit === config.package8digit
+                                ? {
+                                    ...config,
+                                    data_with_selection_code: config.data_with_selection_code.map(item =>
+                                        item.package_selection_code === package_selection_code
+                                            ? updatedData
+                                            : item
+                                    )
+                                }
+                                : config
+                        )
+                    }
+                    : equip
+            )
         );
-    };
+        setEditKeys(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(itemKey);
+            return newSet;
+        });
 
+    }, [])
 
     return (
-        <div>
-            <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-                <Table size='small'>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell colSpan={user.role === 'admin' ? 8 : 7} sx={{ textAlign: 'center' }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Typography variant="h6">Validate Configuration</Typography>
-                                    {user.role === 'admin' &&
-                                        <Button
-                                            size='small'
-                                            variant="outlined"
-                                            startIcon={<Add />}
-                                        // onClick={() => setIsAddNew(true)}
-                                        >
-                                            EQUIPMENT
-                                        </Button>
-                                    }
-                                </Box>
-                            </TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        <TableRow>
-                            <TableCell width={100} align='center' >
-                                <Typography fontWeight="bold">Equipment</Typography>
-                            </TableCell>
-                            <TableCell align='center' >
-                                <Typography fontWeight="bold">Data Config</Typography>
-                            </TableCell>
-                        </TableRow>
-                        {validate.list.map((eq) => {
-
-                            return (
-
-                                <TableRow key={eq._id}>
-                                    <TableCell sx={{ pr: 0 }}>
-                                        <Typography fontWeight='bold'>{eq.equipment_name}</Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Table size='small'>
-                                            <TableHead>
-                                                <TableRow>
-                                                    <TableCell width={450}>
-                                                        <Typography fontWeight='bold'> First Package Code 8 Digit</Typography>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Typography fontWeight='bold'> Selection Code</Typography>
-                                                    </TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {eq.config.map((config, configIndex) => {
-                                                    const configKey = `${eq._id},${config.package8digit}`;
-                                                    return (
-                                                        <React.Fragment key={configIndex}>
-                                                            {/* Level 1: Config */}
-                                                            <TableRow>
-                                                                <TableCell>
-                                                                    <Typography> {config.package8digit}</Typography>
-                                                                </TableCell>
-                                                                <TableCell>
-                                                                    <Typography>  {config.selection_code}</Typography>
-                                                                </TableCell>
-                                                            </TableRow>
-
-                                                            {/* Level 2: Data with Selection Code */}
-                                                            {config.data_with_selection_code.map((data, dataIndex) => {
-                                                                const dataKey = `${configKey},${data.package_selection_code}`;
-                                                                const isDataItemExpanded = expanded.package_selection_code === dataKey;
-                                                                const isEditing = editingKey === dataKey;
-                                                                return (
-                                                                    <TableRow key={dataIndex}>
-                                                                        <TableCell colSpan={2} sx={{ pl: 2 }}>
-                                                                            <Button size='small' variant="text" color='primary'
-                                                                                disableTouchRipple
-                                                                                disableFocusRipple
-                                                                                disableRipple
-                                                                                sx={{ backgroundColor: 'inherit', pt: 0, pb: 0 }}
-                                                                                startIcon={isDataItemExpanded ? <ExpandLess /> : <ExpandMore />}
-                                                                                onClick={() => toggleExpand(dataKey, 'package_selection_code')}
-                                                                            >
-                                                                                <Typography>{data.product_name}</Typography>
-                                                                            </Button>
-                                                                            {/* collapse */}
-                                                                            <Collapse in={isDataItemExpanded} timeout="auto" unmountOnExit>
-                                                                                <Box sx={{ mt: 1, p: 2, border: '1px solid #ccc', borderRadius: 1 }}>
-                                                                                    <Grid2 container spacing={1}>
-                                                                                        <Grid2 size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
-                                                                                            <EditableTextField
-                                                                                                editing={isEditing}
-                                                                                                label="Package Selection Code"
-                                                                                                value={data.package_selection_code}
-                                                                                                inputRef={editRefs.package_selection_code}
-                                                                                            />
-                                                                                        </Grid2>
-                                                                                        <Grid2 size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
-                                                                                            <EditableTextField
-                                                                                                editing={isEditing}
-                                                                                                label="Product Name"
-                                                                                                value={data.product_name}
-                                                                                                inputRef={editRefs.product_name}
-                                                                                            />
-                                                                                        </Grid2>
-                                                                                        <Grid2 size={{ xs: 12, sm: 6, md: 4, lg: 4 }}>
-                                                                                            <EditableTextField
-                                                                                                editing={isEditing}
-                                                                                                label="Recipe Name"
-                                                                                                value={data.recipe_name}
-                                                                                                inputRef={editRefs.recipe_name}
-                                                                                            />
-                                                                                        </Grid2>
-                                                                                        <Grid2 size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-                                                                                            <EditableTextField
-                                                                                                label="Validate Type"
-                                                                                                value={data.validate_type}
-                                                                                                editing={isEditing}
-                                                                                                inputRef={editRefs.validate_type} select
-                                                                                            >
-                                                                                                <MenuItem value={'recipe'}>Recipe</MenuItem>
-                                                                                                <MenuItem value={'tool_id'}>Tool ID</MenuItem>
-                                                                                            </EditableTextField>
-
-                                                                                        </Grid2>
-                                                                                        <Grid2 size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-                                                                                            <EditableTextField
-                                                                                                editing={isEditing}
-                                                                                                label="Operation Code"
-                                                                                                value={data.operation_code}
-                                                                                                inputRef={editRefs.operation_code}
-                                                                                            />
-                                                                                        </Grid2>
-                                                                                        <Grid2 size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-                                                                                            <EditableTextField
-                                                                                                editing={isEditing}
-                                                                                                label="On Operation"
-                                                                                                value={data.on_operation}
-                                                                                                inputRef={editRefs.on_operation}
-                                                                                            />
-                                                                                        </Grid2>
-
-                                                                                        {/* options */}
-                                                                                        <Grid2 size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-                                                                                            <EditableTextField
-                                                                                                label="Use Operation Code"
-                                                                                                value={data.options.use_operation_code}
-                                                                                                editing={isEditing}
-                                                                                                inputRef={editRefs.use_operation} select
-                                                                                            >
-                                                                                                <MenuItem value={'true'}>Yes</MenuItem>
-                                                                                                <MenuItem value={'false'}>No</MenuItem>
-                                                                                            </EditableTextField>
-                                                                                        </Grid2>
-                                                                                        <Grid2 size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-                                                                                            <EditableTextField
-                                                                                                label="Use On Operation"
-                                                                                                value={data.options.use_on_operation}
-                                                                                                editing={isEditing}
-                                                                                                inputRef={editRefs.use_on_operation} select
-                                                                                            >
-                                                                                                <MenuItem value={'true'}>Yes</MenuItem>
-                                                                                                <MenuItem value={'false'}>No</MenuItem>
-                                                                                            </EditableTextField>
-                                                                                        </Grid2>
-                                                                                        <Grid2 size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-                                                                                            <EditableTextField
-
-                                                                                                label="Use Lot Hold"
-                                                                                                value={data.options.use_lot_hold}
-                                                                                                editing={isEditing}
-                                                                                                inputRef={editRefs.use_lot_hold} select
-                                                                                            >
-                                                                                                <MenuItem value={'true'}>Yes</MenuItem>
-                                                                                                <MenuItem value={'false'}>No</MenuItem>
-                                                                                            </EditableTextField>
-                                                                                        </Grid2>
-
-                                                                                        {/* allow tool ids */}
-                                                                                        <Grid2 width={'100%'} justifyContent={'center'}>
-                                                                                            <Typography variant='body2' sx={{ pl: 1 }}>Allow Tool IDs</Typography>
-                                                                                        </Grid2>
-
-                                                                                        <Grid2 size={{ xs: 12, sm: 6, md: 6, lg: 6 }}>
-                                                                                            <EditableTextField
-                                                                                                editing={isEditing}
-                                                                                                label="Position 1"
-                                                                                                value={data.allow_tool_id.position_1.join(',')}
-                                                                                                inputRef={editRefs.allowId_position_1}
-                                                                                            />
-                                                                                        </Grid2>
-                                                                                        <Grid2 size={{ xs: 12, sm: 6, md: 6, lg: 6 }}>
-                                                                                            <EditableTextField
-                                                                                                editing={isEditing}
-                                                                                                label="Position 2"
-                                                                                                value={data.allow_tool_id.position_2.join(',')}
-                                                                                                inputRef={editRefs.allowId_position_2}
-                                                                                            />
-                                                                                        </Grid2>
-                                                                                        <Grid2 size={{ xs: 12, sm: 6, md: 6, lg: 6 }}>
-                                                                                            <EditableTextField
-                                                                                                editing={isEditing}
-                                                                                                label="Position 3"
-                                                                                                value={data.allow_tool_id.position_3.join(',')}
-                                                                                                inputRef={editRefs.allowId_position_3}
-                                                                                            />
-                                                                                        </Grid2>
-                                                                                        <Grid2 size={{ xs: 12, sm: 6, md: 6, lg: 6 }}>
-                                                                                            <EditableTextField
-                                                                                                editing={isEditing}
-                                                                                                label="Position 4"
-                                                                                                value={data.allow_tool_id.position_4.join(',')}
-                                                                                                inputRef={editRefs.allowId_position_4}
-                                                                                            />
-                                                                                        </Grid2>
-
-                                                                                        {user.role === 'admin' &&
-                                                                                            <Grid2 size={{ xs: 12, md: 12, }} display='flex' justifyContent='flex-end'>
-                                                                                                {isEditing ?
-                                                                                                    (
-                                                                                                        <>
-                                                                                                            <IconButton
-                                                                                                                size='small'
-                                                                                                                color='success'
-                                                                                                                onClick={() => handleSave(dataKey)}
-                                                                                                            >
-                                                                                                                <Save fontSize='small' />
-                                                                                                            </IconButton>
-                                                                                                            <IconButton
-                                                                                                                size='small'
-                                                                                                                color='primary'
-                                                                                                                onClick={() => setEditingKey(null)}
-                                                                                                            >
-                                                                                                                <Cancel fontSize='small' />
-                                                                                                            </IconButton></>
-                                                                                                    ) : (
-                                                                                                        <IconButton
-                                                                                                            size='small'
-                                                                                                            color='primary'
-                                                                                                            onClick={
-                                                                                                                () => startEditing(dataKey)
-                                                                                                            }
-                                                                                                        >
-                                                                                                            <Edit fontSize='small' />
-                                                                                                        </IconButton>
-                                                                                                    )
-
-                                                                                                }
-                                                                                                <IconButton
-                                                                                                    size='small'
-                                                                                                    color='error'
-                                                                                                    onClick={
-                                                                                                        () => handleDelete(dataKey)
-                                                                                                    }
-                                                                                                >
-                                                                                                    <Delete fontSize='small' />
-                                                                                                </IconButton>
-                                                                                            </Grid2>
-                                                                                        }
-                                                                                    </Grid2>
-                                                                                </Box>
-                                                                            </Collapse>
-                                                                        </TableCell>
-                                                                    </TableRow>
-                                                                );
-                                                            })}
-                                                        </React.Fragment>
-                                                    )
-                                                })
-                                                }
-                                            </TableBody>
-                                        </Table>
-                                    </TableCell>
-                                </TableRow>)
-                        }
+        <div className="validate-config-container">
+            {/* Selection Controls */}
+            <Grid2 container spacing={2} sx={{ mb: 3 }}>
+                <Grid2 size={4}>
+                    <Autocomplete
+                        id="equipment-select"
+                        size='small'
+                        freeSolo
+                        options={autocompleteOptions.equipment_name}
+                        value={selectionState.equipmentName}
+                        onInputChange={(_, value) => handleSelectionChange('equipment', value)}
+                        renderInput={(params) => (
+                            <TextField {...params} label="Select Equipment" fullWidth />
                         )}
-                    </TableBody>
-                </Table>
-                <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    component="div"
-                    count={validate.totalCount || 0}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                />
-            </TableContainer>
+                    />
+                </Grid2>
+
+                <Grid2 size={3}>
+                    <Autocomplete
+                        id="package-select"
+                        size='small'
+                        freeSolo
+                        options={autocompleteOptions.package8digit}
+                        value={selectionState.package8Digit}
+                        onInputChange={(_, value) => handleSelectionChange('package', value)}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Package 8 Digit"
+                                inputProps={{ ...params.inputProps, maxLength: 8 }}
+                            />
+                        )}
+                    />
+                </Grid2>
+
+                <Grid2 size={3}>
+                    <TextField
+                        size='small'
+                        select
+                        fullWidth
+                        label="Selection Code"
+                        value={selectionState.selectionCode}
+                        onChange={(e) => handleSelectionChange('code', e.target.value)}
+                    // disabled={!isNewPackage}
+                    >
+                        {['1000', '1001', '1010', '1011', '1100', '1101', '1110', '1111'].map(code => (
+                            <MenuItem key={code} value={code}>{code}</MenuItem>
+                        ))}
+                    </TextField>
+                </Grid2>
+
+                <Grid2 size={4}>
+                    <Autocomplete
+                        id="package-select"
+                        size="small"
+                        freeSolo
+                        options={autocompleteOptions.package_selection_code}
+                        value={selectionState.package_selection_code}
+                        onInputChange={(_, value) => handleSelectionChange('package_selection_code', value)}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Package With Selection Code"
+                            />
+                        )}
+                    />
+                </Grid2>
+
+                {user.role === 'admin' &&
+                    <Grid2 size={3} display="flex" alignItems="center">
+                        <Button
+                            variant="outlined"
+                            fullWidth
+                            disabled={!canAddNewPackage}
+                            // onClick={handleAddNewPackage}
+                            onClick={() => {
+                                // console.log('Add New Package:', selectionState);
+                                addNewData()
+                                // create add new package logic here
+
+                            }}
+                        >
+                            Add New
+                        </Button>
+                    </Grid2>
+                }
+            </Grid2>
+
+            {/* Package List */}
+            <div className="package-list">
+                <p>{`select state: [${selectionState.equipmentName}], [${selectionState.package8Digit}], [${selectionState.selectionCode}], [${selectionState.package_selection_code}]`}</p>
+                <pre>{`exit ${JSON.stringify([...editKeys], null, 2)}`}</pre>
+                <pre>{`expended ${JSON.stringify([...expandedAccordions], null, 2)}`}</pre>
+
+                {
+                    equipmentData && (
+                        <>
+                            {equipmentData.config.map((config: ConfigItem) => (
+                                <Fragment key={config.package8digit}>
+                                    {config.data_with_selection_code.map((data: DataWithSelectionCode) => {
+                                        const itemKey = `${equipmentData._id},${config.package8digit},${data.package_selection_code}`;
+                                        // return (
+                                        //     <Grid2 key={itemKey} container spacing={2} size={12}>
+                                        //         <Grid2 size={8}>
+                                        //             <Button
+                                        //                 fullWidth
+                                        //                 sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
+                                        //                 onClick={() => {
+                                        //                     setExpandedAccordions(prev => {
+                                        //                         const newSet = new Set(prev);
+                                        //                         if (newSet.has(itemKey)) {
+                                        //                             newSet.delete(itemKey);
+                                        //                         } else {
+                                        //                             newSet.add(itemKey);
+                                        //                         }
+                                        //                         return newSet;
+                                        //                     })
+                                        //                 }}>
+                                        //                 {data.product_name}
+                                        //             </Button>
+                                        //         </Grid2>
+
+                                        //         {/* actions */}
+                                        //         <Grid2 size={3}>
+                                        //             {editKeys.has(itemKey) ? (
+                                        //                 <Fragment>
+                                        //                     <Button
+                                        //                         color='success'
+                                        //                         onClick={() => {
+                                        //                             setEditKeys(prev => {
+                                        //                                 const newSet = new Set(prev);
+                                        //                                 newSet.delete(itemKey);
+                                        //                                 return newSet;
+                                        //                             })
+                                        //                             // handleSavePackage(itemKey, data)
+                                        //                         }}
+                                        //                     >
+                                        //                         save
+                                        //                     </Button>
+                                        //                     <Button
+                                        //                         color='warning'
+                                        //                         onClick={() => {
+                                        //                             setEditKeys(prev => {
+                                        //                                 const newSet = new Set(prev);
+                                        //                                 newSet.delete(itemKey);
+                                        //                                 return newSet;
+                                        //                             });
+                                        //                         }}>
+                                        //                         cancel
+                                        //                     </Button>
+                                        //                 </Fragment>
+                                        //             ) : (
+                                        //                 <Fragment>
+                                        //                     <Button
+                                        //                         onClick={() => {
+                                        //                             setEditKeys(prev => new Set([...prev, itemKey]))
+                                        //                         }}>
+                                        //                         edit
+                                        //                     </Button>
+                                        //                     <Button
+                                        //                         color='error'
+                                        //                         onClick={() => {
+                                        //                             //    removePackage(itemKey)
+                                        //                             equipmentData.config = equipmentData.config.filter((config: ConfigItem) => config.package8digit !== data.package_selection_code)
+                                        //                             console.log('removePackage', equipmentData.config);
+
+                                        //                         }}
+                                        //                     >
+                                        //                         delete
+                                        //                     </Button>
+                                        //                 </Fragment>
+                                        //             )}
+                                        //         </Grid2>
+                                        //     </Grid2>
+                                        // );
+
+                                        return (
+                                            <MemoizedAccordionItem
+                                                key={itemKey}
+                                                userRole={user.role}
+                                                item={data}
+                                                isEditing={editKeys.has(itemKey)}
+                                                isExpanded={expandedAccordions.has(itemKey)}
+                                                onToggle={() => {
+                                                    setExpandedAccordions(prev => {
+                                                        const newSet = new Set(prev);
+                                                        if (newSet.has(itemKey)) {
+                                                            newSet.delete(itemKey);
+                                                        } else {
+                                                            newSet.add(itemKey);
+                                                        }
+                                                        return newSet;
+                                                    });
+                                                }}
+                                                onEdit={() => {
+                                                    setEditKeys(prev => new Set([...prev, itemKey]));
+                                                }}
+                                                onSave={(updatedData) => {
+                                                    // Handle save logic
+                                                    handleSavePackage(itemKey, updatedData);
+                                                    // setEquipmentList(prev =>
+                                                    //     prev.map(equip =>
+                                                    //         equip.equipment_name === equipmentData?.equipment_name
+                                                    //             ? {
+                                                    //                 ...equip,
+                                                    //                 config: equip.config.map(config =>
+                                                    //                     config.package8digit === config.package8digit
+                                                    //                         ? {
+                                                    //                             ...config,
+                                                    //                             data_with_selection_code: config.data_with_selection_code.map(item =>
+                                                    //                                 item.package_selection_code === data.package_selection_code
+                                                    //                                     ? updatedData
+                                                    //                                     : item
+                                                    //                             )
+                                                    //                         }
+                                                    //                         : config
+                                                    //                 )
+                                                    //             }
+                                                    //             : equip
+                                                    //     )
+                                                    // );
+                                                    // setEditKeys(prev => {
+                                                    //     const newSet = new Set(prev);
+                                                    //     newSet.delete(itemKey);
+                                                    //     return newSet;
+                                                    // });
+
+                                                }}
+                                                onCancel={() => {
+                                                    setEditKeys(prev => {
+                                                        const newSet = new Set(prev);
+                                                        newSet.delete(itemKey);
+                                                        return newSet;
+                                                    });
+                                                }}
+                                                onDelete={() => {
+                                                    setEquipmentList(prev =>
+                                                        prev.map(equip =>
+                                                            equip.equipment_name === equipmentData?.equipment_name
+                                                                ? {
+                                                                    ...equip,
+                                                                    config: equip.config.map(config =>
+                                                                        config.package8digit === config.package8digit
+                                                                            ? {
+                                                                                ...config,
+                                                                                data_with_selection_code: config.data_with_selection_code.filter(
+                                                                                    item => item.package_selection_code !== data.package_selection_code
+                                                                                )
+                                                                            }
+                                                                            : config
+                                                                    )
+                                                                }
+                                                                : equip
+                                                        )
+                                                    );
+                                                    setEditKeys(prev => {
+                                                        const newSet = new Set(prev);
+                                                        newSet.delete(itemKey);
+                                                        return newSet;
+                                                    });
+                                                    setExpandedAccordions(prev => {
+                                                        const newSet = new Set(prev);
+                                                        newSet.delete(itemKey);
+                                                        return newSet;
+                                                    });
+                                                }}
+                                            />
+                                        );
+
+                                    })}
+                                </Fragment>
+                            ))}
+                        </>
+                    )
+                }
+            </div>
+
+            {/* Snackbar for notifications */}
+            <SnackbarNotify
+                open={snackbar.open}
+                onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+                snackbarSeverity={snackbar.severity}
+                onConfirm={() => setSnackbar(prev => ({ ...prev, open: false }))}
+                message={snackbar.message}
+            />
         </div >
     )
 }
-
-
-ValidateConfig.propTypes = {
-    user: PropTypes.shape({
-        name: PropTypes.string.isRequired,
-        email: PropTypes.string.isRequired,
-        role: PropTypes.string.isRequired,
-    }).isRequired,
-}
-
-export default ValidateConfig

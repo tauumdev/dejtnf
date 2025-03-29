@@ -4,7 +4,7 @@ import { login } from '../service/userApi';
 import { getEquipment, getEquipments, createEquipment, deleteEquipment, updateEquipment } from '../service/equipmentApi';
 import { getValidateConfigs, getValidateConfig, createLotValidateConfig, updateLotValidateConfig, deleteLotValidateConfig } from '../service/validateApi';
 
-import { EquipmentResponse, Equipment, ValidateConfigPropTypes, ValidateResponse, ConfigItem } from '../service/types';
+import { EquipmentResponse, Equipment, ValidateConfig, ValidateResponse, ConfigItem } from '../service/types';
 
 interface UserContextProps {
     logIn: (user: { email: string; password: string }) => Promise<any>;
@@ -12,7 +12,7 @@ interface UserContextProps {
 
 interface ValidateContextProps {
     loading: boolean;
-    list: ValidateConfigPropTypes[];
+    list: ValidateConfig[];
     totalCount: number;
     get: (id: string) => Promise<any>;
     gets: (
@@ -23,7 +23,7 @@ interface ValidateContextProps {
         sort?: string,
         order?: number
     ) => Promise<any>;
-    create: (data: ConfigItem) => Promise<any>;
+    create: (data: ValidateConfig) => Promise<any>;
     update: (id: string, data: any) => Promise<any>;
     delete: (id: string) => Promise<any>;
 }
@@ -59,7 +59,7 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const [loadingEquipment, setLoadingEquipment] = useState(true)
     const [totalCountEquipment, setTotalCountEquipment] = useState<number>(0)
 
-    const [validateList, setValidateList] = useState<ValidateConfigPropTypes[]>([])
+    const [validateList, setValidateList] = useState<ValidateConfig[]>([])
     const [loadingValidateConfig, setLoadingValidateConfig] = useState(true)
     const [totalCountValidateConfig, setTotalCountValidateConfig] = useState<number>(0)
 

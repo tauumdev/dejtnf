@@ -43,7 +43,6 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
     const { validate } = useApiContext()
     const [equipmentList, setEquipmentList] = useState<ValidateConfig[]>([])
 
-    // Combined state for better organization
     const [selectionState, setSelectionState] = useState<{
         equipmentName: string
         package8Digit: string
@@ -54,11 +53,13 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
         selectionCode: '1000'
     })
 
-    // const [isNew, setIsNew] = useState<{ equipment: ValidateConfig, package: DataWithSelectionCode }>()
-
     const [displayData, setDisplayData] = useState<DataWithSelectionCode[]>([])
     const [editKeys, setEditKeys] = useState<Set<string>>(new Set())
     const [expandedAccordions, setExpandedAccordions] = useState<Set<string>>(new Set())
+    const [editContext, setEditContext] = useState<{
+        package8digit: string
+        package_selection_code: string
+    } | null>(null)
 
     const [snackbar, setSnackbar] = useState<{
         open: boolean
@@ -81,21 +82,16 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
         [currentEquipment, selectionState.package8Digit]
     )
 
-    const getCurrentPackage = () => {
-        const equipment = equipmentList.find(e => e.equipment_name === selectionState.equipmentName);
-        return equipment?.config.find(c => c.package8digit === selectionState.package8Digit);
-    };
-
     const canAddNewPackage = useMemo(() => {
         const hasRequiredFields = selectionState.equipmentName &&
             selectionState.package8Digit &&
-            selectionState.selectionCode;
+            selectionState.selectionCode
 
         const isCode1000LimitReached = selectionState.selectionCode === '1000' &&
-            displayData.length >= 1;
+            displayData.length >= 1
 
-        return hasRequiredFields && !isCode1000LimitReached;
-    }, [selectionState, displayData.length]);
+        return hasRequiredFields && !isCode1000LimitReached
+    }, [selectionState, displayData.length])
 
     const isNewEquipment = !currentEquipment
     const isNewPackage = !currentPackage
@@ -110,47 +106,39 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
         }
     }, [])
 
-
     const handleSelectionChange = useCallback(
         (type: 'equipment' | 'package' | 'code', value: string) => {
-
             setSelectionState(prev => {
-
-                // กรณีเปลี่ยน Equipment
                 if (type === 'equipment') {
-                    const equipmentExists = equipmentList.some(e => e.equipment_name === value);
-
+                    const equipmentExists = equipmentList.some(e => e.equipment_name === value)
                     return {
                         ...prev,
                         equipmentName: value,
-                        // ถ้าไม่มี Equipment นี้ในลิสต์ ให้ reset package8Digit ด้วย
                         package8Digit: equipmentExists ? prev.package8Digit : '',
                         selectionCode: equipmentExists ? prev.selectionCode : '1000'
-                    };
+                    }
                 }
 
-                // กรณีเปลี่ยน Package
                 if (type === 'package') {
-                    const selectedPackage = currentEquipment?.config.find(c => c.package8digit === value);
+                    const selectedPackage = currentEquipment?.config.find(c => c.package8digit === value)
                     return {
                         ...prev,
                         package8Digit: value,
-                        selectionCode: selectedPackage?.selection_code || prev.selectionCode
-                    };
+                        selectionCode: selectedPackage?.selection_code as SelectionCode || prev.selectionCode
+                    }
                 }
 
-                // กรณีเปลี่ยน Selection Code
                 if (type === 'code') {
                     return {
                         ...prev,
-                        selectionCode: value as SelectionCode // Type assertion
-                    };
+                        selectionCode: value as SelectionCode
+                    }
                 }
-                return prev;
-            });
+                return prev
+            })
         },
         [equipmentList, currentEquipment]
-    );
+    )
 
     const handleAddNewPackage = useCallback(() => {
         const newPackage: DataWithSelectionCode = {
@@ -184,142 +172,111 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
             newSet.delete(id)
             return newSet
         })
-    }, []);
+        setEditContext(null)
+    }, [])
+
+    const handleEdit = useCallback((pkg: DataWithSelectionCode) => {
+        const equipment = equipmentList.find(e => e.equipment_name === selectionState.equipmentName)
+        const parentPackage = equipment?.config.find(c =>
+            c.data_with_selection_code.some(d => d.package_selection_code === pkg.package_selection_code)
+        )
+
+        if (parentPackage) {
+            setEditContext({
+                package8digit: parentPackage.package8digit,
+                package_selection_code: pkg.package_selection_code
+            })
+        }
+        setEditKeys(prev => new Set([...prev, pkg.package_selection_code]))
+    }, [equipmentList, selectionState.equipmentName])
 
     const handleEditSave = useCallback(async (id: string, newData: DataWithSelectionCode) => {
-        console.log(id, newData.package_selection_code);
-
         try {
             // Validation
             if (!newData.package_selection_code.trim() || !newData.product_name.trim()) {
-                throw new Error('Please fill all required fields');
+                throw new Error('Please fill all required fields')
             }
 
-            // Prepare updated equipment data
-            let updatedEquipment: ValidateConfig;
+            let updatedEquipment: ValidateConfig
+            const existingEquipment = equipmentList.find(e => e.equipment_name === selectionState.equipmentName)
 
-            if (isNewEquipment) {
-                // กรณีสร้าง Equipment ใหม่ทั้งหมด
+            // Case 1: New Equipment
+            if (!existingEquipment) {
                 updatedEquipment = {
                     equipment_name: selectionState.equipmentName,
                     config: [{
                         package8digit: selectionState.package8Digit,
                         selection_code: selectionState.selectionCode,
-                        data_with_selection_code: [newData] // Level 3
-                    }] // Level 2
-                };
-            } else if (isNewPackage) {
-                // กรณีเพิ่ม Package ใหม่ใน Equipment ที่มีอยู่
-                updatedEquipment = {
-                    ...currentEquipment!,
-                    config: [
-                        ...currentEquipment!.config, // Level 2 เก่า
-                        { // Level 2 ใหม่
-                            package8digit: selectionState.package8Digit,
-                            selection_code: selectionState.selectionCode,
-                            data_with_selection_code: [newData] // Level 3
-                        }
-                    ]
-                };
-            } else {
-                // กรณีอัปเดต Package ที่มีอยู่แล้ว
-                updatedEquipment = {
-                    ...currentEquipment!,
-                    config: currentEquipment!.config.map(config => {
-                        console.log(config.package8digit);
-
-                        return config.package8digit === currentPackage?.package8digit
-                            ? { // Level 2 ที่ตรงกัน
-                                ...config,
-                                data_with_selection_code: config.data_with_selection_code.map(item =>
-                                    item.package_selection_code === id
-                                        ? newData // อัปเดต Level 3
-                                        : item
-                                )
-                            }
-                            : config // Level 2 อื่นที่ไม่เกี่ยวข้อง
-                    }
-
-                    )
-                };
-                // updatedEquipment = {
-                //     ...currentEquipment!,
-                //     config: currentEquipment!.config.map(config => {
-                //         // 1. หา Package ที่ตรงกับ package8digit ปัจจุบัน
-                //         if (config.package8digit === currentPackage?.package8digit) {
-                //             // 2. อัปเดตเฉพาะรายการใน data_with_selection_code ที่มี package_selection_code ตรงกับ id
-                //             const updatedData = config.data_with_selection_code.map(item =>
-                //                 item.package_selection_code === id ? newData : item
-                //             );
-
-                //             // 3. ถ้าไม่เจอข้อมูลที่ตรงกับ id (อาจเป็นกรณีเพิ่มใหม่ใน Package เดิม)
-                //             if (!config.data_with_selection_code.some(item => item.package_selection_code === id)) {
-                //                 console.log('Adding new data to existing package');
-
-                //                 updatedData.push(newData); // เพิ่มเข้าไปใน array
-                //             }
-
-                //             return {
-                //                 ...config,
-                //                 data_with_selection_code: updatedData
-                //             };
-                //         }
-                //         return config; // Package อื่นที่ไม่เกี่ยวข้อง
-                //     })
-                // };
+                        data_with_selection_code: [newData]
+                    }]
+                }
+                const response = await validate.create(updatedEquipment)
+                setEquipmentList(prev => [...prev, response])
             }
 
-            console.log('isNewEquipment:', isNewEquipment);
-            console.log('isNewPackage:', isNewPackage);
-            console.log('New Data:', newData);
+            // Case 2: Existing Equipment, New Package
+            else if (isNewPackage) {
+                updatedEquipment = {
+                    ...existingEquipment,
+                    config: [
+                        ...existingEquipment.config,
+                        {
+                            package8digit: selectionState.package8Digit,
+                            selection_code: selectionState.selectionCode,
+                            data_with_selection_code: [newData]
+                        }
+                    ]
+                }
+                const response = await validate.update(existingEquipment._id!, updatedEquipment)
+                setEquipmentList(prev => prev.map(eq => eq._id === existingEquipment._id ? response : eq))
+            }
 
-            console.log('Updated Equipment:', updatedEquipment);
-            return
+            // Case 3: Existing Package
+            else {
+                updatedEquipment = {
+                    ...existingEquipment,
+                    config: existingEquipment.config.map(config => {
+                        if (editContext && config.package8digit !== editContext.package8digit) {
+                            return config
+                        }
+                        return {
+                            ...config,
+                            data_with_selection_code: config.data_with_selection_code.map(item =>
+                                item.package_selection_code === id ? newData : item
+                            )
+                        }
+                    })
+                }
+                const response = await validate.update(existingEquipment._id!, updatedEquipment)
+                setEquipmentList(prev => prev.map(eq => eq._id === existingEquipment._id ? response : eq))
+            }
 
-
-            // Optimistic UI update
-            setDisplayData(prev =>
-                prev.map(item => item.package_selection_code === id ? newData : item)
-            );
-
-            // Call API to save
-            const response = isNewEquipment
-                ? await validate.create(updatedEquipment)
-                : await validate.update(currentEquipment!._id!, updatedEquipment);
-
-            // Update equipment list
-            setEquipmentList(prev =>
-                isNewEquipment
-                    ? [...prev, response]
-                    : prev.map(eq =>
-                        eq._id === currentEquipment!._id ? response : eq
-                    )
-            );
+            // Update display data
+            setDisplayData(prev => prev.map(item => item.package_selection_code === id ? newData : item))
 
             setSnackbar({
                 open: true,
                 message: 'Saved successfully',
                 severity: 'success'
-            });
+            })
 
         } catch (error) {
             setSnackbar({
                 open: true,
                 message: handleError(error, 'Failed to save package'),
                 severity: 'error'
-            });
+            })
         } finally {
             setEditKeys(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(id);
-                return newSet;
-            });
+                const newSet = new Set(prev)
+                newSet.delete(id)
+                return newSet
+            })
+            setEditContext(null)
         }
-    }, [selectionState, currentEquipment, currentPackage?.package8digit, isNewEquipment, isNewPackage, validate]);
+    }, [equipmentList, selectionState, isNewPackage, editContext, validate])
 
     const handleEditDelete = useCallback((id: string) => {
-        console.log('Deleting item with ID:', id);
-
         setDisplayData(prev => prev.filter(item => item.package_selection_code !== id))
         setEditKeys(prev => {
             const newSet = new Set(prev)
@@ -336,17 +293,17 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
     useEffect(() => {
         const updateDisplayData = () => {
             if (selectionState.package8Digit.length === 8) {
-                const selectedPackage = currentEquipment?.config.find(c => c.package8digit === selectionState.package8Digit);
-                setDisplayData(selectedPackage?.data_with_selection_code || []);
+                const selectedPackage = currentEquipment?.config.find(c => c.package8digit === selectionState.package8Digit)
+                setDisplayData(selectedPackage?.data_with_selection_code || [])
             } else if (selectionState.equipmentName) {
-                setDisplayData(currentEquipment?.config.flatMap(c => c.data_with_selection_code) || []);
+                setDisplayData(currentEquipment?.config.flatMap(c => c.data_with_selection_code) || [])
             } else {
-                setDisplayData([]);
+                setDisplayData([])
             }
         }
 
-        updateDisplayData();
-    }, [selectionState, currentEquipment]);
+        updateDisplayData()
+    }, [selectionState, currentEquipment])
 
     return (
         <div className="validate-config-container">
@@ -429,8 +386,7 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
                                 : newSet.add(pkg.package_selection_code)
                             return newSet
                         })}
-                        onEdit={() => setEditKeys(prev => new Set([...prev, pkg.package_selection_code]))}
-                        // ... other props
+                        onEdit={() => handleEdit(pkg)}
                         onSave={(newData) => handleEditSave(pkg.package_selection_code, newData)}
                         onCancel={() => handleEditCancel(pkg.package_selection_code)}
                         onDelete={() => handleEditDelete(pkg.package_selection_code)}

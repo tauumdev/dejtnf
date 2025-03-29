@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ValidateResponse, ValidateConfigPropTypes, ValidateAllowToolId, ValidateDataWithSelectionCode, ValidateOptions } from "./types";
+import { ValidateResponse, ValidateConfig, ValidateAllowToolId, DataWithSelectionCode, ValidateOptions } from "./types";
 
 const API_HOST = process.env.REACT_APP_API_HOST || "http://localhost:3000";
 
@@ -38,7 +38,7 @@ export const getValidateConfigs = async (
 
 
 // Get Lot Validate Config by ID
-export const getValidateConfig = async (id: string): Promise<ValidateConfigPropTypes> => {
+export const getValidateConfig = async (id: string): Promise<ValidateConfig> => {
     try {
         const response = await api.get(`/config/${id}`);
         return response.data;
@@ -50,7 +50,7 @@ export const getValidateConfig = async (id: string): Promise<ValidateConfigPropT
 }
 
 // Create a new Lot Validate Config record
-export const createLotValidateConfig = async (lotValidateConfig: any): Promise<ValidateConfigPropTypes> => {
+export const createLotValidateConfig = async (lotValidateConfig: any): Promise<ValidateConfig> => {
     try {
         console.log(lotValidateConfig);
 
@@ -62,7 +62,7 @@ export const createLotValidateConfig = async (lotValidateConfig: any): Promise<V
     }
 }
 // Update a Lot Validate Config record
-export const updateLotValidateConfig = async (id: string, lotValidateConfig: any): Promise<ValidateConfigPropTypes> => {
+export const updateLotValidateConfig = async (id: string, lotValidateConfig: any): Promise<ValidateConfig> => {
     try {
         const response = await api.put(`/config/${id}`, lotValidateConfig);
         return response.data;
