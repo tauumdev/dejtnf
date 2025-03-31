@@ -192,7 +192,7 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
     }, [fetchEquipmentList])
 
     const equipmentData = useMemo(() => {
-        // console.log('Equipment Callback:', selectionState);
+        console.log('Equipment Callback:', selectionState);
 
         if (!selectionState.equipmentName || !equipmentList?.length) {
             return null;
@@ -275,7 +275,7 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
             setEquipmentList(prev => [...prev, newEquipment]);
 
             // สร้าง itemKey จาก equipment ใหม่
-            const itemKey = `${newEquipment._id}|${selectionState.package8Digit}|${newData.package_selection_code}`;
+            const itemKey = `${newEquipment._id},${selectionState.package8Digit},${newData.package_selection_code}`;
             setEditKeys(prev => new Set([...prev, itemKey]));
             setExpandedAccordions(prev => new Set([...prev, itemKey]));
             return;
@@ -364,152 +364,29 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
         setExpandedAccordions(prev => new Set([...prev, itemKey]));
     }, [equipmentList, selectionState]);
 
-    const handleSave11 = async (itemKey: string, updatedData: DataWithSelectionCode) => {
-        const [_id, package8digit, package_selection_code] = itemKey.split('|');
-        console.log(_id, package8digit, package_selection_code);
+    const handleSave = useCallback((itemKey: string) => {
+        const [_id, package8digit, package_selection_code] = itemKey.split(',');
+        // console.log(_id, package8digit, package_selection_code);
+        // console.log(equipmentList.find(e => e._id));
 
-        // หา equipment ที่มี _id ตรงกับ _id ที่ให้มา
-        const existEq = equipmentList.find(e => e._id === _id);
-        if (!existEq) {
-            console.error('Equipment not found');
-            return;
-        }
-
-        console.log('Existing Equipment:', existEq);
-        console.log('Updated Data:', updatedData);
-
-        // อัปเดตข้อมูลใน existEq
-        const updatedConfig = existEq.config.map(config => {
-            if (config.package8digit !== package8digit) return config;
-
-            // อัปเดต data_with_selection_code
-            const updatedDataList = config.data_with_selection_code.map(item =>
-                item.package_selection_code === package_selection_code
-                    ? updatedData
-                    : item
-            );
-
-            return {
-                ...config,
-                data_with_selection_code: updatedDataList
-            };
-        });
-
-        // สร้าง object ใหม่สำหรับ updatedEquipment
-        const updatedEquipment = {
-            ...existEq,
-            config: updatedConfig
-        };
-
-        console.log('Updated Config:', updatedConfig);
-        console.log('Updated Equipment:', updatedEquipment);
-
-        // อัปเดต state ทันทีเพื่อให้ UI ตอบสนองเร็ว
-        const updatedEquipmentList = equipmentList.map(equip =>
-            equip._id === _id ? updatedEquipment : equip
-        );
-        setEquipmentList(updatedEquipmentList);
-
-        console.log('Updated Equipment List:', updatedEquipmentList);
-
-
-        // เรียก API ตามสถานะ
+        const equipmentSave = equipmentList.find(e => e._id === _id);
         if (isNew) {
-            await validate.create(updatedEquipment);
-            setIsNew(false);
+            console.log('new equipmentSave:', equipmentSave);
+            // if (equipmentSave) {
+            //     validate.create(equipmentSave);
+            // } else {
+            //     console.error('equipmentSave is undefined');
+            // }
         } else {
-            await validate.update(_id, updatedEquipment);
+            console.log('update equipmentSave:', equipmentSave);
+            // if (equipmentSave) {
+            //     validate.update(_id, equipmentSave);
+            // } else {
+            //     console.error('equipmentSave is undefined');
+            // }
         }
 
-        // ปิดโหมดแก้ไข
-        setEditKeys(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(itemKey);
-            return newSet;
-        });
-
-        setSnackbar({
-            open: true,
-            message: 'บันทึกข้อมูลสำเร็จ',
-            severity: 'success'
-        });
-    };
-
-    const handleSave = useCallback(async (itemKey: string, updatedData: DataWithSelectionCode) => {
-        try {
-            const [_id, package8digit, package_selection_code] = itemKey.split('|');
-            console.log(_id);
-
-            // อัปเดตสถานะ equipmentList
-            const updatedEquipmentList = equipmentList.map(equip => {
-                if (equip._id !== _id) return equip;
-
-                // อัปเดต config
-                const updatedConfig = equip.config.map(config => {
-                    if (config.package8digit !== package8digit) return config;
-
-                    // อัปเดต data_with_selection_code
-                    const updatedDataList = config.data_with_selection_code.map(item =>
-                        item.package_selection_code === package_selection_code
-                            ? updatedData
-                            : item
-                    );
-
-                    return {
-                        ...config,
-                        data_with_selection_code: updatedDataList
-                    };
-                });
-
-                return {
-                    ...equip,
-                    config: updatedConfig
-                };
-            });
-
-            // อัปเดต state ทันทีเพื่อให้ UI ตอบสนองเร็ว
-            setEquipmentList(updatedEquipmentList);
-
-            // หา equipment ที่อัปเดต
-            const updatedEquipment = updatedEquipmentList.find(e => e._id === _id);
-            if (!updatedEquipment) {
-                throw new Error('Equipment not found');
-            }
-
-            console.log('Update Equipment:', updatedEquipment);
-
-            // เรียก API ตามสถานะ
-            if (isNew) {
-                await validate.create(updatedEquipment);
-                setIsNew(false);
-            } else {
-                await validate.update(_id, updatedEquipment);
-            }
-
-            // ปิดโหมดแก้ไข
-            setEditKeys(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(itemKey);
-                return newSet;
-            });
-
-            setSnackbar({
-                open: true,
-                message: 'บันทึกข้อมูลสำเร็จ',
-                severity: 'success'
-            });
-            fetchEquipmentList();
-
-        } catch (error) {
-            console.error('Failed to save data:', error);
-            setSnackbar({
-                open: true,
-                message: handleError(error, 'เกิดข้อผิดพลาดในการบันทึกข้อมูล'),
-                severity: 'error'
-            });
-        }
-
-    }, [equipmentList, isNew, validate, fetchEquipmentList]);
+    }, [equipmentList, isNew])
 
     return (
         <div className="validate-config-container">
@@ -612,7 +489,7 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
                             {equipmentData.config.map((config: ConfigItem) => (
                                 <Fragment key={config.package8digit}>
                                     {config.data_with_selection_code.map((data: DataWithSelectionCode) => {
-                                        const itemKey = `${equipmentData._id}|${config.package8digit}|${data.package_selection_code}`;
+                                        const itemKey = `${equipmentData._id},${config.package8digit},${data.package_selection_code}`;
                                         return (
                                             <MemoizedAccordionItem
                                                 key={itemKey}
@@ -635,7 +512,36 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
                                                     setEditKeys(prev => new Set([...prev, itemKey]));
                                                 }}
                                                 onSave={(updatedData) => {
-                                                    handleSave(itemKey, updatedData);
+                                                    // Handle save logic
+
+                                                    setEquipmentList(prev =>
+                                                        prev.map(equip =>
+                                                            equip.equipment_name === equipmentData?.equipment_name
+                                                                ? {
+                                                                    ...equip,
+                                                                    config: equip.config.map(config =>
+                                                                        config.package8digit === config.package8digit
+                                                                            ? {
+                                                                                ...config,
+                                                                                data_with_selection_code: config.data_with_selection_code.map(item =>
+                                                                                    item.package_selection_code === data.package_selection_code
+                                                                                        ? updatedData
+                                                                                        : item
+                                                                                )
+                                                                            }
+                                                                            : config
+                                                                    )
+                                                                }
+                                                                : equip
+                                                        )
+                                                    );
+                                                    handleSave(itemKey);
+                                                    setEditKeys(prev => {
+                                                        const newSet = new Set(prev);
+                                                        newSet.delete(itemKey);
+                                                        return newSet;
+                                                    });
+
                                                 }}
                                                 onCancel={() => {
                                                     setEditKeys(prev => {
@@ -686,7 +592,7 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
                 }
             </div>
 
-            {/* {equipmentList?.map((equipment: ValidateConfig) =>
+            {equipmentList?.map((equipment: ValidateConfig) =>
                 <div key={equipment._id}>
                     <li >{equipment.equipment_name}</li>
                     {equipment.config.map((config: ConfigItem) =>
@@ -694,14 +600,14 @@ export default function ValidateConfigComponent({ user }: ValidateConfigProps) {
                             <li>{config.package8digit}</li>
                             {config.data_with_selection_code.map((data: DataWithSelectionCode) =>
                                 <div key={data.package_selection_code} style={{ paddingLeft: '20px' }}>
-                                    <li>{`${data.package_selection_code}, ${data.recipe_name}, ${data.operation_code}`}</li>
+                                    <li>{data.product_name}</li>
                                 </div>
                             )}
                         </div>
                     )}
 
                 </div>
-            )} */}
+            )}
 
             {/* Snackbar for notifications */}
             <SnackbarNotify
