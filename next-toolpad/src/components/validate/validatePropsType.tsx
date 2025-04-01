@@ -42,7 +42,6 @@ export interface ValidateConfig {
     config: ConfigItem[];
 }
 
-
 // Example usage:
 const exampleConfig: ValidateConfig = {
     equipment_name: "TNF-61",

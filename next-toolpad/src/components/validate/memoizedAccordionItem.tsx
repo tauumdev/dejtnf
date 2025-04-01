@@ -187,7 +187,7 @@ const MemoizedAccordionItem = React.memo(
                                         fullWidth
                                         size="small"
                                         label="Package Selection Code"
-                                        value={localData.package_selection_code}
+                                        value={localData.package_selection_code.split('uuid')[0]}
                                         onChange={(e) => handleFieldChange('package_selection_code', e.target.value)}
                                     />
                                 ) : (
@@ -195,7 +195,7 @@ const MemoizedAccordionItem = React.memo(
                                         fullWidth
                                         size='small'
                                         label="Package Selection Code"
-                                        value={item.package_selection_code}
+                                        value={item.package_selection_code.split('uuid')[0]}
                                     />
                                 )}
                             </Grid2>
