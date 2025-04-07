@@ -39,14 +39,14 @@ export const DialogConfirm = ({
             </DialogContentText>
         </DialogContent>
         <DialogActions>
+            <Button size='small' onClick={onConfirm} variant='contained' color={confirmColor || 'error'} autoFocus>
+                {confirmText}
+            </Button>
             {cancelText && (
                 <Button size='small' onClick={onCancel} variant='outlined' color='inherit'>
                     {cancelText}
                 </Button>
             )}
-            <Button size='small' onClick={onConfirm} variant='contained' color={confirmColor || 'error'} autoFocus>
-                {confirmText}
-            </Button>
         </DialogActions>
     </Dialog>
 );

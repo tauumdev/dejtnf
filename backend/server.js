@@ -70,6 +70,7 @@ app.set('view engine', 'html')
 
 // Mount your API routes under the /api path
 const apiRoutes = require('./app/routes/api');
+const { startEarthquakeChecker } = require('./app/controllers/earthquake/earthquakeNotify')
 app.use('/api', apiRoutes);
 
 // Mount the remaining routes (this will be your app’s default routes)
@@ -79,5 +80,7 @@ app.listen(app.get('port'))
 
 // Init MongoDB
 initMongo()
+
+startEarthquakeChecker();
 
 module.exports = app // for testing

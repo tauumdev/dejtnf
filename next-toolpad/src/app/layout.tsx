@@ -3,7 +3,7 @@ import { NextAppProvider } from '@toolpad/core/nextjs';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-
+import BrokenImageIcon from '@mui/icons-material/BrokenImage';
 import type { Navigation } from '@toolpad/core/AppProvider';
 import { SessionProvider, signIn, signOut } from 'next-auth/react';
 import { auth } from './api/auth/auth';
@@ -17,6 +17,11 @@ const NAVIGATION: Navigation = [
     segment: '',
     title: 'Dashboard',
     icon: <DashboardIcon />,
+  },
+  {
+    segment: 'earthquake',
+    title: 'Earthquake',
+    icon: <BrokenImageIcon />,
   },
   {
     segment: 'equipments',

@@ -172,7 +172,7 @@ const MemoizedAccordionItem = React.memo(
 
         return (
             <>
-                <Accordion expanded={isExpanded} onChange={onToggle} sx={{ boxShadow: 20 }}>
+                <Accordion expanded={isExpanded} onChange={onToggle}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Typography color={isEditing ? theme.palette.success.main : theme.palette.primary.main}>
                             {isEditing ? localData.product_name : item.product_name}
@@ -362,11 +362,11 @@ const MemoizedAccordionItem = React.memo(
                                 <Grid2 size={12} display="flex" justifyContent="flex-end" gap={1}>
                                     {isEditing ? (
                                         <>
-                                            <Button variant="outlined" size="small" color="success" onClick={handleSaveClick}>
-                                                Save
-                                            </Button>
                                             <Button variant="outlined" size="small" color="inherit" onClick={onCancel}>
                                                 Cancel
+                                            </Button>
+                                            <Button variant="outlined" size="small" color="success" onClick={handleSaveClick}>
+                                                Save
                                             </Button>
                                         </>
                                     ) : (

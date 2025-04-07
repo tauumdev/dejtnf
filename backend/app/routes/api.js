@@ -1,12 +1,57 @@
 const express = require('express');
 const router = express.Router();
 const trimRequest = require('trim-request')
+// import line from '@line/bot-sdk'
+const line = require('@line/bot-sdk')
+
 
 // Existing API endpoints
 router.get('/', (req, res) => {
     res.status(200).json({
         message: ["/secsgem", "/validate", "/lotinfo/:id"]
     });
+});
+
+const config = {
+    channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
+    channelSecret: process.env.CHANNEL_SECRET
+};
+
+const client = new line.messagingApi.MessagingApiClient(config);
+const userId = process.env.CHANNEL_USERID;
+
+router.post('/notification', async (req, res) => {
+    const { message } = req.body;
+
+    if (!message) {
+        return res.status(400).send('Message is required');
+    }
+
+    if (typeof message !== 'string' || message.trim() === '') {
+        return res.status(400).send('Message must be a non-empty string');
+    }
+
+    if (!userId) {
+        console.error('CHANNEL_USERID is missing');
+        return res.status(500).send('Server configuration error');
+    }
+
+    try {
+        await client.pushMessage({
+            to: userId,
+            messages: [
+                {
+                    type: 'text',
+                    text: message,
+                },
+            ],
+        });
+
+        res.status(200).send('Notification sent successfully');
+    } catch (error) {
+        console.error('Error sending notification:', JSON.stringify(error, null, 2));
+        res.status(500).send('Failed to send notification');
+    }
 });
 
 // Import Lot info controllers

@@ -4,11 +4,13 @@ import { auth } from '../api/auth/auth';
 import { Box } from '@mui/material';
 
 
+
 export default async function HomePage() {
   const session = await auth();
 
   const jwt = await auth();
   // console.log(jwt?.user?.id);
+
 
   return (
     <Box>

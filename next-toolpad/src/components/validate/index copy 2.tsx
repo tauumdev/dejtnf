@@ -7,10 +7,7 @@ import { Add } from '@mui/icons-material'
 import { v4 as uuidv4 } from 'uuid'
 import MemoizedAccordionItem from './memoizedAccordionItem'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import AutocompleteInput from './AutocompleteInput'
-import ConfigTable from './ConfigTable';
 
-const SELECTION_CODES = ['1000', '1001', '1010', '1011', '1100', '1101', '1110', '1111'];
 
 // ==================== Main Component ====================
 export default function ValidateConfigComponent({ user }: { user: { role: string } }) {
@@ -21,8 +18,6 @@ export default function ValidateConfigComponent({ user }: { user: { role: string
     const [rowsPerPage, setRowsPerPage] = useState(5);
 
     const [equipmentList, setEquipmentList] = useState<ValidateConfig[]>([])
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const [selectionState, setSelectionState] = useState<{
         equipmentName: string
@@ -44,36 +39,10 @@ export default function ValidateConfigComponent({ user }: { user: { role: string
         selection_code: '1000',
     })
 
-    const [accordionState, setAccordionState] = useState<{
-        editKeys: Set<string>;
-        addNewKeys: Set<string>;
-        expandedAccordions: Set<string>;
-    }>({
-        editKeys: new Set(),
-        addNewKeys: new Set(),
-        expandedAccordions: new Set(),
-    });
+    const [editKeys, setEditKeys] = useState<Set<string>>(new Set())
+    const [addNewKeys, setAddNewKeys] = useState<Set<string>>(new Set())
+    const [expandedAccordions, setExpandedAccordions] = useState<Set<string>>(new Set())
 
-    const setEditKeys = (updateFn: (prev: Set<string>) => Set<string>) => {
-        setAccordionState((prev) => ({
-            ...prev,
-            editKeys: updateFn(prev.editKeys),
-        }));
-    };
-
-    const setAddNewKeys = (updateFn: (prev: Set<string>) => Set<string>) => {
-        setAccordionState((prev) => ({
-            ...prev,
-            addNewKeys: updateFn(prev.addNewKeys),
-        }));
-    };
-
-    const setExpandedAccordions = (updateFn: (prev: Set<string>) => Set<string>) => {
-        setAccordionState((prev) => ({
-            ...prev,
-            expandedAccordions: updateFn(prev.expandedAccordions),
-        }));
-    };
 
     const handleChangePage = (_: unknown, newPage: number) => {
         setPage(newPage);
@@ -86,23 +55,20 @@ export default function ValidateConfigComponent({ user }: { user: { role: string
 
     // ==================== API Handlers ====================
     const fetchEquipmentList = useCallback(async () => {
-        setError(null);
-        setLoading(true);
         try {
-            const res = await validate.gets(undefined, undefined, page + 1, rowsPerPage, 'equipment_name', 1);
-            setEquipmentList(res.docs || []);
+            const res = await validate.gets(undefined, undefined, page + 1, rowsPerPage, 'equipment_name', 1)
+            // const res = await validate.gets(undefined, undefined, 1, 100, 'equipment_name', 1)
+            setEquipmentList(res.docs || [])
             setAutocompleteOptions({
                 equipment_name: res.docs.map((e: { equipment_name: string }) => e.equipment_name),
                 package8digit: [],
                 selection_code: '1000',
-            });
+            })
         } catch (error) {
-            setError('Failed to fetch equipment list. Please try again.');
-            console.error('Failed to fetch equipment list:', error);
-        } finally {
-            setLoading(false);
+            console.error('Failed to fetch equipment list:', error)
         }
-    }, [rowsPerPage, page]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [rowsPerPage, page])
 
     useEffect(() => {
         fetchEquipmentList();
@@ -161,8 +127,8 @@ export default function ValidateConfigComponent({ user }: { user: { role: string
     }, [selectionState, dataWithSelectionCodeCount])
 
     const disableSelectionCode = useMemo(() => {
-        return autocompleteOptions.package8digit.some(c => c === selectionState.package8Digit) || accordionState.addNewKeys.size > 0
-    }, [autocompleteOptions.package8digit, selectionState.package8Digit, accordionState.addNewKeys.size])
+        return autocompleteOptions.package8digit.some(c => c === selectionState.package8Digit) || addNewKeys.size > 0
+    }, [autocompleteOptions.package8digit, selectionState.package8Digit, addNewKeys.size])
 
     const updateAutocompleteOptions = useCallback((equipmentName: string) => {
         const selectedEquipment = equipmentMap.get(equipmentName);
@@ -314,7 +280,7 @@ export default function ValidateConfigComponent({ user }: { user: { role: string
     const handleCancel = useCallback((itemKey: string) => {
         const [_id, package8digit, package_selection_code] = itemKey.split('|');
 
-        const isNewKey: boolean = accordionState.addNewKeys.has(itemKey);
+        const isNewKey: boolean = addNewKeys.has(itemKey);
 
         if (isNewKey) {
             // Step 1: Remove the added item from equipmentList
@@ -358,7 +324,7 @@ export default function ValidateConfigComponent({ user }: { user: { role: string
         });
 
         console.log(`Cancelled and removed: ${itemKey}`);
-    }, [accordionState.addNewKeys, setEquipmentList]);
+    }, [addNewKeys, setEquipmentList]);
 
     const updateEquipment = (
         equip: ValidateConfig,
@@ -400,7 +366,7 @@ export default function ValidateConfigComponent({ user }: { user: { role: string
     const handleSave = useCallback(async (itemKey: string, updatedData: DataWithSelectionCode) => {
         const [_id, package8digit, package_selection_code] = itemKey.split('|');
 
-        const isNewKey: boolean = accordionState.addNewKeys.has(itemKey);
+        const isNewKey: boolean = addNewKeys.has(itemKey);
 
         const updatedEquipmentList = equipmentList.map(equip => updateEquipment(equip, _id, package8digit, package_selection_code, updatedData));
 
@@ -455,7 +421,7 @@ export default function ValidateConfigComponent({ user }: { user: { role: string
         }))
         fetchEquipmentList()
 
-    }, [accordionState.addNewKeys, equipmentList, validate, fetchEquipmentList])
+    }, [addNewKeys, equipmentList, validate, fetchEquipmentList])
 
     const handleDelete = useCallback(async (itemKey: string) => {
         const [_id, package8digit, package_selection_code] = itemKey.split('|');
@@ -523,123 +489,189 @@ export default function ValidateConfigComponent({ user }: { user: { role: string
         <>
             <pre>{JSON.stringify(selectionState)}</pre>
             <pre>{JSON.stringify(autocompleteOptions)}</pre>
-            <pre>{`add new ${JSON.stringify([...accordionState.addNewKeys], null, 2)}`}</pre>
-            <pre>{`edit ${JSON.stringify([...accordionState.editKeys], null, 2)}`}</pre>
-            <pre>{`expend ${JSON.stringify([...accordionState.expandedAccordions], null, 2)}`}</pre>
+            <pre>{`add new ${JSON.stringify([...addNewKeys], null, 2)}`}</pre>
+            <pre>{`edit ${JSON.stringify([...editKeys], null, 2)}`}</pre>
+            <pre>{`expend ${JSON.stringify([...expandedAccordions], null, 2)}`}</pre>
 
             <Box>
-                {loading ? (
-                    <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                        <CircularProgress />
-                    </Box>
-                ) : (
-                    <TableContainer component={Paper}>
-                        {error && <Typography color="error">{error}</Typography>}
-                        <Grid2 container spacing={2} sx={{ p: 2 }}>
-                            <Grid2 size={12}>
-                                <Typography variant="h6">Config Validate Lot</Typography>
-                            </Grid2>
-                            <Grid2 size={4}>
-                                <AutocompleteInput
-                                    id="equipment-select"
-                                    label="Select Equipment"
-                                    options={autocompleteOptions.equipment_name}
-                                    value={selectionState.equipmentName}
-                                    onInputChange={(value) => handleSelectionChange('equipment', value)}
-                                    disabled={accordionState.addNewKeys.size > 0}
-                                    maxLength={15}
-                                    onKeyDown={(event) => {
-                                        if (event.key === 'Enter') {
-                                            event.defaultPrevented = true;
-                                            findEquipment(selectionState.equipmentName);
-                                        }
-                                    }}
-                                />
-                            </Grid2>
+                <TableContainer component={Paper}> <Grid2 container spacing={2} sx={{ p: 2 }}>
+                    <Grid2 size={12}>
+                        <Typography variant="h6">Config Validate Lot</Typography>
+                    </Grid2>
+                    <Grid2 size={4}>
+                        <Autocomplete
+                            id="equipment-select"
+                            size='small'
+                            freeSolo
+                            options={autocompleteOptions.equipment_name}
+                            value={selectionState.equipmentName}
+                            onInputChange={(_, value) => handleSelectionChange('equipment', value)}
+                            disabled={addNewKeys.size > 0}
+                            renderInput={(params) => (
+                                <TextField {...params} label="Select Equipment" fullWidth
+                                    inputProps={{ ...params.inputProps, maxLength: 15 }} />
+                            )}
 
-                            <Grid2 size={3}>
-                                <AutocompleteInput
-                                    id="package-select"
-                                    label="Package 8 Digit"
-                                    options={autocompleteOptions.package8digit}
-                                    value={selectionState.package8Digit}
-                                    onInputChange={(value) => handleSelectionChange('package', value)}
-                                    disabled={accordionState.addNewKeys.size > 0}
-                                    maxLength={8}
-                                />
-                            </Grid2>
-                            <Grid2 size={2}>
-                                <TextField
-                                    size='small'
-                                    select
-                                    fullWidth
-                                    label="Selection Code"
-                                    value={selectionState.selectionCode}
-                                    onChange={(e) => handleSelectionChange('code', e.target.value)}
-                                    disabled={disableSelectionCode}
-                                >
-                                    {SELECTION_CODES.map(code => (
-                                        <MenuItem key={code} value={code}>{code}</MenuItem>
-                                    ))}
-                                </TextField>
-                            </Grid2>
-
-                            {user.role === 'admin' &&
-                                <Grid2 size={2} display="flex" alignItems="center">
-                                    <Button
-                                        variant="outlined"
-                                        fullWidth
-                                        sx={{ whiteSpace: 'nowrap' }}
-                                        disabled={!canAddNewPackage}
-                                        onClick={handleAddDataWithSelectionCode}
-                                        startIcon={<Add />}
-                                    >
-                                        Add New
-                                    </Button>
-                                </Grid2>
-                            }
-                        </Grid2>
-                        <Divider sx={{ width: '100%' }} />
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell width={120}>
-                                        <Typography fontWeight="bold">Equipment</Typography>
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <Typography fontWeight="bold">Data Config</Typography>
-                                    </TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <ConfigTable
-                                filteredEquipment={filteredEquipment}
-                                userRole={user.role}
-                                editKeys={accordionState.editKeys}
-                                expandedAccordions={accordionState.expandedAccordions}
-                                onToggleAccordion={(itemKey) =>
-                                    setExpandedAccordions((prev) => {
-                                        const newSet = new Set(prev);
-                                        newSet.has(itemKey) ? newSet.delete(itemKey) : newSet.add(itemKey);
-                                        return newSet;
-                                    })
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter') {
+                                    // Prevent's default 'Enter' behavior.
+                                    event.defaultMuiPrevented = true;
+                                    // your handler code
+                                    findEquipment(selectionState.equipmentName);
                                 }
-                                onEdit={(itemKey) => setEditKeys((prev) => new Set([...prev, itemKey]))}
-                                onSave={handleSave}
-                                onCancel={handleCancel}
-                                onDelete={handleDelete}
-                            />
-                        </Table>
-                        <TablePagination
-                            rowsPerPageOptions={[5, 10, 25]}
-                            component="div"
-                            count={validate.totalCount}
-                            rowsPerPage={rowsPerPage}
-                            page={page}
-                            onPageChange={handleChangePage}
-                            onRowsPerPageChange={handleChangeRowsPerPage}
+                            }}
                         />
-                    </TableContainer>
-                )}
+                    </Grid2>
+                    <Grid2 size={3}>
+                        <Autocomplete
+                            id="package-select"
+                            size='small'
+                            freeSolo
+                            options={autocompleteOptions.package8digit}
+                            value={selectionState.package8Digit}
+                            onInputChange={(_, value) => handleSelectionChange('package', value)}
+                            disabled={addNewKeys.size > 0}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params} label="Package 8 Digit" fullWidth
+                                    inputProps={{ ...params.inputProps, maxLength: 8 }}
+                                />
+                            )}
+                        />
+                    </Grid2>
+
+                    <Grid2 size={2}>
+                        <TextField
+                            size='small'
+                            select
+                            fullWidth
+                            label="Selection Code"
+                            value={selectionState.selectionCode}
+                            onChange={(e) => handleSelectionChange('code', e.target.value)}
+                            disabled={disableSelectionCode}
+                        >
+                            {['1000', '1001', '1010', '1011', '1100', '1101', '1110', '1111'].map(code => (
+                                <MenuItem key={code} value={code}>{code}</MenuItem>
+                            ))}
+                        </TextField>
+                    </Grid2>
+
+                    {user.role === 'admin' &&
+                        <Grid2 size={2} display="flex" alignItems="center">
+                            <Button
+                                variant="outlined"
+                                fullWidth
+                                sx={{ whiteSpace: 'nowrap' }}
+                                disabled={!canAddNewPackage}
+                                onClick={handleAddDataWithSelectionCode}
+                                startIcon={<Add />}
+                            >
+                                Add New
+                            </Button>
+                        </Grid2>
+                    }
+                </Grid2>
+                    <Divider sx={{ width: '100%' }} />
+                    <Table >
+                        <TableHead>
+                            <TableRow>
+                                <TableCell width={120} >
+                                    <Typography fontWeight="bold">Equipment</Typography>
+                                </TableCell>
+                                <TableCell align='center' >
+                                    <Typography fontWeight="bold">Data Config</Typography>
+                                </TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {filteredEquipment &&
+                                filteredEquipment.map((eq) =>
+                                    <TableRow key={eq._id}>
+                                        <TableCell component="th" scope="row">
+                                            <Typography fontWeight="bold">{eq.equipment_name}</Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Box>
+                                                <Table size="small">
+                                                    {/* <TableHead>
+                                                        <TableRow>
+                                                            <TableCell>
+                                                                <Typography variant="body1">First Package Code 8 Digit</Typography>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Typography variant="body1">Selection Code</Typography>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    </TableHead> */}
+                                                    <TableBody>
+                                                        {eq.config.map((config) =>
+                                                            <Fragment key={config.package8digit}>
+                                                                <TableRow>
+                                                                    <TableCell sx={{ width: 300 }}>
+                                                                        <Typography variant="body1">{config.package8digit}</Typography>
+                                                                    </TableCell>
+                                                                    <TableCell sx={{ width: 300 }}>
+                                                                        <Typography variant="body1">{config.selection_code}</Typography>
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                                <TableRow>
+                                                                    <TableCell colSpan={3} sx={{ p: 1 }}>
+                                                                        {config.data_with_selection_code.map((data) => {
+                                                                            const itemKey = `${eq._id}|${config.package8digit}|${data.package_selection_code}`;
+                                                                            return (
+                                                                                <MemoizedAccordionItem
+                                                                                    key={data.package_selection_code}
+                                                                                    userRole={user.role}
+                                                                                    item={data}
+                                                                                    isEditing={editKeys.has(itemKey)}
+                                                                                    isExpanded={expandedAccordions.has(itemKey)}
+                                                                                    onToggle={() => {
+                                                                                        setExpandedAccordions(prev => {
+                                                                                            // const newSet = new Set(prev);
+                                                                                            // if (newSet.has(itemKey)) {
+                                                                                            //     newSet.delete(itemKey);
+                                                                                            // } else {
+                                                                                            //     newSet.add(itemKey);
+                                                                                            // }
+                                                                                            // return newSet;
+                                                                                            const newSet = new Set(prev);
+                                                                                            newSet.has(itemKey) ? newSet.delete(itemKey) : newSet.add(itemKey);
+                                                                                            return newSet;
+                                                                                        });
+                                                                                    }}
+                                                                                    onEdit={() => {
+                                                                                        setEditKeys(prev => new Set([...prev, itemKey]));
+                                                                                    }}
+                                                                                    onSave={(updatedData: DataWithSelectionCode) => handleSave(itemKey, updatedData)}
+                                                                                    onCancel={() => handleCancel(itemKey)}
+                                                                                    onDelete={() => handleDelete(itemKey)}
+                                                                                />
+                                                                            )
+                                                                        })}
+                                                                    </TableCell>
+
+
+                                                                </TableRow>
+                                                            </Fragment>
+                                                        )}
+                                                    </TableBody>
+                                                </Table>
+                                            </Box>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                        </TableBody>
+                    </Table>
+                    <TablePagination
+                        rowsPerPageOptions={[5, 10, 25]}
+                        component="div"
+                        count={validate.totalCount}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                    />
+                </TableContainer>
             </Box >
         </>
     )
