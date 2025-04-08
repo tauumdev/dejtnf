@@ -60,18 +60,20 @@ async function fetchTMD() {
     const latest = res.data.DailyEarthquakes[0];
     const lat = latest.Latitude;
     const lon = latest.Longitude;
+    const depth = latest.Depth;
 
     const { country, flag } = await getCountryFlag(lat, lon);
     return {
         source: 'TMD',
         time: new Date(latest.DateTimeUTC),
         message: `
-            ${flag} [TMD] แผ่นดินไหวใน ${country}
-            📅 ${latest.DateTimeThai}
-            📍 ${lat}, ${lon}
-            📏 ${latest.Magnitude} ML
-            📌 ${latest.TitleThai}
-            🗺️ ${createMapLink(lat, lon)}
+${flag} [TMD] แผ่นดินไหวใน ${country}
+📅 ${latest.DateTimeThai}
+📍 ${lat}, ${lon}
+📏 ${latest.Magnitude} ML
+🌍 ความลึก: ${depth} กม.
+📌 ${latest.TitleThai}
+🗺️ ${createMapLink(lat, lon)}
         `.trim()
     };
 }
@@ -82,7 +84,7 @@ async function fetchUSGS() {
     const lat = latest.geometry.coordinates[1];
     const lon = latest.geometry.coordinates[0];
     const mag = parseFloat(latest.properties.mag);
-
+    const depth = latest.geometry.coordinates[2];
 
     const { country, flag } = await getCountryFlag(lat, lon);
     return {
@@ -93,6 +95,7 @@ ${flag} [USGS] Earthquake in ${country}
 📅 ${new Date(latest.properties.time).toLocaleString('th-TH')}
 📍 ${lat}, ${lon}
 📏 ${mag} ML
+🌍 Depth: ${depth} km
 📌 ${latest.properties.place}
 🗺️ ${createMapLink(lat, lon)}
         `.trim()
@@ -107,6 +110,7 @@ async function fetchEMSC() {
     const lat = coords[1];
     const lon = coords[0];
     const mag = parseFloat(props.mag);
+    const depth = coords[2];
 
     const { country, flag } = await getCountryFlag(lat, lon);
     return {
@@ -117,6 +121,7 @@ ${flag} [EMSC] Earthquake in ${country}
 📅 ${new Date(latest.properties.time).toLocaleString('th-TH')}
 📍 ${lat}, ${lon}
 📏 ${mag} ML
+🌍 Depth: ${depth} km
 📌 ${latest.properties.flynn_region}
 🗺️ ${createMapLink(lat, lon)}
         `.trim()
@@ -162,9 +167,10 @@ async function checkEarthquakes() {
                     } else {
                         console.log(`✅ ${source} ไม่มีเหตุการณ์ใหม่`);
                     }
-                } else {
-                    console.log(`⚠️ ${source} magnitude ${mag} < ${minMag} — ไม่แจ้งเตือน`);
                 }
+                // else {
+                //     console.log(`⚠️ ${source} magnitude ${mag} < ${minMag} — ไม่แจ้งเตือน`);
+                // }
             } catch (err) {
                 console.error(`❌ ดึงข้อมูล ${fetchFn.name} ล้มเหลว: ${err.message}`);
             }

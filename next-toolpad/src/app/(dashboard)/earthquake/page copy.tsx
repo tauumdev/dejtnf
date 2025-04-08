@@ -16,66 +16,6 @@ const getMagnitudeColor = (mag: number) => {
     return "#388e3c"; // เขียว (เบา)
 };
 
-
-// ✅ แปลงพิกัดเป็นชื่อประเทศและ emoji ธงชาติ
-interface CountryFlagResult {
-    country: string;
-    flag: string;
-}
-
-interface NominatimResponse {
-    address?: {
-        country?: string;
-        country_code?: string;
-    };
-}
-
-async function getCountryFlag(lat: number, lon: number): Promise<CountryFlagResult> {
-    try {
-        const res = await axios.get<NominatimResponse>('https://nominatim.openstreetmap.org/reverse', {
-            params: {
-                format: 'json',
-                lat,
-                lon,
-                zoom: 3, // country level
-                addressdetails: 1
-            },
-            // headers: { 'User-Agent': 'earthquake-alert-app' }
-        });
-
-        if (res.data && res.data.address && res.data.address.country) {
-            const country = res.data.address.country;
-            const countryCode = res.data.address.country_code || '';
-            const flag = getFlagEmoji(countryCode);
-            return { country, flag };
-        } else {
-            console.error("❌ ไม่พบข้อมูลประเทศจาก Nominatim API");
-            return { country: 'Unknown', flag: '' };
-        }
-    } catch (err: any) {
-        console.error(`❌ reverse geocoding ล้มเหลว: ${err.message}`);
-        return { country: 'Unknown', flag: '' };
-    }
-}
-
-// ✅ แปลง country code เป็น flag emoji
-function getFlagEmoji(countryCode: string): string {
-    const codePoints: number[] = countryCode
-        .toUpperCase()
-        .split('')
-        .map((char: string) => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
-}
-
-interface MapLinkParams {
-    lat: number;
-    lon: number;
-}
-
-function createMapLink({ lat, lon }: MapLinkParams): string {
-    return `https://maps.google.com/?q=${lat},${lon}`;
-}
-
 export default function EarthQuake() {
 
     const [dataUSGS, setDataUSGS] = useState<USGSEarthquakeFeature[]>([]);
@@ -180,6 +120,10 @@ export default function EarthQuake() {
 
                 const newDataTMD: TMDEarthquakeFeature[] = tmdResponse.data;
                 // console.log("New TMD data:", newDataTMD); // Debug
+                const lat = newDataTMD[0].properties.latitude
+                const lon = newDataTMD[0].properties.longitude
+                const { country, flag } = await getCountryFlag(lat, lon);
+                console.log(country, flag);
 
                 // ตรวจสอบว่ามีข้อมูลใหม่เข้ามา แล้วเล่นเสียงเตือน
                 if (
@@ -193,7 +137,7 @@ export default function EarthQuake() {
                     // await sendNotification(`New TMD earthquake detected!: ${newDataTMD[0]?.properties.titleThai}`);
                     // const time = new Date(newDataTMD[0].properties.dateTimeThai).toLocaleString();
                     // const message = `${newDataTMD[0].properties.titleThai} Mag: ${newDataTMD[0].properties.magnitude} Depth: ${newDataTMD[0].properties.depth} km. ${time}`
-                    // await sendNotification(message);                    
+                    // await sendNotification(message);
                 }
 
                 previousTMDDataRef.current = newDataTMD;
@@ -311,6 +255,65 @@ export default function EarthQuake() {
         100% { border-color: ${color}; }
         `;
 
+    // ✅ แปลงพิกัดเป็นชื่อประเทศและ emoji ธงชาติ
+    interface CountryFlagResult {
+        country: string;
+        flag: string;
+    }
+
+    interface NominatimResponse {
+        address?: {
+            country?: string;
+            country_code?: string;
+        };
+    }
+
+    async function getCountryFlag(lat: number, lon: number): Promise<CountryFlagResult> {
+        try {
+            const res = await axios.get<NominatimResponse>('https://nominatim.openstreetmap.org/reverse', {
+                params: {
+                    format: 'json',
+                    lat,
+                    lon,
+                    zoom: 3, // country level
+                    addressdetails: 1
+                },
+                // headers: { 'User-Agent': 'earthquake-alert-app' }
+            });
+
+            if (res.data && res.data.address && res.data.address.country) {
+                const country = res.data.address.country;
+                const countryCode = res.data.address.country_code || '';
+                const flag = getFlagEmoji(countryCode);
+                return { country, flag };
+            } else {
+                console.error("❌ ไม่พบข้อมูลประเทศจาก Nominatim API");
+                return { country: 'Unknown', flag: '' };
+            }
+        } catch (err: any) {
+            console.error(`❌ reverse geocoding ล้มเหลว: ${err.message}`);
+            return { country: 'Unknown', flag: '' };
+        }
+    }
+
+    // ✅ แปลง country code เป็น flag emoji
+    function getFlagEmoji(countryCode: string): string {
+        const codePoints: number[] = countryCode
+            .toUpperCase()
+            .split('')
+            .map((char: string) => 127397 + char.charCodeAt(0));
+        return String.fromCodePoint(...codePoints);
+    }
+
+    interface MapLinkParams {
+        lat: number;
+        lon: number;
+    }
+
+    function createMapLink({ lat, lon }: MapLinkParams): string {
+        return `https://maps.google.com/?q=${lat},${lon}`;
+    }
+
     // if (loading) return <CircularProgress />;
     if (error) return <Typography color="error">Error: {error}</Typography>;
 
@@ -331,7 +334,7 @@ export default function EarthQuake() {
                                 max: 9, min: 1, step: "0.5"
                             }
                         }}
-                        disabled={loadingUSGS || loadingEMSC || loadingTMD}
+                        disabled={loadingUSGS || loadingEMSC}
                     >
                         Min Magnitude
                     </TextField>
@@ -345,7 +348,7 @@ export default function EarthQuake() {
                                 max: 15, min: 1, step: "1"
                             }
                         }}
-                        disabled={loadingUSGS || loadingEMSC || loadingTMD}
+                        disabled={loadingUSGS || loadingEMSC}
                     >
                         Query limit
                     </TextField>
@@ -354,7 +357,7 @@ export default function EarthQuake() {
                     <FormControlLabel control={<Checkbox
                         onChange={(e) => setParams({ ...params, neighboring: e.target.checked })}
                         checked={params.neighboring}
-                        disabled={loadingUSGS || loadingEMSC || loadingTMD}
+                        disabled={loadingUSGS || loadingEMSC}
                     />} label="Thailand and Neighbors" />
                 </Grid2>
 
@@ -372,9 +375,6 @@ export default function EarthQuake() {
                 {dataTMD?.map((quake: TMDEarthquakeFeature) => {
                     const quakeTime = new Date(quake.properties.dateTimeThai).toLocaleString();
                     const isNew = newEarthquakeIds.has(quake.properties.dateTimeUTC); // ตรวจสอบว่าเป็นข้อมูลใหม่หรือไม่
-                    const lat = quake.properties.latitude;
-                    const lon = quake.properties.longitude;
-                    // const { country, flag } =  getCountryFlag(lat, lon);
 
                     return (
                         <Grid2 size={4} key={quake.properties.dateTimeUTC}>
@@ -390,7 +390,7 @@ export default function EarthQuake() {
                                 <CardContent>
                                     <Stack direction="row" alignItems="center" spacing={1} justifyContent="space-between">
                                         <Typography variant="h6" sx={{ color: getMagnitudeColor(quake.properties.magnitude) }}>
-                                            ♒︎ {quake.properties.magnitude} ML
+                                            ♒ {quake.properties.magnitude} ML
                                         </Typography>
                                         {quake.properties.flagUrl && (
                                             // eslint-disable-next-line @next/next/no-img-element
@@ -403,7 +403,6 @@ export default function EarthQuake() {
                                             />
                                         )}
                                     </Stack>
-
                                     <Typography variant="body1">📌 {quake.properties.titleThai}</Typography>
                                     <Typography variant="body2">📅 {quakeTime}</Typography>
                                     <Typography variant="body2">🌍 {quake.properties.depth} km. </Typography>
@@ -415,7 +414,7 @@ export default function EarthQuake() {
                                             rel="noopener noreferrer"
                                         // underline="hover"
                                         >
-                                            📍Google Maps
+                                            Google Maps
                                         </Link>
                                     </Box>
 
@@ -452,7 +451,7 @@ export default function EarthQuake() {
 
                                     <Stack direction="row" alignItems="center" spacing={1} justifyContent={flagUrl ? 'space-between' : 'flex-start'}>
                                         <Typography variant="h6" sx={{ color: getMagnitudeColor(quake.properties.mag) }}>
-                                            ♒︎ {quake.properties.mag} ML
+                                            ♒ {quake.properties.mag} ML
                                         </Typography>
                                         {flagUrl && (
                                             // eslint-disable-next-line @next/next/no-img-element
@@ -521,7 +520,7 @@ export default function EarthQuake() {
                                 <CardContent>
                                     <Stack direction="row" alignItems="center" spacing={1} justifyContent={flagUrl ? 'space-between' : 'flex-start'}>
                                         <Typography variant="h6" sx={{ color: getMagnitudeColor(quake.properties.mag) }}>
-                                            ♒︎ {quake.properties.mag} ML
+                                            ♒ {quake.properties.mag}
                                         </Typography>
                                         {flagUrl && (
                                             // eslint-disable-next-line @next/next/no-img-element

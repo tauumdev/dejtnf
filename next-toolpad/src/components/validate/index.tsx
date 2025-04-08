@@ -102,6 +102,7 @@ export default function ValidateConfigComponent({ user }: { user: { role: string
         } finally {
             setLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rowsPerPage, page]);
 
     useEffect(() => {
@@ -447,12 +448,12 @@ export default function ValidateConfigComponent({ user }: { user: { role: string
             return newSet;
         });
 
-        setSelectionState(prev => ({
-            ...prev,
-            equipmentName: '',
-            package8Digit: '',
-            selectionCode: prev.selectionCode,
-        }))
+        // setSelectionState(prev => ({
+        //     ...prev,
+        //     equipmentName: '',
+        //     package8Digit: '',
+        //     selectionCode: prev.selectionCode,
+        // }))
         fetchEquipmentList()
 
     }, [accordionState.addNewKeys, equipmentList, validate, fetchEquipmentList])
@@ -521,11 +522,11 @@ export default function ValidateConfigComponent({ user }: { user: { role: string
 
     return (
         <>
-            <pre>{JSON.stringify(selectionState)}</pre>
+            {/* <pre>{JSON.stringify(selectionState)}</pre>
             <pre>{JSON.stringify(autocompleteOptions)}</pre>
             <pre>{`add new ${JSON.stringify([...accordionState.addNewKeys], null, 2)}`}</pre>
             <pre>{`edit ${JSON.stringify([...accordionState.editKeys], null, 2)}`}</pre>
-            <pre>{`expend ${JSON.stringify([...accordionState.expandedAccordions], null, 2)}`}</pre>
+            <pre>{`expend ${JSON.stringify([...accordionState.expandedAccordions], null, 2)}`}</pre> */}
 
             <Box>
                 {loading ? (
@@ -568,37 +569,40 @@ export default function ValidateConfigComponent({ user }: { user: { role: string
                                     maxLength={8}
                                 />
                             </Grid2>
-                            <Grid2 size={2}>
-                                <TextField
-                                    size='small'
-                                    select
-                                    fullWidth
-                                    label="Selection Code"
-                                    value={selectionState.selectionCode}
-                                    onChange={(e) => handleSelectionChange('code', e.target.value)}
-                                    disabled={disableSelectionCode}
-                                >
-                                    {SELECTION_CODES.map(code => (
-                                        <MenuItem key={code} value={code}>{code}</MenuItem>
-                                    ))}
-                                </TextField>
-                            </Grid2>
 
                             {user.role === 'admin' &&
-                                <Grid2 size={2} display="flex" alignItems="center">
-                                    <Button
-                                        variant="outlined"
-                                        fullWidth
-                                        sx={{ whiteSpace: 'nowrap' }}
-                                        disabled={!canAddNewPackage}
-                                        onClick={handleAddDataWithSelectionCode}
-                                        startIcon={<Add />}
-                                    >
-                                        Add New
-                                    </Button>
-                                </Grid2>
+                                <>
+                                    <Grid2 size={2}>
+                                        <TextField
+                                            size='small'
+                                            select
+                                            fullWidth
+                                            label="Selection Code"
+                                            value={selectionState.selectionCode}
+                                            onChange={(e) => handleSelectionChange('code', e.target.value)}
+                                            disabled={disableSelectionCode}
+                                        >
+                                            {SELECTION_CODES.map(code => (
+                                                <MenuItem key={code} value={code}>{code}</MenuItem>
+                                            ))}
+                                        </TextField>
+                                    </Grid2>
+                                    <Grid2 size={2} display="flex" alignItems="center">
+                                        <Button
+                                            variant="outlined"
+                                            fullWidth
+                                            sx={{ whiteSpace: 'nowrap' }}
+                                            disabled={!canAddNewPackage}
+                                            onClick={handleAddDataWithSelectionCode}
+                                            startIcon={<Add />}
+                                        >
+                                            Add New
+                                        </Button>
+                                    </Grid2>
+                                </>
                             }
                         </Grid2>
+
                         <Divider sx={{ width: '100%' }} />
                         <Table>
                             <TableHead>

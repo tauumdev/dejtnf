@@ -29,8 +29,9 @@ export async function GET(req: Request) {
 
         const rawList = response.data?.DailyEarthquakes || [];
 
-        const processed: TMDEarthquakeFeature[] = rawList.map((item: any) => {
+        const processed: TMDEarthquakeFeature[] = await Promise.all(rawList.map(async (item: any) => {
             const countryCode = getCountryCodeFromOriginThai(item.OriginThai);
+
             return {
                 properties: {
                     originThai: item.OriginThai,
@@ -41,10 +42,10 @@ export async function GET(req: Request) {
                     latitude: parseFloat(item.Latitude),
                     longitude: parseFloat(item.Longitude),
                     titleThai: item.TitleThai,
-                    flagUrl: countryCode ? `https://flagcdn.com/w40/${countryCode}.png` : undefined
+                    flagUrl: countryCode ? `https://flagcdn.com/w40/${countryCode}.png` : undefined,
                 }
             };
-        });
+        }));
 
         // filter ตาม magnitude
         let filtered = processed.filter(q => q.properties.magnitude >= minMagnitude);

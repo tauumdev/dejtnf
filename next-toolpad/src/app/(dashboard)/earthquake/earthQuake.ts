@@ -108,6 +108,8 @@ export type TMDEarthquakeFeature = {
         longitude: number; // ลองจิจูด
         titleThai: string; // ชื่อเหตุการณ์ (ไทย)
         flagUrl?: string; // URL รูปธงประเทศ (optional)
+        country?: string;
+        flag?: string
     }
 }
 
